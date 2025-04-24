@@ -40,6 +40,7 @@ export default function CtpHolePage() {
         !ctp || (distance !== '' && Number(distance) < ctp.distance_cm)
 
     useEffect(() => {
+        if (!router.isReady || !hole) return
         if (!hole) return
 
         getCtp(parseInt(hole as string)).then((result) => {
@@ -48,7 +49,7 @@ export default function CtpHolePage() {
         })
 
         getPlayers().then(setPlayers)
-    }, [hole])
+    }, [router.isReady, hole])
 
     const handleSubmit = async () => {
         if (!hole || !selectedPlayer || distance === '' || !isBetterThrow) return
