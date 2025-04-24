@@ -6,7 +6,11 @@ export type CtpResult = {
 }
 
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8787'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
+
+if (!API_BASE) {
+    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
+}
 
 const getCtp = async (hole: number): Promise<CtpResult | null> => {
     try {
