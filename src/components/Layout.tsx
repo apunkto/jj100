@@ -1,9 +1,9 @@
-import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material'
-import { ReactNode } from 'react'
+import {AppBar, Toolbar, Typography, Container, Box} from '@mui/material'
+import {ReactNode} from 'react'
 import Image from 'next/image'
 
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({children}: { children: ReactNode }) {
     return (
         <Box
             display="flex"
@@ -27,12 +27,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                             width={45}
                             height={40}
                             priority
-                            style={{ marginRight: 16 }}
+                            style={{marginRight: 16}}
                         />
 
-
-
-                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        <Typography variant="h6" sx={{fontWeight: 700}}>
                             Järva-Jaani 100!
                         </Typography>
                     </Box>
@@ -40,7 +38,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </AppBar>
 
             {/* Content */}
-            <Container sx={{ mt: 4, mb: 6 }} component="main">
+            <Container sx={{mt: 4, mb: 6}} component="main">
                 {children}
             </Container>
 
