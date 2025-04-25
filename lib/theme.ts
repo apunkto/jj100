@@ -4,7 +4,7 @@ const theme = createTheme({
     palette: {
         mode: 'light',
         primary: {
-            main: '#d26619', // Disc golf blue 😎
+            main: '#EA5B0D',
         },
         secondary: {
             main: '#3e3e3e',
@@ -12,6 +12,9 @@ const theme = createTheme({
     },
     shape: {
         borderRadius: 12,
+    },
+    typography: {
+        fontFamily: `'Poppins', sans-serif`,
     },
     components: {
         MuiButton: {
