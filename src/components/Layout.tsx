@@ -1,5 +1,7 @@
 import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material'
 import { ReactNode } from 'react'
+import Image from 'next/image'
+
 
 export default function Layout({ children }: { children: ReactNode }) {
     return (
@@ -19,7 +21,17 @@ export default function Layout({ children }: { children: ReactNode }) {
                             alignItems: 'center',
                         }}
                     >
-                        <Box component="img" src="/logo.webp" alt="Logo" sx={{ height: 40, mr: 2 }} />
+                        <Image
+                            src="/logo.webp"
+                            alt="Logo"
+                            width={45}
+                            height={40}
+                            priority
+                            style={{ marginRight: 16 }}
+                        />
+
+
+
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>
                             Järva-Jaani 100!
                         </Typography>
