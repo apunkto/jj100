@@ -39,6 +39,9 @@ export default function CtpHolePage() {
 
     const isBetterThrow =
         !ctp || (distance !== '' && Number(distance) < ctp.distance_cm)
+    const showError =
+        Boolean(ctp && distance !== '' && Number(distance) >= ctp.distance_cm)
+
 
     useEffect(() => {
         if (!router.isReady || !hole) return
@@ -57,6 +60,7 @@ export default function CtpHolePage() {
     }
 
     const handleConfirmSubmit = async () => {
+        console.log("isBetterThrow", isBetterThrow, ctp)
         if (!hole || !selectedPlayer || distance === '' || !isBetterThrow) return
         try {
             await submitCtp(parseInt(hole as string), selectedPlayer.id, Number(distance))
@@ -130,7 +134,6 @@ export default function CtpHolePage() {
                         options={players.filter((p) => p.id !== ctp?.player_id)}
                         getOptionLabel={(option: Player) => option.name}
                         value={selectedPlayer}
-                        disabled={!ctp}
                         onChange={(_: React.SyntheticEvent, newValue: Player | null) =>
                             setSelectedPlayer(newValue)
                         }
@@ -146,27 +149,28 @@ export default function CtpHolePage() {
                         fullWidth
                         value={distance}
                         onChange={(e) =>
-                            setDistance(
-                                e.target.value === '' ? '' : Number(e.target.value)
-                            )
+                            setDistance(e.target.value === '' ? '' : Number(e.target.value))
                         }
-                        sx={{mb: 2}}
-                        error={distance !== '' && !isBetterThrow}
+                        sx={{ mb: 2 }}
+                        error={showError}
                         helperText={
-                            distance !== '' && !isBetterThrow
-                                ? `CTP peab olema väiksem kui ${ctp?.distance_cm ?? '...'} cm`
+                            showError
+                                ? `CTP peab olema väiksem kui ${ctp?.distance_cm ?? '...' } cm`
                                 : ''
                         }
                     />
+
+
 
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleSubmit}
-                        disabled={!selectedPlayer || distance === '' || !isBetterThrow}
+                        disabled={!selectedPlayer || distance === '' || showError}
                     >
                         Kinnita
                     </Button>
+
                 </Box>
             </Box>
 
