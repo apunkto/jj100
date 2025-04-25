@@ -11,18 +11,32 @@ import {
     Dialog,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
-import useCtpApi, { CtpResult } from '@/src/api/useCtpApi'
+import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
-import { useToast } from '@/src/contexts/ToastContext' // 👈 import toast context
+import { useToast } from '@/src/contexts/ToastContext'
+
+type HoleData = {
+    hole: {
+        id: number
+        number: number
+        is_ctp: boolean
+    }
+    ctp: {
+        hole_id: number
+        distance_cm: number
+        player_id: number
+        player_name: string
+    } | null
+} | null
 
 export default function CtpHolePage() {
     const router = useRouter()
     const { hole } = router.query
-    const { getCtp, submitCtp } = useCtpApi()
+    const { getHole, submitCtp } = useCtpApi()
     const { getPlayers } = usePlayerApi()
-    const { showToast } = useToast()  // 👈 useToast hook here
+    const { showToast } = useToast()
 
-    const [ctp, setCtp] = useState<CtpResult | null>(null)
+    const [holeData, setHoleData] = useState<HoleResult | null>(null)
     const [loading, setLoading] = useState(true)
     const [players, setPlayers] = useState<Player[]>([])
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -30,17 +44,27 @@ export default function CtpHolePage() {
     const [confirmOpen, setConfirmOpen] = useState(false)
 
     const isValidDistance = distance !== '' && Number(distance) > 0
-    const isBetterThrow = !ctp || (isValidDistance && Number(distance) < ctp.distance_cm)
-    const showError = Boolean(ctp && isValidDistance && Number(distance) >= ctp.distance_cm)
+    const isBetterThrow = !holeData?.ctp || (isValidDistance && Number(distance) < holeData.ctp.distance_cm)
+    const showError = Boolean(holeData?.ctp && isValidDistance && Number(distance) >= holeData.ctp.distance_cm)
+
+    const noCtpGame = holeData?.hole && !holeData.hole.is_ctp
 
     useEffect(() => {
         if (!router.isReady || !hole) return
 
-        getCtp(parseInt(hole as string)).then((result) => {
-            setCtp(result)
-            setLoading(false)
-        })
+        const fetchData = async () => {
+            try {
+                const result = await getHole(parseInt(hole as string))
+                setHoleData(result)
+            } catch (err) {
+                console.error('Failed to fetch hole data:', err)
+                setHoleData(null)
+            } finally {
+                setLoading(false)
+            }
+        }
 
+        fetchData()
         getPlayers().then(setPlayers)
     }, [router.isReady, hole])
 
@@ -49,17 +73,17 @@ export default function CtpHolePage() {
     }
 
     const handleConfirmSubmit = async () => {
-        if (!hole || !selectedPlayer || !isValidDistance || !isBetterThrow) return
+        if (!holeData?.hole || !selectedPlayer || !isValidDistance || !isBetterThrow) return
         try {
-            await submitCtp(parseInt(hole as string), selectedPlayer.id, Number(distance))
-            const newCtp = await getCtp(parseInt(hole as string))
-            setCtp(newCtp)
+            await submitCtp(holeData.hole.id, selectedPlayer.id, Number(distance))
+            const newHole = await getHole(holeData.hole.number)
+            setHoleData(newHole)
             setDistance('')
             setSelectedPlayer(null)
 
-            showToast('CTP tulemus sisestatud!', 'success')  // ✅ use global toast
+            showToast('CTP tulemus sisestatud!', 'success')
         } catch (err) {
-            showToast('CTP sisestamine ebaõnnestus!', 'error')  // ✅ use global toast
+            showToast('CTP sisestamine ebaõnnestus!', 'error')
         } finally {
             setConfirmOpen(false)
         }
@@ -85,66 +109,81 @@ export default function CtpHolePage() {
                         </Typography>
                     </Box>
                 </Box>
-                <Typography variant="h5" gutterBottom>
-                    CTP tulemus
-                </Typography>
 
                 {loading ? (
                     <CircularProgress />
-                ) : ctp?.player_name ? (
+                ) : !holeData?.hole ? (
+                    <Typography>Korvi {hole} ei leitud</Typography>
+                ) : noCtpGame ? (
                     <>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                            {ctp.player_name}
+                        <Typography variant="h5" gutterBottom>
+                            Korvil {hole} ei toimu CTP mängu
                         </Typography>
-                        <Typography variant="h5">{ctp.distance_cm} cm</Typography>
                     </>
                 ) : (
-                    <Typography>CTP tulemust pole veel sisestatud</Typography>
-                )}
+                    <>
+                        <Typography variant="h5" gutterBottom>
+                            CTP tulemus
+                        </Typography>
 
-                <Box mt={4}>
-                    <Typography variant="h6" gutterBottom>
-                        Kas viskasid lähemale?
-                    </Typography>
-
-                    <Autocomplete<Player>
-                        options={players.filter((p) => p.id !== ctp?.player_id)}
-                        getOptionLabel={(option) => option.name}
-                        value={selectedPlayer}
-                        onChange={(_: React.SyntheticEvent, newValue: Player | null) => setSelectedPlayer(newValue)}
-                        renderInput={(params: AutocompleteRenderInputParams) => (
-                            <TextField {...params} label="Otsi mängijat" fullWidth sx={{ mb: 2 }} />
+                        {holeData.ctp ? (
+                            <>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                    {holeData.ctp?.player?.name}
+                                </Typography>
+                                <Typography variant="h5">{holeData.ctp.distance_cm} cm</Typography>
+                            </>
+                        ) : (
+                            <Typography>CTP tulemust pole veel sisestatud</Typography>
                         )}
-                    />
 
-                    <TextField
-                        label="Kaugus korvist (cm)"
-                        type="number"
-                        fullWidth
-                        value={distance}
-                        onChange={(e) => setDistance(e.target.value === '' ? '' : Number(e.target.value))}
-                        sx={{ mb: 2 }}
-                        error={distance !== '' && (!isValidDistance || showError)}
-                        helperText={
-                            distance !== ''
-                                ? !isValidDistance
-                                    ? 'CTP peab olema suurem kui 0 cm'
-                                    : showError
-                                        ? `CTP peab olema väiksem kui ${ctp?.distance_cm ?? '...'} cm`
+                        <Box mt={4}>
+                            <Typography variant="h6" gutterBottom>
+                                Kas viskasid lähemale?
+                            </Typography>
+
+                            <Autocomplete<Player>
+                                options={players.filter((p) => p.id !== holeData?.ctp?.player_id)}
+                                getOptionLabel={(option) => option.name}
+                                value={selectedPlayer}
+                                onChange={(_: React.SyntheticEvent, newValue: Player | null) =>
+                                    setSelectedPlayer(newValue)
+                                }
+                                renderInput={(params: AutocompleteRenderInputParams) => (
+                                    <TextField {...params} label="Otsi mängijat" fullWidth sx={{ mb: 2 }} />
+                                )}
+                            />
+
+                            <TextField
+                                label="Kaugus korvist (cm)"
+                                type="number"
+                                fullWidth
+                                value={distance}
+                                onChange={(e) => setDistance(e.target.value === '' ? '' : Number(e.target.value))}
+                                sx={{ mb: 2 }}
+                                error={distance !== '' && (!isValidDistance || showError)}
+                                helperText={
+                                    distance !== ''
+                                        ? !isValidDistance
+                                            ? 'CTP peab olema suurem kui 0 cm'
+                                            : showError
+                                                ? `CTP peab olema väiksem kui ${holeData?.ctp?.distance_cm ?? '...'} cm`
+                                                : ''
                                         : ''
-                                : ''
-                        }
-                    />
+                                }
+                            />
 
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSubmit}
-                        disabled={!selectedPlayer || !isValidDistance || showError}
-                    >
-                        Kinnita
-                    </Button>
-                </Box>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleSubmit}
+                                disabled={!selectedPlayer || !isValidDistance || showError}
+                            >
+                                Kinnita
+                            </Button>
+                        </Box>
+                    </>
+                )}
             </Box>
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>

@@ -1,8 +1,20 @@
-export type CtpResult = {
-    hole: number
-    player_id: number
-    player_name: string
-    distance_cm: number
+export type HoleResult = {
+    hole: {
+        id: number
+        number: number
+        is_ctp: boolean
+    }
+    ctp: {
+        id: number
+        hole_id: number
+        player_id: number
+        distance_cm: number
+        created_date: string
+        player: {
+            id: number
+            name: string
+        }
+    } | null
 }
 
 
@@ -12,32 +24,26 @@ if (!API_BASE) {
     throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
 }
 
-const getCtp = async (hole: number): Promise<CtpResult | null> => {
-    try {
-        const res = await fetch(`${API_BASE}/ctp/${hole}`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return await res.json()
-    } catch (err) {
-        console.error('Error fetching CTP result:', err)
-        return null
-    }
+const getHole = async (holeNumber: number): Promise<HoleResult | null> => {
+    const res = await fetch(`${API_BASE}/hole/${holeNumber}`)
+    if (!res.ok) return null
+    return await res.json()
 }
 
-const submitCtp = async (hole: number, player_id: number, distance_cm: number) => {
-    const res = await fetch(`${API_BASE}/ctp/${hole}`, {
+const submitCtp = async (holeId: number, playerId: number, distanceCm: number) => {
+    const res = await fetch(`${API_BASE}/ctp/${holeId}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({player_id, distance_cm}),
+        body: JSON.stringify({ player_id: playerId, distance_cm: distanceCm }),
     })
 
     if (!res.ok) throw new Error('Failed to submit CTP')
     return await res.json()
 }
 
-
 export default function useCtpApi() {
     return {
-        getCtp,
+        getHole,
         submitCtp,
     }
 }
