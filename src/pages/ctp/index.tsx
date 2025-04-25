@@ -75,7 +75,7 @@ export default function CtpListPage() {
                                         }}
                                     >
                                         <TableCell>
-                                            <Typography fontWeight="600">{hole.number}</Typography>
+                                            <Typography fontWeight="600">#{hole.number}</Typography>
                                         </TableCell>
                                         <TableCell>
                                             <Link href={`/ctp/${hole.number}`} passHref legacyBehavior>
