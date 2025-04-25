@@ -24,8 +24,8 @@ export default function Layout({children}: { children: ReactNode }) {
                         <Image
                             src="/logo.webp"
                             alt="Logo"
-                            width={45}
-                            height={40}
+                            width={57}
+                            height={35}
                             priority
                             style={{marginRight: 16}}
                         />
