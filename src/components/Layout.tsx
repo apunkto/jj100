@@ -79,7 +79,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
                     {/* Links */}
                     <List>
-                        <Link href="/ctp/1" passHref legacyBehavior>
+                        <Link href="/ctp" passHref legacyBehavior>
                             <ListItem disablePadding>
                                 <ListItemButton sx={{ borderRadius: 2 }}>
                                     <ListItemIcon>

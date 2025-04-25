@@ -1,3 +1,9 @@
+export type HoleEntity = {
+    id: number
+    number: number
+    is_ctp: boolean
+}
+
 export type HoleResult = {
     hole: {
         id: number
@@ -41,9 +47,16 @@ const submitCtp = async (holeId: number, playerId: number, distanceCm: number) =
     return await res.json()
 }
 
+const getCtpHoles = async (): Promise<HoleEntity[]> => {
+    const res = await fetch(`${API_BASE}/holes/ctp`)
+    if (!res.ok) throw new Error(`Failed to fetch CTP holes: ${res.status}`)
+    return await res.json()
+}
+
 export default function useCtpApi() {
     return {
         getHole,
         submitCtp,
+        getCtpHoles
     }
 }
