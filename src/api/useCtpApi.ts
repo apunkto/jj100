@@ -1,6 +1,6 @@
 export type CtpResult = {
     hole: number
-    player_id: string
+    player_id: number
     player_name: string
     distance_cm: number
 }
@@ -23,7 +23,7 @@ const getCtp = async (hole: number): Promise<CtpResult | null> => {
     }
 }
 
-const submitCtp = async (hole: number, player_id: string, distance_cm: number) => {
+const submitCtp = async (hole: number, player_id: number, distance_cm: number) => {
     const res = await fetch(`${API_BASE}/ctp/${hole}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},

@@ -6,21 +6,21 @@ import {
     CircularProgress,
     Button,
     TextField,
-    Snackbar,
-    Alert,
-    AutocompleteRenderInputParams,
     Autocomplete,
+    AutocompleteRenderInputParams,
     Dialog,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useCtpApi, { CtpResult } from '@/src/api/useCtpApi'
 import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
+import { useToast } from '@/src/contexts/ToastContext' // 👈 import toast context
 
 export default function CtpHolePage() {
     const router = useRouter()
     const { hole } = router.query
     const { getCtp, submitCtp } = useCtpApi()
     const { getPlayers } = usePlayerApi()
+    const { showToast } = useToast()  // 👈 useToast hook here
 
     const [ctp, setCtp] = useState<CtpResult | null>(null)
     const [loading, setLoading] = useState(true)
@@ -28,16 +28,6 @@ export default function CtpHolePage() {
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [distance, setDistance] = useState<number | ''>('')
     const [confirmOpen, setConfirmOpen] = useState(false)
-
-    const [toast, setToast] = useState<{
-        open: boolean
-        message: string
-        severity: 'success' | 'error'
-    }>({
-        open: false,
-        message: '',
-        severity: 'success',
-    })
 
     const isValidDistance = distance !== '' && Number(distance) > 0
     const isBetterThrow = !ctp || (isValidDistance && Number(distance) < ctp.distance_cm)
@@ -67,17 +57,9 @@ export default function CtpHolePage() {
             setDistance('')
             setSelectedPlayer(null)
 
-            setToast({
-                open: true,
-                message: 'CTP tulemus sisestatud!',
-                severity: 'success',
-            })
+            showToast('CTP tulemus sisestatud!', 'success')  // ✅ use global toast
         } catch (err) {
-            setToast({
-                open: true,
-                message: 'CTP sisestamine ebaõnnestus!',
-                severity: 'error',
-            })
+            showToast('CTP sisestamine ebaõnnestus!', 'error')  // ✅ use global toast
         } finally {
             setConfirmOpen(false)
         }
@@ -127,11 +109,9 @@ export default function CtpHolePage() {
 
                     <Autocomplete<Player>
                         options={players.filter((p) => p.id !== ctp?.player_id)}
-                        getOptionLabel={(option: Player) => option.name}
+                        getOptionLabel={(option) => option.name}
                         value={selectedPlayer}
-                        onChange={(_: React.SyntheticEvent, newValue: Player | null) =>
-                            setSelectedPlayer(newValue)
-                        }
+                        onChange={(_: React.SyntheticEvent, newValue: Player | null) => setSelectedPlayer(newValue)}
                         renderInput={(params: AutocompleteRenderInputParams) => (
                             <TextField {...params} label="Otsi mängijat" fullWidth sx={{ mb: 2 }} />
                         )}
@@ -166,20 +146,6 @@ export default function CtpHolePage() {
                     </Button>
                 </Box>
             </Box>
-
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast({ ...toast, open: false })}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            >
-                <Alert
-                    severity={toast.severity}
-                    onClose={() => setToast({ ...toast, open: false })}
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
                 <Box p={3}>

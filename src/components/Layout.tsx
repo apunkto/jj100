@@ -38,7 +38,16 @@ export default function Layout({children}: { children: ReactNode }) {
             </AppBar>
 
             {/* Content */}
-            <Container sx={{mt: 4, mb: 6}} component="main">
+            <Container
+                sx={{
+                    mt: 4,
+                    mb: 6,
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+                component="main"
+            >
                 {children}
             </Container>
 
