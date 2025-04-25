@@ -19,7 +19,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                             alignItems: 'center',
                         }}
                     >
-                        <Box component="img" src="/logo.png" alt="Logo" sx={{ height: 40, mr: 2 }} />
+                        <Box component="img" src="/logo.webp" alt="Logo" sx={{ height: 40, mr: 2 }} />
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>
                             Järva-Jaani 100!
                         </Typography>
