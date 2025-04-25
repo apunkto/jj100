@@ -84,9 +84,27 @@ export default function CtpHolePage() {
     return (
         <Layout>
             <Box textAlign="center" mt={4}>
-                <Typography variant="h4" gutterBottom>
-                    CTP #{hole}
+                <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
+                    <Box
+                        sx={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: '50%',
+                            backgroundColor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Typography variant="h5" sx={{ color: 'white', fontWeight: 'bold', fontSize: '30px' }}>
+                            {hole}
+                        </Typography>
+                    </Box>
+                </Box>
+                <Typography variant="h5" gutterBottom>
+                    CTP tulemus
                 </Typography>
+
 
                 {loading ? (
                     <CircularProgress/>
