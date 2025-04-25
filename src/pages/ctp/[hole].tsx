@@ -7,7 +7,7 @@ import {
     Button,
     TextField,
     Snackbar,
-    Alert, AutocompleteRenderInputParams, Autocomplete,
+    Alert, AutocompleteRenderInputParams, Autocomplete, Dialog,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useCtpApi, {CtpResult} from '@/src/api/useCtpApi'
@@ -25,6 +25,7 @@ export default function CtpHolePage() {
 
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [distance, setDistance] = useState<number | ''>('')
+    const [confirmOpen, setConfirmOpen] = useState(false)
 
     const [toast, setToast] = useState<{
         open: boolean
@@ -51,14 +52,14 @@ export default function CtpHolePage() {
         getPlayers().then(setPlayers)
     }, [router.isReady, hole])
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
+        setConfirmOpen(true)
+    }
+
+    const handleConfirmSubmit = async () => {
         if (!hole || !selectedPlayer || distance === '' || !isBetterThrow) return
         try {
-            await submitCtp(
-                parseInt(hole as string),
-                selectedPlayer.id,
-                Number(distance)
-            )
+            await submitCtp(parseInt(hole as string), selectedPlayer.id, Number(distance))
             const newCtp = await getCtp(parseInt(hole as string))
             setCtp(newCtp)
             setDistance('')
@@ -66,15 +67,17 @@ export default function CtpHolePage() {
 
             setToast({
                 open: true,
-                message: 'CTP submitted successfully!',
+                message: 'CTP tulemus siestatud!',
                 severity: 'success',
             })
         } catch (err) {
             setToast({
                 open: true,
-                message: 'Failed to submit CTP',
+                message: 'CTP sisestamine ebaõnnestus!',
                 severity: 'error',
             })
+        } finally {
+            setConfirmOpen(false)
         }
     }
 
@@ -96,13 +99,13 @@ export default function CtpHolePage() {
                     </>
                 ) : (
                     <Typography>
-                        No one has submitted a result for this hole yet.
+                        CTP tulemust pole veel sisestatud
                     </Typography>
                 )}
 
                 <Box mt={4}>
                     <Typography variant="h6" gutterBottom>
-                        Think you threw closer?
+                        Kas viskasid lähemale?
                     </Typography>
 
                     <Autocomplete<Player>
@@ -114,13 +117,13 @@ export default function CtpHolePage() {
                             setSelectedPlayer(newValue)
                         }
                         renderInput={(params: AutocompleteRenderInputParams) => (
-                            <TextField {...params} label="Select player" fullWidth sx={{ mb: 2 }} />
+                            <TextField {...params} label="Otsi mängijat" fullWidth sx={{mb: 2}}/>
                         )}
 
                     />
 
                     <TextField
-                        label="Distance (cm)"
+                        label="Kaugus korvist (cm)"
                         type="number"
                         fullWidth
                         value={distance}
@@ -133,7 +136,7 @@ export default function CtpHolePage() {
                         error={distance !== '' && !isBetterThrow}
                         helperText={
                             distance !== '' && !isBetterThrow
-                                ? `Must be less than ${ctp?.distance_cm ?? '...'} cm`
+                                ? `CTP peab olema väiksem kui ${ctp?.distance_cm ?? '...'} cm`
                                 : ''
                         }
                     />
@@ -144,7 +147,7 @@ export default function CtpHolePage() {
                         onClick={handleSubmit}
                         disabled={!selectedPlayer || distance === '' || !isBetterThrow}
                     >
-                        Submit CTP
+                        Kinnita
                     </Button>
                 </Box>
             </Box>
@@ -162,6 +165,23 @@ export default function CtpHolePage() {
                     {toast.message}
                 </Alert>
             </Snackbar>
+            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <Box p={3}>
+                    <Typography variant="h6" gutterBottom>
+                        Kinnita CTP tulemus
+                    </Typography>
+                    <Typography>
+                        Kas kinnitad, et <strong>{selectedPlayer?.name}</strong> tulemus on <strong>{distance} cm</strong>?
+                    </Typography>
+                    <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                        <Button onClick={() => setConfirmOpen(false)}>Katkesta</Button>
+                        <Button onClick={handleConfirmSubmit} variant="contained" color="primary">
+                            Kinnitan
+                        </Button>
+                    </Box>
+                </Box>
+            </Dialog>
+
         </Layout>
     )
 }
