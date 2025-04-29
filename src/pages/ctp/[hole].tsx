@@ -179,7 +179,7 @@ export default function CtpHolePage() {
                                 <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
 
                                 <Typography variant="body1" color="textSecondary">
-                                    CTP tulemuste sisestamine ei ole veel avatud!
+                                    CTP sisestamine ei ole veel avatud!
                                 </Typography>
                             </Box>
                         )}

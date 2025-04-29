@@ -83,7 +83,7 @@ export default function CtpListPage() {
                                                     underline="hover"
                                                     sx={{ fontWeight: '600', color: 'primary.main' }}
                                                 >
-                                                    Vaata
+                                                    Märgi
                                                 </MuiLink>
                                             </Link>
                                         </TableCell>
