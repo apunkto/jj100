@@ -69,3 +69,12 @@
     font-weight: 900;
     src: url('/fonts/poppins-v23-latin-900.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
+
+/* Alatsi-Regular.ttf */
+@font-face {
+    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+    font-family: 'Alatsi';
+    font-style: normal;
+    font-weight: 400;
+    src: url('/fonts/Alatsi-Regular.ttf') format('truetype'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}

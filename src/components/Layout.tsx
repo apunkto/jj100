@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
 
     return (
-        <Box display="flex" flexDirection="column" minHeight="100vh">
+        <Box display="flex" flexDirection="column" minHeight="100vh" maxWidth={900} alignItems="center" mx="auto">
             {/* Header */}
             <AppBar position="static">
                 <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -153,6 +153,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     backgroundColor: 'secondary.main',
                     color: 'white',
                     textAlign: 'center',
+                    width: '100%',
                 }}
             >
                 <Typography variant="body2">

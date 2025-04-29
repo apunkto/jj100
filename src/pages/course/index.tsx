@@ -1,21 +1,21 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
-import { Swiper, SwiperSlide } from 'swiper/react'
+import {Swiper, SwiperSlide} from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import { Navigation } from 'swiper/modules'
+import {Navigation} from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import { Box, IconButton, Typography, TextField } from '@mui/material'
+import {Box, IconButton, Typography, TextField, Button} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
-import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
-import { debounce } from 'lodash'
+import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import {debounce} from 'lodash'
 
 export default function CoursePage() {
     const totalCards = 100
-    const cards = Array.from({ length: totalCards }, (_, i) => i + 1)
+    const cards = Array.from({length: totalCards}, (_, i) => i + 1)
 
-    const { getHole } = useCtpApi()
+    const {getHole} = useCtpApi()
 
     const prevRef = useRef<HTMLButtonElement | null>(null)
     const nextRef = useRef<HTMLButtonElement | null>(null)
@@ -63,7 +63,6 @@ export default function CoursePage() {
     }, [debouncedSlideTo])
 
 
-
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setSearchInput(value)
@@ -87,18 +86,18 @@ export default function CoursePage() {
                         placeholder="Otsi korvi..."
                         value={searchInput}
                         onChange={handleSearchChange}
-                        sx={{ width: 120 }}
-                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                        sx={{width: 120}}
+                        inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
                     />
                 </Box>
 
                 <Swiper
                     modules={[Navigation]}
-                    spaceBetween={30}
+                    spaceBetween={25}
                     slidesPerView={1}
                     onSwiper={(swiper) => setSwiperInstance(swiper)}
                     onSlideChange={(swiper) => setCurrentHoleNumber(swiper.activeIndex + 1)}
-                    style={{ maxWidth: 500, margin: '0 auto' }}
+                    style={{maxWidth: 400, margin: '0 auto'}}
                 >
                     {cards.map((number) => (
                         <SwiperSlide key={number}>
@@ -111,13 +110,34 @@ export default function CoursePage() {
                                     overflow: 'hidden',
                                 }}
                             >
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        zIndex: 2,
+                                        right: '50px',
+                                        top: '28px', // maintain aspect ratio
+
+                                    }}
+                                >
+                                    <Typography
+                                        variant="h4"
+                                        fontWeight="bold"
+                                        sx={{
+                                            fontSize: '22px',
+                                            color: 'black',
+                                            fontFamily: 'Alatsi, sans-serif',
+                                        }}
+                                    >
+                                        {holeInfo[number]?.hole.length}
+                                    </Typography>
+                                </Box>
                                 <Image
                                     src={`/cards/${number}.webp`}
                                     alt={`Rada ${number}`}
                                     layout="fill"
                                     objectFit="cover"
                                     style={{
-                                        borderRadius: '5px', // <-- directly on the img
+                                        borderRadius: '10px', // <-- directly on the img
                                     }}
                                     sizes="(max-width: 600px) 100vw, 500px"
                                 />
@@ -130,10 +150,10 @@ export default function CoursePage() {
 
                 <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={2}>
                     <IconButton color="primary" ref={prevRef}>
-                        <ArrowBackIosNewIcon />
+                        <ArrowBackIosNewIcon/>
                     </IconButton>
                     <IconButton color="primary" ref={nextRef}>
-                        <ArrowForwardIosIcon />
+                        <ArrowForwardIosIcon/>
                     </IconButton>
                 </Box>
 
@@ -145,16 +165,39 @@ export default function CoursePage() {
                                     🎯 Sellel korvil toimub CTP mäng
                                 </Typography>
                                 <Box mt={1}>
-                                    <button
+                                    <Button
                                         onClick={() => {
                                             window.location.href = `/ctp/${currentHoleNumber}`
                                         }}
                                     >
                                         Märgi CTP
-                                    </button>
+                                    </Button>
                                 </Box>
                             </>
                         ) : ''}
+
+                        {holeInfo[currentHoleNumber]?.hole.coordinates && (
+                            <Box mt={2}>
+                                <button
+                                    onClick={() => {
+                                        const coords = holeInfo[currentHoleNumber]!.hole.coordinates
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}`, '_blank')
+                                    }}
+                                    style={{
+                                        marginTop: '10px',
+                                        padding: '8px 16px',
+                                        backgroundColor: '#4285F4',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                    }}
+                                >
+                                    📍 Vaata kaardil
+                                </button>
+                            </Box>
+                        )}
                     </Box>
                 )}
             </Box>

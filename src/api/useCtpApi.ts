@@ -9,6 +9,8 @@ export type HoleResult = {
         id: number
         number: number
         is_ctp: boolean
+        length: number
+        coordinates: string
     }
     ctp: {
         id: number
@@ -40,7 +42,7 @@ const submitCtp = async (holeId: number, playerId: number, distanceCm: number) =
     const res = await fetch(`${API_BASE}/ctp/${holeId}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ player_id: playerId, distance_cm: distanceCm }),
+        body: JSON.stringify({player_id: playerId, distance_cm: distanceCm}),
     })
 
     if (!res.ok) throw new Error('Failed to submit CTP')
