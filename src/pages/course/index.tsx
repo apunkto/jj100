@@ -178,24 +178,20 @@ export default function CoursePage() {
 
                         {holeInfo[currentHoleNumber]?.hole.coordinates && (
                             <Box mt={2}>
-                                <button
-                                    onClick={() => {
-                                        const coords = holeInfo[currentHoleNumber]!.hole.coordinates
-                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}`, '_blank')
-                                    }}
-                                    style={{
-                                        marginTop: '10px',
-                                        padding: '8px 16px',
-                                        backgroundColor: '#4285F4',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        cursor: 'pointer',
-                                        fontSize: '14px',
-                                    }}
+
+                                <Button variant="outlined" color="primary" size="small"
+                                        onClick={() => {
+                                            const coords = holeInfo[currentHoleNumber]!.hole.coordinates
+                                            const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`
+
+                                            window.open(
+                                                url,
+                                                '_blank'
+                                            )
+                                        }}
                                 >
                                     📍 Vaata kaardil
-                                </button>
+                                </Button>
                             </Box>
                         )}
                     </Box>
