@@ -165,10 +165,10 @@ export default function CoursePage() {
                                     🎯 Sellel korvil toimub CTP mäng
                                 </Typography>
                                 <Box mt={1}>
-                                    <Button
-                                        onClick={() => {
-                                            window.location.href = `/ctp/${currentHoleNumber}`
-                                        }}
+                                    <Button variant="contained" color="primary" size="small"
+                                            onClick={() => {
+                                                window.location.href = `/ctp/${currentHoleNumber}`
+                                            }}
                                     >
                                         Märgi CTP
                                     </Button>
