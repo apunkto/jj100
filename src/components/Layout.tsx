@@ -9,7 +9,8 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListItemButton, ListItemIcon
+    ListItemButton,
+    ListItemIcon,
 } from '@mui/material'
 import { ReactNode, useState } from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -17,6 +18,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import GolfCourseIcon from '@mui/icons-material/GolfCourse'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+
 export default function Layout({ children }: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -36,21 +38,33 @@ export default function Layout({ children }: { children: ReactNode }) {
                         <MenuIcon />
                     </IconButton>
 
+                    {/* Title clickable */}
+                    <Link href="/" passHref legacyBehavior>
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                                color: 'inherit',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Järva-Jaani 100!
+                        </Typography>
+                    </Link>
 
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Järva-Jaani 100!
-                    </Typography>
-
-                    <Box display="flex" alignItems="center">
-                        <Image
-                            src="/logo.webp"
-                            alt="Logo"
-                            width={57}
-                            height={35}
-                            priority
-                        />
-
-                    </Box>
+                    {/* Logo clickable */}
+                    <Link href="/" passHref legacyBehavior>
+                        <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
+                            <Image
+                                src="/logo.webp"
+                                alt="Logo"
+                                width={57}
+                                height={35}
+                                priority
+                            />
+                        </Box>
+                    </Link>
                 </Toolbar>
             </AppBar>
 
@@ -61,7 +75,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onClose={() => setDrawerOpen(false)}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#f9f9f9', // light background
+                        backgroundColor: '#f9f9f9',
                         width: 250,
                     },
                 }}
@@ -72,12 +86,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                     onClick={() => setDrawerOpen(false)}
                     onKeyDown={() => setDrawerOpen(false)}
                 >
-                    {/* Menu Title */}
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
                         Menüü
                     </Typography>
 
-                    {/* Links */}
                     <List>
                         <Link href="/ctp" passHref legacyBehavior>
                             <ListItem disablePadding>

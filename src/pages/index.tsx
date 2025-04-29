@@ -2,9 +2,15 @@ import Layout from '@/src/components/Layout'
 import { Box, Typography } from '@mui/material'
 import Image from 'next/image'
 import Countdown from 'react-countdown'
+import { useEffect, useState } from 'react'
 
 export default function HomePage() {
     const targetDate = new Date('2025-05-03T08:00:00')
+    const [mounted, setMounted] = useState(false) // 👈 Add mounted flag
+
+    useEffect(() => {
+        setMounted(true) // 👈 Set to true after hydration
+    }, [])
 
     return (
         <Layout>
@@ -20,22 +26,23 @@ export default function HomePage() {
             </Box>
 
             <Box textAlign="center" mt={6}>
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                    Aega ürituseni
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                    Maratoni alguseni
                 </Typography>
 
                 <Typography variant="h5" fontWeight="bold">
-                    <Countdown
-                        date={targetDate}
-                        daysInHours={false}
-                        renderer={({ days, hours, minutes, seconds }) => (
-                            <>
-                                {days} päeva<br/>
-                                {hours} tundi {minutes} min {seconds} sek
-
-                            </>
-                        )}
-                    />
+                    {mounted && ( // 👈 Only render Countdown after mounted
+                        <Countdown
+                            date={targetDate}
+                            daysInHours={false}
+                            renderer={({ days, hours, minutes, seconds }) => (
+                                <>
+                                    {days} päeva<br />
+                                    {hours} tundi {minutes} min {seconds} sek
+                                </>
+                            )}
+                        />
+                    )}
                 </Typography>
             </Box>
         </Layout>
