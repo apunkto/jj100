@@ -1,5 +1,6 @@
 import Layout from '@/src/components/Layout'
-import { Box, Typography, Button } from '@mui/material'
+import {Box, Typography, Button} from '@mui/material'
+import FacebookIcon from '@mui/icons-material/Facebook';
 
 export default function InfoPage() {
     return (
@@ -27,10 +28,12 @@ export default function InfoPage() {
                         Korraldajad:
                     </Typography>
                     <Typography>
-                        Arto Saar: <a href="tel:+3725257373" style={{ color: '#1976d2', textDecoration: 'none' }}>52 57373</a>
+                        Arto Saar: <a href="tel:+3725257373" style={{color: '#1976d2', textDecoration: 'none'}}>52
+                        57373</a>
                     </Typography>
                     <Typography>
-                        Anti Orgla: <a href="tel:+37251994444" style={{ color: '#1976d2', textDecoration: 'none' }}>51 994444</a>
+                        Anti Orgla: <a href="tel:+37251994444" style={{color: '#1976d2', textDecoration: 'none'}}>51
+                        994444</a>
                     </Typography>
                 </Box>
 
@@ -52,8 +55,9 @@ export default function InfoPage() {
                     href="https://www.facebook.com/events/1377448620276469"
                     target="_blank"
                     rel="noopener noreferrer"
+                    startIcon={<FacebookIcon/>}
                 >
-                    📣 Facebooki Leht
+                    Facebooki Leht
                 </Button>
             </Box>
         </Layout>
