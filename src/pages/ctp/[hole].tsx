@@ -15,6 +15,7 @@ import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from "@/src/api/useConfigApi";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function CtpHolePage() {
     const router = useRouter()
@@ -174,7 +175,9 @@ export default function CtpHolePage() {
                                 </Button>
                             </Box>
                         ) : (
-                            <Box mt={4}>
+                            <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
+                                <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
+
                                 <Typography variant="body1" color="textSecondary">
                                     CTP tulemuste sisestamine ei ole veel avatud!
                                 </Typography>

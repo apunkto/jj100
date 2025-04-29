@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import LockIcon from '@mui/icons-material/Lock'
 import {
     Box,
     Typography,
@@ -9,25 +10,37 @@ import {
     DialogContent,
     DialogActions,
     Autocomplete,
-    AutocompleteRenderInputParams
+    AutocompleteRenderInputParams,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
 import { useCheckinApi } from '@/src/api/useCheckinApi'
-import { useToast } from '@/src/contexts/ToastContext'  // 👈 import global toast hook
+import { useToast } from '@/src/contexts/ToastContext'
+import useConfigApi from '@/src/api/useConfigApi'  // 👈 Import config api
 
 export default function CheckInPage() {
     const { getPlayers } = usePlayerApi()
     const { checkIn } = useCheckinApi()
-    const { showToast } = useToast()  // 👈 use toast hook
+    const { showToast } = useToast()
+    const { isCheckinEnabled } = useConfigApi()  // 👈 use the config hook
 
     const [players, setPlayers] = useState<Player[]>([])
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [checkedIn, setCheckedIn] = useState(false)
+    const [checkinEnabled, setCheckinEnabled] = useState(true) // 👈 default true
 
     useEffect(() => {
-        getPlayers().then(setPlayers)
+        const fetchData = async () => {
+            const [players, enabled] = await Promise.all([
+                getPlayers(),
+                isCheckinEnabled()
+            ])
+            setPlayers(players)
+            setCheckinEnabled(enabled)
+        }
+
+        fetchData()
     }, [])
 
     const handleCheckIn = async () => {
@@ -40,7 +53,7 @@ export default function CheckInPage() {
             if (err.message === 'already_checked_in') {
                 showToast('Mängija on juba loosimängu registreeritud!', 'error')
             } else {
-                showToast('Registreerimisel Tekkis viga!', 'error')
+                showToast('Registreerimisel tekkis viga!', 'error')
             }
         } finally {
             setConfirmOpen(false)
@@ -58,7 +71,15 @@ export default function CheckInPage() {
                     Loosimängu registreerimine
                 </Typography>
 
-                {checkedIn ? (
+                {!checkinEnabled ? (
+                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
+                        <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
+
+                        <Typography variant="body1" color="textSecondary">
+                           Registreerumine ei ole veel avatud!
+                        </Typography>
+                    </Box>
+                ) : checkedIn ? (
                     <Box mt={4}>
                         <Typography variant="h5" color="success.main" gutterBottom>
                             ✅ Oled loosimisse registreeritud!
