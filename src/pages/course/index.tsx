@@ -82,11 +82,12 @@ export default function CoursePage() {
                         Rada
                     </Typography>
                     <TextField
+                        fontSize="small"
                         size="small"
-                        placeholder="Otsi korvi..."
+                        placeholder="Otsi korvi.."
                         value={searchInput}
                         onChange={handleSearchChange}
-                        sx={{width: 120}}
+                        sx={{width: 110}}
                         inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
                     />
                 </Box>
