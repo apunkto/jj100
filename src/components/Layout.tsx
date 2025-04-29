@@ -12,31 +12,32 @@ import {
     ListItemButton,
     ListItemIcon,
 } from '@mui/material'
-import { ReactNode, useState } from 'react'
+import {ReactNode, useState} from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
 import Link from 'next/link'
 import Image from 'next/image'
 import GolfCourseIcon from '@mui/icons-material/GolfCourse'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
- import MapIcon from '@mui/icons-material/Map'
+import MapIcon from '@mui/icons-material/Map'
+import InfoIcon from '@mui/icons-material/Info'
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({children}: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
 
     return (
         <Box display="flex" flexDirection="column" minHeight="100vh" maxWidth={900} alignItems="center" mx="auto">
             {/* Header */}
             <AppBar position="static">
-                <Toolbar sx={{ justifyContent: 'space-between' }}>
+                <Toolbar sx={{justifyContent: 'space-between'}}>
                     {/* Left side: Menu button */}
                     <IconButton
                         edge="start"
                         color="inherit"
                         aria-label="menu"
                         onClick={() => setDrawerOpen(true)}
-                        sx={{ mr: 2 }}
+                        sx={{mr: 2}}
                     >
-                        <MenuIcon />
+                        <MenuIcon/>
                     </IconButton>
 
                     {/* Title clickable */}
@@ -56,7 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
                     {/* Logo clickable */}
                     <Link href="/" passHref legacyBehavior>
-                        <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
+                        <Box display="flex" alignItems="center" sx={{cursor: 'pointer'}}>
                             <Image
                                 src="/logo.webp"
                                 alt="Logo"
@@ -82,45 +83,56 @@ export default function Layout({ children }: { children: ReactNode }) {
                 }}
             >
                 <Box
-                    sx={{ p: 2 }}
+                    sx={{p: 2}}
                     role="presentation"
                     onClick={() => setDrawerOpen(false)}
                     onKeyDown={() => setDrawerOpen(false)}
                 >
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-                        Menüü
+                    <Typography variant="h6" sx={{mb: 2, fontWeight: 'bold'}}>
+                        JJ100! 2025
                     </Typography>
 
                     <List>
 
                         <Link href="/course" passHref legacyBehavior>
                             <ListItem disablePadding>
-                                <ListItemButton sx={{ borderRadius: 2 }}>
+                                <ListItemButton sx={{borderRadius: 2}}>
                                     <ListItemIcon>
-                                        <MapIcon />
+                                        <MapIcon/>
                                     </ListItemIcon>
-                                    <ListItemText primary="Rada" />
+                                    <ListItemText primary="Rada"/>
                                 </ListItemButton>
                             </ListItem>
                         </Link>
                         <Link href="/ctp" passHref legacyBehavior>
                             <ListItem disablePadding>
-                                <ListItemButton sx={{ borderRadius: 2 }}>
+                                <ListItemButton sx={{borderRadius: 2}}>
                                     <ListItemIcon>
-                                        <GolfCourseIcon />
+                                        <GolfCourseIcon/>
                                     </ListItemIcon>
-                                    <ListItemText primary="CTP rajad" />
+                                    <ListItemText primary="CTP rajad"/>
                                 </ListItemButton>
                             </ListItem>
                         </Link>
 
                         <Link href="/check-in" passHref legacyBehavior>
                             <ListItem disablePadding>
-                                <ListItemButton sx={{ borderRadius: 2 }}>
+                                <ListItemButton sx={{borderRadius: 2}}>
                                     <ListItemIcon>
-                                        <CardGiftcardIcon />
+                                        <CardGiftcardIcon/>
                                     </ListItemIcon>
-                                    <ListItemText primary="Loosimängud" />
+                                    <ListItemText primary="Loosimängud"/>
+                                </ListItemButton>
+                            </ListItem>
+                        </Link>
+
+                        <Link href="/info" passHref legacyBehavior>
+                            <ListItem disablePadding>
+                                <ListItemButton sx={{borderRadius: 2}}>
+                                    <ListItemIcon>
+                                        <InfoIcon/>
+                                    </ListItemIcon>
+                                    <ListItemText primary="Info"/>
                                 </ListItemButton>
                             </ListItem>
                         </Link>
