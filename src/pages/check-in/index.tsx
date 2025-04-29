@@ -75,7 +75,7 @@ export default function CheckInPage() {
 
     return (
         <Layout>
-            <Box textAlign="center" mt={4}>
+            <Box textAlign="center" mt={2}>
                 <Typography variant="h4" gutterBottom>
                     Loosimängu registreerimine
                 </Typography>

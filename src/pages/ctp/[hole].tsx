@@ -83,7 +83,7 @@ export default function CtpHolePage() {
 
     return (
         <Layout>
-            <Box textAlign="center" mt={4}>
+            <Box textAlign="center" mt={2}>
                 <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
                     <Box
                         sx={{
