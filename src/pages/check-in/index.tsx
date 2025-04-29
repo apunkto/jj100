@@ -11,33 +11,42 @@ import {
     DialogActions,
     Autocomplete,
     AutocompleteRenderInputParams,
+    CircularProgress,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
 import { useCheckinApi } from '@/src/api/useCheckinApi'
 import { useToast } from '@/src/contexts/ToastContext'
-import useConfigApi from '@/src/api/useConfigApi'  // 👈 Import config api
+import useConfigApi from '@/src/api/useConfigApi'
 
 export default function CheckInPage() {
     const { getPlayers } = usePlayerApi()
     const { checkIn } = useCheckinApi()
     const { showToast } = useToast()
-    const { isCheckinEnabled } = useConfigApi()  // 👈 use the config hook
+    const { isCheckinEnabled } = useConfigApi()
 
     const [players, setPlayers] = useState<Player[]>([])
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [checkedIn, setCheckedIn] = useState(false)
-    const [checkinEnabled, setCheckinEnabled] = useState(true) // 👈 default true
+
+    const [checkinEnabled, setCheckinEnabled] = useState(false)
+    const [configLoading, setConfigLoading] = useState(true) // 👈 Add loading state
 
     useEffect(() => {
         const fetchData = async () => {
-            const [players, enabled] = await Promise.all([
-                getPlayers(),
-                isCheckinEnabled()
-            ])
-            setPlayers(players)
-            setCheckinEnabled(enabled)
+            try {
+                const [players, enabled] = await Promise.all([
+                    getPlayers(),
+                    isCheckinEnabled()
+                ])
+                setPlayers(players)
+                setCheckinEnabled(enabled)
+            } catch (err) {
+                console.error('Failed to fetch players or config', err)
+            } finally {
+                setConfigLoading(false) // 👈 Only after config is fetched
+            }
         }
 
         fetchData()
@@ -71,12 +80,15 @@ export default function CheckInPage() {
                     Loosimängu registreerimine
                 </Typography>
 
-                {!checkinEnabled ? (
-                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
-                        <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
-
+                {configLoading ? (
+                    <Box mt={4} display="flex" justifyContent="center">
+                        <CircularProgress />
+                    </Box>
+                ) : !checkinEnabled ? (
+                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'} flexDirection="column">
+                        <LockIcon sx={{ fontSize: 50, color: 'grey.500', mb: 2 }} />
                         <Typography variant="body1" color="textSecondary">
-                           Registreerumine ei ole veel avatud!
+                            Registreerumine ei ole veel avatud!
                         </Typography>
                     </Box>
                 ) : checkedIn ? (
