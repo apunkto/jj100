@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, Typography, Stack } from '@mui/material'
+import { Box, Button, Typography, Stack, TextField } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import Confetti from 'react-dom-confetti'
-import {CheckedInPlayer, useCheckinApi} from '@/src/api/useCheckinApi'
+import { CheckedInPlayer, useCheckinApi } from '@/src/api/useCheckinApi'
 
 export default function FinalGameDrawPage() {
     const { getCheckins, drawWinner, deleteCheckin, confirmFinalGameCheckin } = useCheckinApi()
@@ -13,7 +13,12 @@ export default function FinalGameDrawPage() {
     const [shuffling, setShuffling] = useState(false)
     const [confettiActive, setConfettiActive] = useState(false)
 
+    const [authorized, setAuthorized] = useState(false)   // ✅ new
+    const [passwordInput, setPasswordInput] = useState('') // ✅ new
+
     const winnerRef = useRef<HTMLDivElement>(null)
+
+    const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'jj101'  // you can set in env
 
     useEffect(() => {
         fetchPlayers()
@@ -29,6 +34,7 @@ export default function FinalGameDrawPage() {
     }
 
     const startDraw = async () => {
+        if (!authorized) return  // ✅ Secure
         if (availablePlayers().length === 0 || finalGamePlayers().length >= 10) return
 
         setShuffling(true)
@@ -54,12 +60,9 @@ export default function FinalGameDrawPage() {
 
         setTimeout(() => {
             clearInterval(interval)
-
             setWinner(drawnWinner)
-            console.log("drawnWinner", drawnWinner)
             setCurrentName(drawnWinner.player.name)
             setShuffling(false)
-
             setConfettiActive(true)
             setTimeout(() => setConfettiActive(false), 4000)
         }, shuffleDuration)
@@ -70,6 +73,7 @@ export default function FinalGameDrawPage() {
     const sortedFinalGamePlayers = () => finalGamePlayers().sort((a, b) => (a.final_game_order || 0) - (b.final_game_order || 0))
 
     const handleConfirmPresent = async () => {
+        if (!authorized) return  // ✅ Secure
         if (winner) {
             try {
                 await confirmFinalGameCheckin(winner.id)
@@ -83,6 +87,7 @@ export default function FinalGameDrawPage() {
     }
 
     const handleNotPresent = async () => {
+        if (!authorized) return  // ✅ Secure
         if (winner) {
             try {
                 await deleteCheckin(winner.id)
@@ -96,72 +101,103 @@ export default function FinalGameDrawPage() {
         }
     }
 
+    const handlePasswordSubmit = () => {
+        if (passwordInput === ADMIN_PASSWORD) {
+            setAuthorized(true)
+        } else {
+            alert('Vale salasõna!')
+        }
+    }
+
     return (
         <Layout>
             <Box textAlign="center" mt={6} position="relative">
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                    Putimängu loosimine
-                </Typography>
 
-                {currentName && (
-                    <Box mt={4} ref={winnerRef} position="relative">
-                        <Typography variant="h5" fontWeight="bold">
-                            {currentName}
+                {!authorized ? (
+                    <>
+                        <Typography variant="h5" fontWeight="bold" mb={2}>
+                            Sisesta salasõna
                         </Typography>
-
-                        <div style={{ position: 'absolute', left: '50%', top: '50%', zIndex: 100 }}>
-                            <Confetti
-                                active={confettiActive}
-                                config={{
-                                    angle: 90,
-                                    spread: 150,
-                                    startVelocity: 50,
-                                    elementCount: 150,
-                                    decay: 0.9,
-                                    duration: 4000,
-                                    colors: ['#ea9627', '#71e669', '#cacaca'],
-                                }}
+                        <Stack direction="column" spacing={2} alignItems="center">
+                            <TextField
+                                type="password"
+                                label="Salasõna"
+                                value={passwordInput}
+                                onChange={(e) => setPasswordInput(e.target.value)}
+                                sx={{ width: 300 }}
                             />
-                        </div>
-
-                        {/* ✅ Show "Kohal / Pole kohal" only AFTER draw animation finishes */}
-                        {!shuffling && winner && (
-                            <Stack direction="row" spacing={2} justifyContent="center" mt={3}>
-                                <Button variant="contained" color="success" onClick={handleConfirmPresent}>
-                                    Kohal
-                                </Button>
-                                <Button variant="contained" color="error" onClick={handleNotPresent}>
-                                    Pole kohal
-                                </Button>
-                            </Stack>
-                        )}
-                    </Box>
-                )}
-
-                {!shuffling && !winner && (
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={startDraw}
-                        sx={{ mt: 6 }}
-                        disabled={availablePlayers().length === 0 || finalGamePlayers().length >= 10}
-                    >
-                        {finalGamePlayers().length >= 10 ? '10 mängijat valitud' : 'Loosi osaleja!'}
-                    </Button>
-                )}
-                {finalGamePlayers().length > 0 && (
-                    <Box mt={8}>
-                        <Typography variant="h5" fontWeight="bold" gutterBottom>
-                            🎯 Putimängus osalevad:
-                        </Typography>
-                        <Stack spacing={1} mt={2}>
-                            {sortedFinalGamePlayers().map((p, index) => (
-                                <Typography key={p.id}>
-                                    {index + 1}. {p.player.name}
-                                </Typography>
-                            ))}
+                            <Button variant="contained" color="primary" onClick={handlePasswordSubmit}>
+                                Kinnita
+                            </Button>
                         </Stack>
-                    </Box>
+                    </>
+                ) : (
+                    <>
+                        <Typography variant="h4" fontWeight="bold" gutterBottom>
+                            Putimängu loosimine
+                        </Typography>
+
+                        {currentName && (
+                            <Box mt={4} ref={winnerRef} position="relative">
+                                <Typography variant="h5" fontWeight="bold">
+                                    {currentName}
+                                </Typography>
+
+                                <div style={{ position: 'absolute', left: '50%', top: '50%', zIndex: 100 }}>
+                                    <Confetti
+                                        active={confettiActive}
+                                        config={{
+                                            angle: 90,
+                                            spread: 150,
+                                            startVelocity: 50,
+                                            elementCount: 150,
+                                            decay: 0.9,
+                                            duration: 4000,
+                                            colors: ['#ea9627', '#71e669', '#cacaca'],
+                                        }}
+                                    />
+                                </div>
+
+                                {!shuffling && winner && (
+                                    <Stack direction="row" spacing={2} justifyContent="center" mt={3}>
+                                        <Button variant="contained" color="success" onClick={handleConfirmPresent}>
+                                            Kohal
+                                        </Button>
+                                        <Button variant="contained" color="error" onClick={handleNotPresent}>
+                                            Pole kohal
+                                        </Button>
+                                    </Stack>
+                                )}
+                            </Box>
+                        )}
+
+                        {!shuffling && !winner && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={startDraw}
+                                sx={{ mt: 6 }}
+                                disabled={availablePlayers().length === 0 || finalGamePlayers().length >= 10}
+                            >
+                                {finalGamePlayers().length >= 10 ? '10 mängijat valitud' : 'Loosi osaleja!'}
+                            </Button>
+                        )}
+
+                        {finalGamePlayers().length > 0 && (
+                            <Box mt={8}>
+                                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                                    🎯 Putimängus osalevad:
+                                </Typography>
+                                <Stack spacing={1} mt={2}>
+                                    {sortedFinalGamePlayers().map((p, index) => (
+                                        <Typography key={p.id}>
+                                            {index + 1}. {p.player.name}
+                                        </Typography>
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
+                    </>
                 )}
             </Box>
         </Layout>
