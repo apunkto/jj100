@@ -1,27 +1,31 @@
-import {useEffect, useRef, useState} from 'react'
-import {Swiper, SwiperSlide} from 'swiper/react'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import {Navigation} from 'swiper/modules'
+import { Navigation } from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import {Box, Button, IconButton, Typography} from '@mui/material'
+import { Box, IconButton, Typography, TextField } from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
+import { debounce } from 'lodash'
 
 export default function CoursePage() {
     const totalCards = 100
-    const cards = Array.from({length: totalCards}, (_, i) => i + 1)
+    const cards = Array.from({ length: totalCards }, (_, i) => i + 1)
 
-    const {getHole} = useCtpApi()
+    const { getHole } = useCtpApi()
 
     const prevRef = useRef<HTMLButtonElement | null>(null)
     const nextRef = useRef<HTMLButtonElement | null>(null)
     const [swiperInstance, setSwiperInstance] = useState<any>(null)
 
     const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1)
-    const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult | null>>({}) // Cache fetched holes
+    const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult | null>>({})
+
+    const [searchInput, setSearchInput] = useState<string>('')
+
 
     useEffect(() => {
         if (swiperInstance && prevRef.current && nextRef.current) {
@@ -34,7 +38,6 @@ export default function CoursePage() {
     }, [swiperInstance])
 
     useEffect(() => {
-        // Load hole data when hole number changes (if not already cached)
         if (!holeInfo[currentHoleNumber]) {
             getHole(currentHoleNumber).then((data) => {
                 setHoleInfo((prev) => ({
@@ -45,12 +48,49 @@ export default function CoursePage() {
         }
     }, [currentHoleNumber])
 
+    // Debounced function
+    const debouncedSlideTo = useCallback(
+        debounce((holeNumber: number) => {
+            if (swiperInstance && holeNumber >= 1 && holeNumber <= totalCards) {
+                swiperInstance.slideTo(holeNumber - 1)
+            }
+        }, 400),
+        [swiperInstance]
+    )
+
+    useEffect(() => {
+        return () => debouncedSlideTo.cancel()
+    }, [debouncedSlideTo])
+
+
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setSearchInput(value)
+
+        const parsed = parseInt(value)
+        if (!isNaN(parsed)) {
+            debouncedSlideTo(parsed)
+        }
+    }
+
     return (
         <Layout>
-            <Box textAlign="center" mt={2}>
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                    Rada
-                </Typography>
+            <Box mt={2}>
+                {/* Header with Title and Search */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h4" fontWeight="bold">
+                        Rada
+                    </Typography>
+                    <TextField
+                        size="small"
+                        placeholder="Otsi korvi..."
+                        value={searchInput}
+                        onChange={handleSearchChange}
+                        sx={{ width: 120 }}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                    />
+                </Box>
 
                 <Swiper
                     modules={[Navigation]}
@@ -58,43 +98,61 @@ export default function CoursePage() {
                     slidesPerView={1}
                     onSwiper={(swiper) => setSwiperInstance(swiper)}
                     onSlideChange={(swiper) => setCurrentHoleNumber(swiper.activeIndex + 1)}
-                    style={{maxWidth: 500, margin: '0 auto'}}
+                    style={{ maxWidth: 500, margin: '0 auto' }}
                 >
                     {cards.map((number) => (
                         <SwiperSlide key={number}>
-                            <Image
-                                src={`/cards/${number}.webp`}
-                                alt={`Rada ${number}`}
-                                width={500}
-                                height={700}
-                                layout="responsive"
-                            />
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    paddingTop: '141.4%', // maintain aspect ratio
+                                    borderRadius: '15px',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <Image
+                                    src={`/cards/${number}.webp`}
+                                    alt={`Rada ${number}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    style={{
+                                        borderRadius: '5px', // <-- directly on the img
+                                    }}
+                                    sizes="(max-width: 600px) 100vw, 500px"
+                                />
+                            </Box>
                         </SwiperSlide>
+
+
                     ))}
                 </Swiper>
 
                 <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={2}>
                     <IconButton color="primary" ref={prevRef}>
-                        <ArrowBackIosNewIcon/>
+                        <ArrowBackIosNewIcon />
                     </IconButton>
                     <IconButton color="primary" ref={nextRef}>
-                        <ArrowForwardIosIcon/>
+                        <ArrowForwardIosIcon />
                     </IconButton>
                 </Box>
 
-                {/* Hole Info */}
                 {holeInfo[currentHoleNumber] && (
-                    <Box mt={4}>
+                    <Box mt={1} textAlign="center">
                         {holeInfo[currentHoleNumber]?.hole.is_ctp ? (
                             <>
                                 <Typography color="primary">
                                     🎯 Sellel korvil toimub CTP mäng
                                 </Typography>
-                                <Button variant="contained" color="primary" onClick={() => {
-                                    window.location.href = `/ctp/${currentHoleNumber}`
-                                }}>
-                                    Märgi CTP
-                                </Button>
+                                <Box mt={1}>
+                                    <button
+                                        onClick={() => {
+                                            window.location.href = `/ctp/${currentHoleNumber}`
+                                        }}
+                                    >
+                                        Märgi CTP
+                                    </button>
+                                </Box>
                             </>
                         ) : ''}
                     </Box>

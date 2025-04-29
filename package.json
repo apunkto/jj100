@@ -20,6 +20,7 @@
     "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^7.0.2",
     "@react-hook/window-size": "^3.1.1",
+    "lodash": "^4.17.21",
     "next": "15.2.4",
     "react": "18.3.1",
     "react-confetti": "^6.4.0",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "0.6.6",
+    "@types/lodash": "^4.17.16",
     "@types/node": "22.14.0",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
