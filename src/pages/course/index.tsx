@@ -5,7 +5,9 @@ import 'swiper/css/navigation'
 import { Navigation } from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 
 export default function CoursePage() {
     const totalCards = 100
@@ -15,7 +17,6 @@ export default function CoursePage() {
     const nextRef = useRef<HTMLButtonElement | null>(null)
     const [swiperInstance, setSwiperInstance] = useState<any>(null)
 
-    // When swiper and refs are available, initialize navigation
     useEffect(() => {
         if (swiperInstance && prevRef.current && nextRef.current) {
             swiperInstance.params.navigation.prevEl = prevRef.current
@@ -24,7 +25,7 @@ export default function CoursePage() {
             swiperInstance.navigation.init()
             swiperInstance.navigation.update()
         }
-    }, [swiperInstance, prevRef.current, nextRef.current])
+    }, [swiperInstance])
 
     return (
         <Layout>
@@ -53,13 +54,13 @@ export default function CoursePage() {
                     ))}
                 </Swiper>
 
-                <Box display="flex" justifyContent="center" mt={3} gap={2}>
-                    <Button variant="contained" color="primary" ref={prevRef}>
-                        Eelmine
-                    </Button>
-                    <Button variant="contained" color="primary" ref={nextRef}>
-                        Järgmine
-                    </Button>
+                <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={2}>
+                    <IconButton color="primary" ref={prevRef}>
+                        <ArrowBackIosNewIcon />
+                    </IconButton>
+                    <IconButton color="primary" ref={nextRef}>
+                        <ArrowForwardIosIcon />
+                    </IconButton>
                 </Box>
             </Box>
         </Layout>
