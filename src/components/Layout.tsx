@@ -18,6 +18,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import GolfCourseIcon from '@mui/icons-material/GolfCourse'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+ import MapIcon from '@mui/icons-material/Map'
 
 export default function Layout({ children }: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -91,6 +92,17 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </Typography>
 
                     <List>
+
+                        <Link href="/course" passHref legacyBehavior>
+                            <ListItem disablePadding>
+                                <ListItemButton sx={{ borderRadius: 2 }}>
+                                    <ListItemIcon>
+                                        <MapIcon />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Rada" />
+                                </ListItemButton>
+                            </ListItem>
+                        </Link>
                         <Link href="/ctp" passHref legacyBehavior>
                             <ListItem disablePadding>
                                 <ListItemButton sx={{ borderRadius: 2 }}>
@@ -112,6 +124,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                                 </ListItemButton>
                             </ListItem>
                         </Link>
+
                     </List>
                 </Box>
             </Drawer>
