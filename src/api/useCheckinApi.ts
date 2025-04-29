@@ -4,6 +4,18 @@ export type Player = {
 }
 
 
+
+export type CheckedInPlayer = {
+    id: number
+    player: {
+        id: number
+        name: string
+    }
+    prize_won: boolean,
+    final_game: boolean,
+    final_game_order: number | null
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
 if (!API_BASE) {
@@ -28,6 +40,47 @@ export const useCheckinApi = () => {
         return await res.json()
     }
 
-    return {checkIn}
+    const getCheckins = async (): Promise<CheckedInPlayer[]> => {
+        const res = await fetch(`${API_BASE}/lottery/checkins`)
+        if (!res.ok) {
+            throw new Error('Failed to fetch check-ins')
+        }
+
+        const json = (await res.json()) as { data: CheckedInPlayer[] }
+        return json.data
+    }
+
+    const drawWinner = async (finalGame: boolean = false): Promise<CheckedInPlayer> => {
+        const params = finalGame ? '?final_game=true' : ''
+        const res = await fetch(`${API_BASE}/lottery/draw${params}`, {
+            method: 'POST'
+        })
+
+        if (!res.ok) {
+            throw new Error('Failed to draw winner')
+        }
+
+        return await res.json() as CheckedInPlayer;
+    }
+
+    const deleteCheckin = async (playerId: number) => {
+        const res = await fetch(`${API_BASE}/lottery/checkin/${playerId}`, {
+            method: 'DELETE'
+        })
+        if (!res.ok) {
+            throw new Error('Failed to delete check-in')
+        }
+    }
+
+    const confirmFinalGameCheckin = async (playerId: number) => {
+        const res = await fetch(`${API_BASE}/lottery/checkin/final/${playerId}`, {
+            method: 'POST'
+        })
+        if (!res.ok) {
+            throw new Error('Failed to confirm final game player')
+        }
+    }
+
+    return {checkIn, getCheckins, drawWinner, deleteCheckin, confirmFinalGameCheckin}
 }
 

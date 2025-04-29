@@ -19,10 +19,14 @@
     "@mui/icons-material": "^7.0.2",
     "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^7.0.2",
+    "@react-hook/window-size": "^3.1.1",
     "next": "15.2.4",
     "react": "18.3.1",
+    "react-confetti": "^6.4.0",
     "react-countdown": "^2.3.6",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "react-dom-confetti": "^0.2.0",
+    "react-use": "^17.6.0"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "0.6.6",
