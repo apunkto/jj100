@@ -38,15 +38,31 @@ export default function CoursePage() {
     }, [swiperInstance])
 
     useEffect(() => {
-        if (!holeInfo[currentHoleNumber]) {
-            getHole(currentHoleNumber).then((data) => {
+        const loadHole = async (holeNumber: number) => {
+            if (!holeInfo[holeNumber]) {
+                const data = await getHole(holeNumber)
                 setHoleInfo((prev) => ({
                     ...prev,
-                    [currentHoleNumber]: data,
+                    [holeNumber]: data,
                 }))
-            })
+            }
         }
-    }, [currentHoleNumber])
+
+        if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
+            loadHole(currentHoleNumber)
+
+            // Preload previous hole if it exists
+            if (currentHoleNumber > 1) {
+                loadHole(currentHoleNumber - 1)
+            }
+
+            // Preload next hole if it exists
+            if (currentHoleNumber < totalCards) {
+                loadHole(currentHoleNumber + 1)
+            }
+        }
+    }, [currentHoleNumber, getHole, holeInfo])
+
 
     // Debounced function
     const debouncedSlideTo = useCallback(
@@ -75,33 +91,45 @@ export default function CoursePage() {
 
     return (
         <Layout>
-            <Box mt={2}>
+            <Box mt={0}>
                 {/* Header with Title and Search */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h4" fontWeight="bold">
                         Rada
                     </Typography>
                     <TextField
-                        fontSize="small"
                         size="small"
                         placeholder="Otsi korvi.."
                         value={searchInput}
                         onChange={handleSearchChange}
-                        sx={{width: 110}}
-                        inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+                        sx={{
+                            width: 80,
+                            '& .MuiInputBase-root': {
+                                paddingTop: '2px',
+                                paddingBottom: '2px',
+                                fontSize: '0.8rem',
+                            },
+                            '& input': {
+                                padding: '6px 8px',
+                            },
+                        }}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                     />
+
                 </Box>
 
                 <Swiper
                     modules={[Navigation]}
-                    spaceBetween={25}
-                    slidesPerView={1}
+                    spaceBetween={10}  // Space between slides
+                    centeredSlides={true}  // Center active slide
+                    slidesPerView={"auto"}  // Each slide can have its own width
                     onSwiper={(swiper) => setSwiperInstance(swiper)}
                     onSlideChange={(swiper) => setCurrentHoleNumber(swiper.activeIndex + 1)}
-                    style={{maxWidth: 400, margin: '0 auto'}}
+                    style={{maxWidth: '550px', margin: '0 auto', width: '100%'}}
                 >
                     {cards.map((number) => (
-                        <SwiperSlide key={number}>
+                        <SwiperSlide key={number} style={{width: '90%'}}>
+
                             <Box
                                 sx={{
                                     position: 'relative',
@@ -115,16 +143,16 @@ export default function CoursePage() {
                                     sx={{
                                         position: 'absolute',
                                         zIndex: 2,
-                                        right: '50px',
-                                        top: '28px', // maintain aspect ratio
-
+                                        right: '12%',
+                                        top: '7.5%',
+                                        transform: 'translateY(-50%)',  // Pull up by 50% of its own height
                                     }}
                                 >
                                     <Typography
                                         variant="h4"
                                         fontWeight="bold"
                                         sx={{
-                                            fontSize: '22px',
+                                            fontSize: 'clamp(4px, 4vw, 24px)',
                                             color: 'black',
                                             fontFamily: 'Alatsi, sans-serif',
                                         }}
@@ -149,10 +177,28 @@ export default function CoursePage() {
                     ))}
                 </Swiper>
 
-                <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mt={1}>
                     <IconButton color="primary" ref={prevRef}>
                         <ArrowBackIosNewIcon/>
                     </IconButton>
+                    {holeInfo[currentHoleNumber]?.hole.coordinates && (
+                        <Box>
+
+                            <Button variant="outlined" color="primary" size="small"
+                                    onClick={() => {
+                                        const coords = holeInfo[currentHoleNumber]!.hole.coordinates
+                                        const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`
+
+                                        window.open(
+                                            url,
+                                            '_blank'
+                                        )
+                                    }}
+                            >
+                                📍 Juhata rajale
+                            </Button>
+                        </Box>
+                    )}
                     <IconButton color="primary" ref={nextRef}>
                         <ArrowForwardIosIcon/>
                     </IconButton>
@@ -163,7 +209,7 @@ export default function CoursePage() {
                         {holeInfo[currentHoleNumber]?.hole.is_ctp ? (
                             <>
                                 <Typography color="primary">
-                                    🎯 Sellel korvil toimub CTP mäng
+                                    🎯 Sellel korvil on CTP
                                 </Typography>
                                 <Box mt={1}>
                                     <Button variant="contained" color="primary" size="small"
@@ -177,24 +223,7 @@ export default function CoursePage() {
                             </>
                         ) : ''}
 
-                        {holeInfo[currentHoleNumber]?.hole.coordinates && (
-                            <Box mt={2}>
 
-                                <Button variant="outlined" color="primary" size="small"
-                                        onClick={() => {
-                                            const coords = holeInfo[currentHoleNumber]!.hole.coordinates
-                                            const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`
-
-                                            window.open(
-                                                url,
-                                                '_blank'
-                                            )
-                                        }}
-                                >
-                                    📍 Vaata kaardil
-                                </Button>
-                            </Box>
-                        )}
                     </Box>
                 )}
             </Box>
