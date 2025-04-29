@@ -85,8 +85,8 @@ export default function CheckInPage() {
                         <CircularProgress />
                     </Box>
                 ) : !checkinEnabled ? (
-                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'} flexDirection="column">
-                        <LockIcon sx={{ fontSize: 50, color: 'grey.500', mb: 2 }} />
+                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'} >
+                        <LockIcon sx={{ fontSize: 24, color: 'grey.500'}} />
                         <Typography variant="body1" color="textSecondary">
                             Registreerumine ei ole veel avatud!
                         </Typography>

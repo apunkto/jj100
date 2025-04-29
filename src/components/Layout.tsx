@@ -109,7 +109,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                                     <ListItemIcon>
                                         <GolfCourseIcon />
                                     </ListItemIcon>
-                                    <ListItemText primary="CTP mängud" />
+                                    <ListItemText primary="CTP rajad" />
                                 </ListItemButton>
                             </ListItem>
                         </Link>

@@ -32,7 +32,7 @@ export default function CtpListPage() {
 
     return (
         <Layout>
-            <Container maxWidth="md" sx={{ mt: 6 }}>
+            <Container maxWidth="md" sx={{ mt: 0 }}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
                     CTP Rajad
                 </Typography>
