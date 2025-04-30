@@ -124,7 +124,10 @@ export default function CtpStatsPage() {
                                     <Typography variant="h6" gutterBottom>
                                         {selectedPlayer.Name}
                                     </Typography>
-                                    <Typography  variant="h6" fontWeight={700}>{selectedPlayer.Diff}</Typography>
+                                    <Typography variant="h6" fontWeight={700}>
+                                        {Number(selectedPlayer.Diff) > 0 ? `+${selectedPlayer.Diff}` : selectedPlayer.Diff}
+                                    </Typography>
+
                                 </Box>
                                 <Divider sx={{mb: 2}}/>
                                 <Box display="flex" justifyContent="space-between" mb={1}>
