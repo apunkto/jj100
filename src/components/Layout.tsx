@@ -20,6 +20,7 @@ import GolfCourseIcon from '@mui/icons-material/GolfCourse'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import MapIcon from '@mui/icons-material/Map'
 import InfoIcon from '@mui/icons-material/Info'
+import FeedbackIcon from '@mui/icons-material/Feedback'
 
 export default function Layout({children}: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -133,6 +134,16 @@ export default function Layout({children}: { children: ReactNode }) {
                                         <InfoIcon/>
                                     </ListItemIcon>
                                     <ListItemText primary="Info"/>
+                                </ListItemButton>
+                            </ListItem>
+                        </Link>
+                        <Link href="/feedback" passHref legacyBehavior>
+                            <ListItem disablePadding>
+                                <ListItemButton sx={{borderRadius: 2}}>
+                                    <ListItemIcon>
+                                        <FeedbackIcon/>
+                                    </ListItemIcon>
+                                    <ListItemText primary="Tagasiside"/>
                                 </ListItemButton>
                             </ListItem>
                         </Link>
