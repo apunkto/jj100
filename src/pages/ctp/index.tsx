@@ -32,16 +32,16 @@ export default function CtpListPage() {
                 </Typography>
 
                 {loading ? (
-                    <Box display="flex" justifyContent="center" mt={4}>
+                    <Box display="flex" justifyContent="center" mt={2}>
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <Box mt={4}>
+                    <Box mt={2}>
                         <Box display="flex" py={1} borderBottom={2} borderColor="primary.main" fontWeight="bold">
-                            <Typography sx={{ flexBasis: '20%' }} fontSize="16px" color="primary.main">
-                                Korv #
+                            <Typography sx={{ flexBasis: '15%' }} fontSize="16px" color="primary.main">
+                                Korv
                             </Typography>
-                            <Typography sx={{ flexBasis: '70%', textAlign: 'center' }} fontSize="16px" color="primary.main">
+                            <Typography sx={{ flexBasis: '75%', textAlign: 'center' }} fontSize="16px" color="primary.main">
                                 CTP
                             </Typography>
                             <Typography sx={{ flexBasis: '10%', textAlign: 'right' }} fontSize="16px" color="primary.main">
@@ -66,11 +66,11 @@ export default function CtpListPage() {
                                         },
                                     }}
                                 >
-                                    <Typography sx={{ flexBasis: '20%' }} fontWeight="600">
+                                    <Typography sx={{ flexBasis: '15%' }} fontWeight="600">
                                         {hole.number}
                                     </Typography>
 
-                                    <Typography sx={{ flexBasis: '70%', textAlign: 'center' }}>
+                                    <Typography sx={{ flexBasis: '75%', textAlign: 'center' }}>
                                         {topThrow
                                             ? `${topThrow.player.name} (${topThrow.distance_cm} cm)`
                                             : '—'}
