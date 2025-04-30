@@ -154,7 +154,7 @@ export default function CoursePage() {
                                     </Box>
                                 )}
                                 <Image
-                                    src={`/cards/${number}.webp`}
+                                    src={`/cards/${number}.webp?v=2`}
                                     alt={`Rada ${number}`}
                                     layout="fill"
                                     objectFit="cover"
