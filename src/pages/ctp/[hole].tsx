@@ -1,5 +1,5 @@
-import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import {useRouter} from 'next/router'
+import React, {useEffect, useState} from 'react'
 import {
     Box,
     Typography,
@@ -11,20 +11,38 @@ import {
     Dialog,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
-import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
-import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
-import { useToast } from '@/src/contexts/ToastContext'
+import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
+import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
 
-export default function CtpHolePage() {
-    const router = useRouter()
-    const { hole } = router.query
-    const { getHole, submitCtp } = useCtpApi()
-    const { isCtpEnabled } = useConfigApi()
+export async function getStaticPaths() {
+    const paths = Array.from({length: 100}, (_, i) => ({
+        params: {hole: (i + 1).toString()}
+    }));
 
-    const { getPlayers } = usePlayerApi()
-    const { showToast } = useToast()
+    return {
+        paths,
+        fallback: false
+    };
+}
+
+export async function getStaticProps({params}: { params: { hole: string } }) {
+    return {
+        props: {
+            hole: params.hole
+        }
+    };
+}
+
+
+export default function CtpHolePage({hole}: { hole: string }) {
+    const {getHole, submitCtp} = useCtpApi()
+    const {isCtpEnabled} = useConfigApi()
+
+    const {getPlayers} = usePlayerApi()
+    const {showToast} = useToast()
 
     const [holeData, setHoleData] = useState<HoleResult | null>(null)
     const [loading, setLoading] = useState(true)
@@ -42,8 +60,6 @@ export default function CtpHolePage() {
     const noCtpGame = holeData?.hole && !holeData.hole.is_ctp
 
     useEffect(() => {
-        if (!router.isReady || !hole) return
-
         const fetchData = async () => {
             try {
                 const result = await getHole(parseInt(hole as string))
@@ -60,7 +76,7 @@ export default function CtpHolePage() {
 
         fetchData()
         getPlayers().then(setPlayers)
-    }, [router.isReady, hole])
+    }, [hole])
 
     const handleSubmit = () => {
         setConfirmOpen(true)
@@ -97,14 +113,14 @@ export default function CtpHolePage() {
                             justifyContent: 'center',
                         }}
                     >
-                        <Typography variant="h5" sx={{ color: 'white', fontWeight: 'bold', fontSize: '30px' }}>
+                        <Typography variant="h5" sx={{color: 'white', fontWeight: 'bold', fontSize: '30px'}}>
                             {hole}
                         </Typography>
                     </Box>
                 </Box>
 
                 {loading ? (
-                    <CircularProgress />
+                    <CircularProgress/>
                 ) : !holeData?.hole ? (
                     <Typography>Korvi {hole} ei leitud</Typography>
                 ) : noCtpGame ? (
@@ -119,7 +135,7 @@ export default function CtpHolePage() {
 
                         {bestThrow ? (
                             <>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                <Typography variant="h6" sx={{fontWeight: 'bold'}}>
                                     {bestThrow.player.name}
                                 </Typography>
                                 <Typography variant="h5">{bestThrow.distance_cm} cm</Typography>
@@ -144,7 +160,7 @@ export default function CtpHolePage() {
                                         setSelectedPlayer(newValue)
                                     }
                                     renderInput={(params: AutocompleteRenderInputParams) => (
-                                        <TextField {...params} label="Otsi mängijat" fullWidth sx={{ mb: 2 }} />
+                                        <TextField {...params} label="Otsi mängijat" fullWidth sx={{mb: 2}}/>
                                     )}
                                 />
 
@@ -156,7 +172,7 @@ export default function CtpHolePage() {
                                     onChange={(e) =>
                                         setDistance(e.target.value === '' ? '' : Number(e.target.value))
                                     }
-                                    sx={{ mb: 2 }}
+                                    sx={{mb: 2}}
                                     error={distance !== '' && (!isValidDistance || showError)}
                                     helperText={
                                         distance !== ''
@@ -203,8 +219,8 @@ export default function CtpHolePage() {
                             </Box>
                         ) : (
                             <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
-                                <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
-                                <Typography variant="body1" color="textSecondary" sx={{ ml: 1 }}>
+                                <LockIcon sx={{fontSize: 25, color: 'grey.500'}}/>
+                                <Typography variant="body1" color="textSecondary" sx={{ml: 1}}>
                                     CTP sisestamine ei ole veel avatud!
                                 </Typography>
                             </Box>
