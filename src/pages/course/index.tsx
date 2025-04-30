@@ -26,8 +26,6 @@ export default function CoursePage() {
 
     const [searchInput, setSearchInput] = useState<string>('')
 
-    const excludedHoleNumbers = [76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 87, 88, 89, 90, 91, 94]
-
     useEffect(() => {
         if (swiperInstance && prevRef.current && nextRef.current) {
             swiperInstance.params.navigation.prevEl = prevRef.current
@@ -132,12 +130,12 @@ export default function CoursePage() {
                                     overflow: 'hidden',
                                 }}
                             >
-                                {!excludedHoleNumbers.includes(number) && holeInfo[number]?.hole.length && (
+                                { holeInfo[number]?.hole.length && (
                                     <Box
                                         sx={{
                                             position: 'absolute',
                                             zIndex: 2,
-                                            right: '12.5%',
+                                            right: '7%',
                                             top: '7.5%',
                                             transform: 'translateY(-50%)',
                                         }}
@@ -151,7 +149,7 @@ export default function CoursePage() {
                                                 fontFamily: 'Alatsi, sans-serif',
                                             }}
                                         >
-                                            {holeInfo[number]?.hole.length}
+                                            {holeInfo[number]?.hole.length}m
                                         </Typography>
                                     </Box>
                                 )}
