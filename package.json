@@ -31,7 +31,6 @@
     "swiper": "^11.2.6"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "0.6.6",
     "@types/lodash": "^4.17.16",
     "@types/node": "22.14.0",
     "@types/react": "18.3.12",
@@ -40,17 +39,13 @@
     "eslint-config-next": "14.2.5",
     "postcss": "8.5.3",
     "tailwindcss": "3.4.17",
-    "typescript": "5.8.2",
-    "wrangler": "4.7.0"
+    "typescript": "5.8.2"
   },
   "scripts": {
-    "build": "open-next build",
-    "check": "opennextjs-cloudflare build && tsc && wrangler deploy --dry-run",
-    "deploy": "opennextjs-cloudflare build && wrangler deploy",
+    "build": "next build && next export",
     "dev": "next dev",
     "lint": "next lint",
-    "preview": "opennextjs-cloudflare build && wrangler dev",
-    "start": "next start",
-    "types": "wrangler types --env-interface CloudflareEnv env.d.ts"
+    "start": "next start"
   }
+
 }
