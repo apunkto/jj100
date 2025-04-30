@@ -119,7 +119,7 @@ export default function CtpStatsPage() {
                         />
 
                         {selectedPlayer && (
-                            <Paper elevation={3} sx={{mt: 4, p: 3, textAlign: 'left'}}>
+                            <Paper elevation={3} sx={{mt: 2, p: 3, textAlign: 'left'}}>
                                 <Box display="flex" justifyContent="space-between" >
                                     <Typography variant="h6" gutterBottom>
                                         {selectedPlayer.Name}
