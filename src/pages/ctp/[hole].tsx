@@ -1,5 +1,5 @@
-import {useRouter} from 'next/router'
-import React, {useEffect, useState} from 'react'
+import { useRouter } from 'next/router'
+import React, { useEffect, useState } from 'react'
 import {
     Box,
     Typography,
@@ -11,20 +11,20 @@ import {
     Dialog,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
-import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
-import {useToast} from '@/src/contexts/ToastContext'
-import useConfigApi from "@/src/api/useConfigApi";
-import LockIcon from "@mui/icons-material/Lock";
+import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
+import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
+import { useToast } from '@/src/contexts/ToastContext'
+import useConfigApi from "@/src/api/useConfigApi"
+import LockIcon from "@mui/icons-material/Lock"
 
 export default function CtpHolePage() {
     const router = useRouter()
-    const {hole} = router.query
-    const {getHole, submitCtp} = useCtpApi()
-    const {isCtpEnabled} = useConfigApi()
+    const { hole } = router.query
+    const { getHole, submitCtp } = useCtpApi()
+    const { isCtpEnabled } = useConfigApi()
 
-    const {getPlayers} = usePlayerApi()
-    const {showToast} = useToast()
+    const { getPlayers } = usePlayerApi()
+    const { showToast } = useToast()
 
     const [holeData, setHoleData] = useState<HoleResult | null>(null)
     const [loading, setLoading] = useState(true)
@@ -32,11 +32,12 @@ export default function CtpHolePage() {
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [distance, setDistance] = useState<number | ''>('')
     const [confirmOpen, setConfirmOpen] = useState(false)
-    const [ctpEnabled, setCtpEnabled] = useState(true) // 👈 new
+    const [ctpEnabled, setCtpEnabled] = useState(true)
 
+    const bestThrow = holeData?.ctp?.[0] ?? null
     const isValidDistance = distance !== '' && Number(distance) > 0
-    const isBetterThrow = !holeData?.ctp || (isValidDistance && Number(distance) < holeData.ctp.distance_cm)
-    const showError = Boolean(holeData?.ctp && isValidDistance && Number(distance) >= holeData.ctp.distance_cm)
+    const isBetterThrow = !bestThrow || (isValidDistance && Number(distance) < bestThrow.distance_cm)
+    const showError = Boolean(bestThrow && isValidDistance && Number(distance) >= bestThrow.distance_cm)
 
     const noCtpGame = holeData?.hole && !holeData.hole.is_ctp
 
@@ -48,7 +49,7 @@ export default function CtpHolePage() {
                 const result = await getHole(parseInt(hole as string))
                 setHoleData(result)
                 const enabled = await isCtpEnabled()
-                setCtpEnabled(enabled) // 👈 store config
+                setCtpEnabled(enabled)
             } catch (err) {
                 console.error('Failed to fetch hole or config:', err)
                 setHoleData(null)
@@ -96,14 +97,14 @@ export default function CtpHolePage() {
                             justifyContent: 'center',
                         }}
                     >
-                        <Typography variant="h5" sx={{color: 'white', fontWeight: 'bold', fontSize: '30px'}}>
+                        <Typography variant="h5" sx={{ color: 'white', fontWeight: 'bold', fontSize: '30px' }}>
                             {hole}
                         </Typography>
                     </Box>
                 </Box>
 
                 {loading ? (
-                    <CircularProgress/>
+                    <CircularProgress />
                 ) : !holeData?.hole ? (
                     <Typography>Korvi {hole} ei leitud</Typography>
                 ) : noCtpGame ? (
@@ -116,18 +117,17 @@ export default function CtpHolePage() {
                             CTP tulemus
                         </Typography>
 
-                        {holeData.ctp ? (
+                        {bestThrow ? (
                             <>
-                                <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                                    {holeData.ctp?.player?.name}
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                    {bestThrow.player.name}
                                 </Typography>
-                                <Typography variant="h5">{holeData.ctp.distance_cm} cm</Typography>
+                                <Typography variant="h5">{bestThrow.distance_cm} cm</Typography>
                             </>
                         ) : (
                             <Typography>CTP tulemust pole veel sisestatud</Typography>
                         )}
 
-                        {/* 👇 Only show the form if CTP is enabled */}
                         {ctpEnabled ? (
                             <Box mt={4}>
                                 <Typography variant="h6" gutterBottom>
@@ -135,7 +135,9 @@ export default function CtpHolePage() {
                                 </Typography>
 
                                 <Autocomplete<Player>
-                                    options={players.filter((p) => p.id !== holeData?.ctp?.player_id)}
+                                    options={players.filter(
+                                        (p) => !holeData.ctp.some((ctp) => ctp.player_id === p.id)
+                                    )}
                                     getOptionLabel={(option) => option.name}
                                     value={selectedPlayer}
                                     onChange={(_: React.SyntheticEvent, newValue: Player | null) =>
@@ -151,7 +153,9 @@ export default function CtpHolePage() {
                                     type="number"
                                     fullWidth
                                     value={distance}
-                                    onChange={(e) => setDistance(e.target.value === '' ? '' : Number(e.target.value))}
+                                    onChange={(e) =>
+                                        setDistance(e.target.value === '' ? '' : Number(e.target.value))
+                                    }
                                     sx={{ mb: 2 }}
                                     error={distance !== '' && (!isValidDistance || showError)}
                                     helperText={
@@ -159,7 +163,7 @@ export default function CtpHolePage() {
                                             ? !isValidDistance
                                                 ? 'CTP peab olema suurem kui 0 cm'
                                                 : showError
-                                                    ? `CTP peab olema väiksem kui ${holeData?.ctp?.distance_cm ?? '...'} cm`
+                                                    ? `CTP peab olema väiksem kui ${bestThrow?.distance_cm ?? '...'} cm`
                                                     : ''
                                             : ''
                                     }
@@ -173,12 +177,34 @@ export default function CtpHolePage() {
                                 >
                                     Kinnita
                                 </Button>
+
+                                {holeData.ctp.length > 0 && (
+                                    <Box mt={4} textAlign="left">
+                                        <Typography variant="h6" gutterBottom>
+                                            CTP Ajalugu
+                                        </Typography>
+                                        {holeData.ctp.map((entry, idx) => (
+                                            <Box
+                                                key={entry.id}
+                                                display="flex"
+                                                justifyContent="space-between"
+                                                py={1}
+                                                borderBottom={1}
+                                                borderColor="grey.300"
+                                            >
+                                                <Typography>
+                                                    {idx + 1}. {entry.player.name}
+                                                </Typography>
+                                                <Typography>{entry.distance_cm} cm</Typography>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
                             </Box>
                         ) : (
                             <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
                                 <LockIcon sx={{ fontSize: 25, color: 'grey.500' }} />
-
-                                <Typography variant="body1" color="textSecondary">
+                                <Typography variant="body1" color="textSecondary" sx={{ ml: 1 }}>
                                     CTP sisestamine ei ole veel avatud!
                                 </Typography>
                             </Box>

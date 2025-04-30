@@ -22,7 +22,7 @@ export type HoleResult = {
             id: number
             name: string
         }
-    } | null
+    }[]
 }
 
 
