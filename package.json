@@ -2,7 +2,7 @@
   "name": "jj100",
   "description": "Build a full-stack web application with Next.js.",
   "scripts": {
-    "build": "next build && next export",
+    "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start"
