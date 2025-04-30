@@ -21,7 +21,9 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import MapIcon from '@mui/icons-material/Map'
 import InfoIcon from '@mui/icons-material/Info'
 import FeedbackIcon from '@mui/icons-material/Feedback'
-import { useRouter } from 'next/router'
+import {useRouter} from 'next/router'
+import LineChartIcon from '@mui/icons-material/ShowChart'
+
 
 export default function Layout({children}: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -94,19 +96,20 @@ export default function Layout({children}: { children: ReactNode }) {
                 >
                     <List>
                         {[
-                            { href: '/course', label: 'Rada', icon: <MapIcon /> },
-                            { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
-                            { href: '/check-in', label: 'Loosimängud', icon: <CardGiftcardIcon /> },
-                            { href: '/info', label: 'Info', icon: <InfoIcon /> },
-                            { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
-                        ].map(({ href, label, icon }) => {
+                            {href: '/course', label: 'Rada', icon: <MapIcon/>},
+                            {href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon/>},
+                            {href: '/stats', label: 'Statistika', icon: <LineChartIcon/>},
+                            {href: '/check-in', label: 'Loosimängud', icon: <CardGiftcardIcon/>},
+                            {href: '/info', label: 'Info', icon: <InfoIcon/>},
+                            {href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon/>},
+                        ].map(({href, label, icon}) => {
                             const isActive = currentPath === href
 
                             return (
                                 <Link href={href} passHref legacyBehavior key={href}>
                                     <ListItem disablePadding>
-                                        <ListItemButton sx={{ borderRadius: 2 }}>
-                                            <ListItemIcon sx={{ color: 'primary.main' }}>
+                                        <ListItemButton sx={{borderRadius: 2}}>
+                                            <ListItemIcon sx={{color: 'primary.main'}}>
                                                 {icon}
                                             </ListItemIcon>
                                             <ListItemText
