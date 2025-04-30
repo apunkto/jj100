@@ -21,9 +21,12 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import MapIcon from '@mui/icons-material/Map'
 import InfoIcon from '@mui/icons-material/Info'
 import FeedbackIcon from '@mui/icons-material/Feedback'
+import { useRouter } from 'next/router'
 
 export default function Layout({children}: { children: ReactNode }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const router = useRouter()
+    const currentPath = router.pathname
 
     return (
         <Box display="flex" flexDirection="column" minHeight="100vh" maxWidth={900} alignItems="center" mx="auto">
@@ -89,66 +92,45 @@ export default function Layout({children}: { children: ReactNode }) {
                     onClick={() => setDrawerOpen(false)}
                     onKeyDown={() => setDrawerOpen(false)}
                 >
-                    <Typography variant="h6" sx={{mb: 2, fontWeight: 'bold'}}>
-                        JJ100! 2025
-                    </Typography>
-
                     <List>
+                        {[
+                            { href: '/course', label: 'Rada', icon: <MapIcon /> },
+                            { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
+                            { href: '/check-in', label: 'Loosimängud', icon: <CardGiftcardIcon /> },
+                            { href: '/info', label: 'Info', icon: <InfoIcon /> },
+                            { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
+                        ].map(({ href, label, icon }) => {
+                            const isActive = currentPath === href
 
-                        <Link href="/course" passHref legacyBehavior>
-                            <ListItem disablePadding>
-                                <ListItemButton sx={{borderRadius: 2}}>
-                                    <ListItemIcon>
-                                        <MapIcon/>
-                                    </ListItemIcon>
-                                    <ListItemText primary="Rada"/>
-                                </ListItemButton>
-                            </ListItem>
-                        </Link>
-                        <Link href="/ctp" passHref legacyBehavior>
-                            <ListItem disablePadding>
-                                <ListItemButton sx={{borderRadius: 2}}>
-                                    <ListItemIcon>
-                                        <GolfCourseIcon/>
-                                    </ListItemIcon>
-                                    <ListItemText primary="CTP rajad"/>
-                                </ListItemButton>
-                            </ListItem>
-                        </Link>
-
-                        <Link href="/check-in" passHref legacyBehavior>
-                            <ListItem disablePadding>
-                                <ListItemButton sx={{borderRadius: 2}}>
-                                    <ListItemIcon>
-                                        <CardGiftcardIcon/>
-                                    </ListItemIcon>
-                                    <ListItemText primary="Loosimängud"/>
-                                </ListItemButton>
-                            </ListItem>
-                        </Link>
-
-                        <Link href="/info" passHref legacyBehavior>
-                            <ListItem disablePadding>
-                                <ListItemButton sx={{borderRadius: 2}}>
-                                    <ListItemIcon>
-                                        <InfoIcon/>
-                                    </ListItemIcon>
-                                    <ListItemText primary="Info"/>
-                                </ListItemButton>
-                            </ListItem>
-                        </Link>
-                        <Link href="/feedback" passHref legacyBehavior>
-                            <ListItem disablePadding>
-                                <ListItemButton sx={{borderRadius: 2}}>
-                                    <ListItemIcon>
-                                        <FeedbackIcon/>
-                                    </ListItemIcon>
-                                    <ListItemText primary="Tagasiside"/>
-                                </ListItemButton>
-                            </ListItem>
-                        </Link>
-
+                            return (
+                                <Link href={href} passHref legacyBehavior key={href}>
+                                    <ListItem disablePadding>
+                                        <ListItemButton sx={{ borderRadius: 2 }}>
+                                            <ListItemIcon sx={{ color: 'primary.main' }}>
+                                                {icon}
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={
+                                                    <Typography
+                                                        sx={{
+                                                            fontWeight: 500,
+                                                            textDecoration: isActive ? 'underline' : 'none',
+                                                            textDecorationColor: isActive ? 'primary.main' : 'inherit',
+                                                            textUnderlineOffset: '6px',
+                                                            color: 'text.primary',
+                                                        }}
+                                                    >
+                                                        {label}
+                                                    </Typography>
+                                                }
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                </Link>
+                            )
+                        })}
                     </List>
+
                 </Box>
             </Drawer>
 
