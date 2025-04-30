@@ -4,21 +4,15 @@ import {
     Container,
     CircularProgress,
     Typography,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Link as MuiLink,
+    Link as MuiLink
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
 import Link from 'next/link'
-import useCtpApi, { HoleEntity } from '@/src/api/useCtpApi'
+import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
+import EditIcon from '@mui/icons-material/Edit';
 
 export default function CtpListPage() {
-    const [ctpHoles, setCtpHoles] = useState<HoleEntity[]>([])
+    const [ctpHoles, setCtpHoles] = useState<HoleResult[]>([])
     const [loading, setLoading] = useState(true)
 
     const { getCtpHoles } = useCtpApi()
@@ -32,7 +26,7 @@ export default function CtpListPage() {
 
     return (
         <Layout>
-            <Container maxWidth="md" sx={{ mt: 0 }}>
+            <Container maxWidth="sm" sx={{ mt: 0 }}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
                     CTP Rajad
                 </Typography>
@@ -42,56 +36,61 @@ export default function CtpListPage() {
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <TableContainer
-                        component={Paper}
-                        sx={{
-                            borderRadius: 1,
-                            border: '1px solid #e0e0e0', // light gray border instead of shadow
-                            boxShadow: 'none', // no shadow at all
-                            mt: 4,
-                        }}
-                    >
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: 'primary.main' }}>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>
-                                        Korvi number
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>
+                    <Box mt={4}>
+                        <Box display="flex" py={1} borderBottom={2} borderColor="primary.main" fontWeight="bold">
+                            <Typography sx={{ flexBasis: '20%' }} fontSize="16px" color="primary.main">
+                                Korv #
+                            </Typography>
+                            <Typography sx={{ flexBasis: '70%', textAlign: 'center' }} fontSize="16px" color="primary.main">
+                                CTP
+                            </Typography>
+                            <Typography sx={{ flexBasis: '10%', textAlign: 'right' }} fontSize="16px" color="primary.main">
+                            </Typography>
+                        </Box>
 
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {ctpHoles.map((hole) => (
-                                    <TableRow
-                                        key={hole.id}
-                                        hover
-                                        sx={{
-                                            transition: 'background 0.2s',
-                                            '&:hover': {
-                                                backgroundColor: 'action.hover',
-                                            },
-                                        }}
-                                    >
-                                        <TableCell>
-                                            <Typography fontWeight="600">#{hole.number}</Typography>
-                                        </TableCell>
-                                        <TableCell sx={{textAlign: 'right'}}>
-                                            <Link href={`/ctp/${hole.number}`} passHref legacyBehavior>
-                                                <MuiLink
-                                                    underline="hover"
-                                                    sx={{ fontWeight: '600', color: 'primary.main' }}
-                                                >
-                                                    Märgi
-                                                </MuiLink>
-                                            </Link>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                        {ctpHoles.map(({ hole, ctp }) => {
+                            const topThrow = ctp?.[0]
+
+                            return (
+                                <Box
+                                    key={hole.id}
+                                    display="flex"
+                                    alignItems="center"
+                                    py={1}
+                                    borderBottom={1}
+                                    borderColor="grey.300"
+                                    sx={{
+                                        transition: 'background 0.2s',
+                                        '&:hover': {
+                                            backgroundColor: 'action.hover',
+                                        },
+                                    }}
+                                >
+                                    <Typography sx={{ flexBasis: '20%' }} fontWeight="600">
+                                        {hole.number}
+                                    </Typography>
+
+                                    <Typography sx={{ flexBasis: '70%', textAlign: 'center' }}>
+                                        {topThrow
+                                            ? `${topThrow.player.name} (${topThrow.distance_cm} cm)`
+                                            : '—'}
+                                    </Typography>
+
+                                    <Typography sx={{ flexBasis: '10%', textAlign: 'right' }}>
+                                        <Link href={`/ctp/${hole.number}`} passHref legacyBehavior>
+                                            <MuiLink
+                                                underline="none"
+                                                sx={{ color: 'primary.main', display: 'inline-flex', alignItems: 'center' }}
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </MuiLink>
+                                        </Link>
+                                    </Typography>
+
+                                </Box>
+                            )
+                        })}
+                    </Box>
                 )}
             </Container>
         </Layout>

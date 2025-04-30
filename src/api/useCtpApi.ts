@@ -49,7 +49,7 @@ const submitCtp = async (holeId: number, playerId: number, distanceCm: number) =
     return await res.json()
 }
 
-const getCtpHoles = async (): Promise<HoleEntity[]> => {
+const getCtpHoles = async (): Promise<HoleResult[]> => {
     const res = await fetch(`${API_BASE}/holes/ctp`)
     if (!res.ok) throw new Error(`Failed to fetch CTP holes: ${res.status}`)
     return await res.json()

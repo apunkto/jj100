@@ -16,6 +16,7 @@ import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
+import {formatEstonianDateTime} from "@/src/components/Util";
 
 export async function getStaticPaths() {
     const paths = Array.from({length: 100}, (_, i) => ({
@@ -199,23 +200,31 @@ export default function CtpHolePage({hole}: { hole: string }) {
                                         <Typography variant="h6" gutterBottom>
                                             CTP Ajalugu
                                         </Typography>
+
                                         {holeData.ctp.map((entry, idx) => (
                                             <Box
                                                 key={entry.id}
                                                 display="flex"
                                                 justifyContent="space-between"
+                                                alignItems="center"
                                                 py={1}
                                                 borderBottom={1}
                                                 borderColor="grey.300"
                                             >
-                                                <Typography>
+                                                <Typography sx={{ flexBasis: '60%' }}>
                                                     {idx + 1}. {entry.player.name}
                                                 </Typography>
-                                                <Typography>{entry.distance_cm} cm</Typography>
+                                                <Typography sx={{ flexBasis: '20%', textAlign: 'center' }}>
+                                                    {formatEstonianDateTime(entry.created_date)}
+                                                </Typography>
+                                                <Typography sx={{ flexBasis: '20%', textAlign: 'right' }}>
+                                                    {entry.distance_cm} cm
+                                                </Typography>
                                             </Box>
                                         ))}
                                     </Box>
                                 )}
+
                             </Box>
                         ) : (
                             <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>

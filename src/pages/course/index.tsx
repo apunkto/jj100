@@ -135,7 +135,7 @@ export default function CoursePage() {
                                         sx={{
                                             position: 'absolute',
                                             zIndex: 2,
-                                            right: '7%',
+                                            right: '6.5%',
                                             top: '7.5%',
                                             transform: 'translateY(-50%)',
                                         }}
@@ -144,7 +144,7 @@ export default function CoursePage() {
                                             variant="h4"
                                             fontWeight="regular"
                                             sx={{
-                                                fontSize: 'clamp(4px, 4vw, 24px)',
+                                                fontSize: 'clamp(4px, 4.2vw, 24px)',
                                                 color: 'black',
                                                 fontFamily: 'Alatsi, sans-serif',
                                             }}
