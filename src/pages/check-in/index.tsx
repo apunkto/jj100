@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect} from 'react'
 import LockIcon from '@mui/icons-material/Lock'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import {
     Box,
     Typography,
@@ -11,19 +12,19 @@ import {
     DialogActions,
     Autocomplete,
     AutocompleteRenderInputParams,
-    CircularProgress,
+    CircularProgress, Alert,
 } from '@mui/material'
 import Layout from '@/src/components/Layout'
-import usePlayerApi, { Player } from '@/src/api/usePlayerApi'
-import { useCheckinApi } from '@/src/api/useCheckinApi'
-import { useToast } from '@/src/contexts/ToastContext'
+import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
+import {useCheckinApi} from '@/src/api/useCheckinApi'
+import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from '@/src/api/useConfigApi'
 
 export default function CheckInPage() {
-    const { getPlayers } = usePlayerApi()
-    const { checkIn } = useCheckinApi()
-    const { showToast } = useToast()
-    const { isCheckinEnabled } = useConfigApi()
+    const {getPlayers} = usePlayerApi()
+    const {checkIn} = useCheckinApi()
+    const {showToast} = useToast()
+    const {isCheckinEnabled} = useConfigApi()
 
     const [players, setPlayers] = useState<Player[]>([])
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -82,11 +83,11 @@ export default function CheckInPage() {
 
                 {configLoading ? (
                     <Box mt={4} display="flex" justifyContent="center">
-                        <CircularProgress />
+                        <CircularProgress/>
                     </Box>
                 ) : !checkinEnabled ? (
-                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'} >
-                        <LockIcon sx={{ fontSize: 24, color: 'grey.500'}} />
+                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
+                        <LockIcon sx={{fontSize: 24, color: 'grey.500'}}/>
                         <Typography variant="body1" color="textSecondary">
                             Registreerumine ei ole veel avatud!
                         </Typography>
@@ -99,13 +100,27 @@ export default function CheckInPage() {
                     </Box>
                 ) : (
                     <Box mt={4}>
+                        <Alert
+                            severity="info"
+                            icon={<InfoOutlinedIcon />}
+                            sx={{
+                                mb: 2,
+                                textAlign: 'left',
+                                backgroundColor: 'primary.light',
+                                color: 'primary.contrastText',
+                                '& .MuiAlert-icon': { color: 'primary.contrastText' },
+                            }}
+                        >
+                            Auhinna saamiseks peab mängija olema loosimise hetkel kohal!
+                        </Alert>
                         <Autocomplete<Player>
+
                             options={players}
                             getOptionLabel={(option) => option.name}
                             value={selectedPlayer}
                             onChange={(_: React.SyntheticEvent, newValue: Player | null) => setSelectedPlayer(newValue)}
                             renderInput={(params: AutocompleteRenderInputParams) => (
-                                <TextField {...params} label="Vali mängija" fullWidth sx={{ mb: 2 }} />
+                                <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
                             )}
                         />
 
@@ -126,7 +141,7 @@ export default function CheckInPage() {
                 <DialogContent>
                     <Typography>
                         Kas oled kindel, et soovid mängija <strong>{selectedPlayer?.name}</strong> loosimängu
-                        registreerida? Auhinna kätte saamiseks tuleb loosimise ajal kohal olla!
+                        registreerida?<br/><br/> Kinnitan, et olen loosimise ajal kohal!
                     </Typography>
                 </DialogContent>
                 <DialogActions>

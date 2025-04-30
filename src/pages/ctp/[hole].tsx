@@ -161,7 +161,7 @@ export default function CtpHolePage({hole}: { hole: string }) {
                                         setSelectedPlayer(newValue)
                                     }
                                     renderInput={(params: AutocompleteRenderInputParams) => (
-                                        <TextField {...params} label="Otsi mängijat" fullWidth sx={{mb: 2}}/>
+                                        <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
                                     )}
                                 />
 
