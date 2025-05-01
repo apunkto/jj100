@@ -14,6 +14,12 @@ export type HoleResult = {
         rank: number
         average_diff: number
         ob_percent: number
+        eagles?: number
+        birdies?: number
+        pars?: number
+        bogeys?: number
+        double_bogeys?: number
+        others?: number
     }
     ctp: {
         id: number
@@ -28,7 +34,6 @@ export type HoleResult = {
     }[]
 }
 
-
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
 if (!API_BASE) {
@@ -38,6 +43,12 @@ if (!API_BASE) {
 const getHole = async (holeNumber: number): Promise<HoleResult | null> => {
     const res = await fetch(`${API_BASE}/hole/${holeNumber}`)
     if (!res.ok) return null
+    return await res.json()
+}
+
+const getTopRankedHoles = async (): Promise<HoleResult[]> => {
+    const res = await fetch(`${API_BASE}/holes/top-ranked`)
+    if (!res.ok) throw new Error('Failed to fetch top ranked holes')
     return await res.json()
 }
 
@@ -61,6 +72,7 @@ const getCtpHoles = async (): Promise<HoleResult[]> => {
 export default function useCtpApi() {
     return {
         getHole,
+        getTopRankedHoles,
         submitCtp,
         getCtpHoles
     }
