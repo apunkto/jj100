@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Autocomplete,
     TextField,
@@ -31,6 +31,8 @@ type MetrixAPIResponse = {
     };
 };
 
+const LOCAL_STORAGE_KEY = 'selectedPlayerId';
+
 export default function CtpStatsPage() {
     const [results, setResults] = useState<PlayerResult[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<PlayerResult | null>(null);
@@ -43,7 +45,16 @@ export default function CtpStatsPage() {
                     'https://discgolfmetrix.com/api.php?content=result&id=2834664'
                 );
                 const data = (await res.json()) as MetrixAPIResponse;
-                setResults(data.Competition.Results);
+                const players = data.Competition.Results;
+                setResults(players);
+
+                const savedPlayerId = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (savedPlayerId) {
+                    const player = players.find(
+                        (p) => p.UserID.toString() === savedPlayerId
+                    );
+                    if (player) setSelectedPlayer(player);
+                }
             } catch (err) {
                 console.error('Failed to fetch Metrix results:', err);
             } finally {
@@ -92,7 +103,7 @@ export default function CtpStatsPage() {
             else if (diff >= 3) tripleOrWorse++;
         }
 
-        return {eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse};
+        return { eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse };
     };
 
     return (
@@ -104,7 +115,7 @@ export default function CtpStatsPage() {
 
                 {loading ? (
                     <Box mt={4} display="flex" justifyContent="center">
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 ) : (
                     <Box mt={4}>
@@ -112,24 +123,30 @@ export default function CtpStatsPage() {
                             options={results}
                             getOptionLabel={(option) => option.Name}
                             value={selectedPlayer}
-                            onChange={(_, newValue) => setSelectedPlayer(newValue)}
+                            onChange={(_, newValue) => {
+                                setSelectedPlayer(newValue);
+                                if (newValue) {
+                                    localStorage.setItem(LOCAL_STORAGE_KEY, newValue.UserID.toString());
+                                } else {
+                                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                                }
+                            }}
                             renderInput={(params) => (
-                                <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
+                                <TextField {...params} label="Mängija nimi" fullWidth sx={{ mb: 2 }} />
                             )}
                         />
 
                         {selectedPlayer && (
-                            <Paper elevation={3} sx={{mt: 2, p: 3, textAlign: 'left'}}>
-                                <Box display="flex" justifyContent="space-between" >
+                            <Paper elevation={3} sx={{ mt: 2, p: 3, textAlign: 'left' }}>
+                                <Box display="flex" justifyContent="space-between">
                                     <Typography variant="h6" gutterBottom>
                                         {selectedPlayer.Name}
                                     </Typography>
                                     <Typography variant="h6" fontWeight={700}>
                                         {Number(selectedPlayer.Diff) > 0 ? `+${selectedPlayer.Diff}` : selectedPlayer.Diff}
                                     </Typography>
-
                                 </Box>
-                                <Divider sx={{mb: 2}}/>
+                                <Divider sx={{ mb: 2 }} />
                                 <Box display="flex" justifyContent="space-between" mb={1}>
                                     <Typography fontWeight="bold">Klass:</Typography>
                                     <Typography>{selectedPlayer.ClassName}</Typography>
@@ -148,48 +165,72 @@ export default function CtpStatsPage() {
                                     <Typography>{getOverallPlace()}. koht</Typography>
                                 </Box>
 
-                                <Divider sx={{my: 2}}/>
+                                <Divider sx={{ my: 2 }} />
+
+                                {/* Score breakdown bar and chips */}
                                 {(() => {
                                     const breakdown = getScoreBreakdown();
                                     if (!breakdown) return null;
 
-                                    const scoreBoxes = [
-                                        {label: 'Eagle', value: breakdown.eagles, color: '#f8c600'},
-                                        {label: 'Birdie', value: breakdown.birdies, color: '#7bc87f'},
-                                        {label: 'Par', value: breakdown.pars, color: '#ffffff'},
-                                        {label: 'Bogey', value: breakdown.bogeys, color: '#ffc6c6'},
-                                        {label: 'Double', value: breakdown.doubleBogeys, color: '#f86969'},
-                                        {label: 'Triple+', value: breakdown.tripleOrWorse, color: '#ff2121'},
+                                    const categories = [
+                                        { key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles },
+                                        { key: 'birdies', color: '#7bc87f', label: 'Birdie', value: breakdown.birdies },
+                                        { key: 'pars', color: '#ddd', label: 'Par', value: breakdown.pars },
+                                        { key: 'bogeys', color: '#ffc6c6', label: 'Bogey', value: breakdown.bogeys },
+                                        { key: 'doubleBogeys', color: '#f86969', label: 'Double', value: breakdown.doubleBogeys },
+                                        { key: 'tripleOrWorse', color: '#ff2121', label: 'Triple+', value: breakdown.tripleOrWorse },
                                     ];
+
+                                    const total = categories.reduce((sum, cat) => sum + cat.value, 0);
+                                    if (total === 0) return null;
 
                                     return (
                                         <>
-                                            <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-                                                {scoreBoxes.map((item) => (
-                                                    <Box
-                                                        key={item.label}
-                                                        sx={{
-                                                            backgroundColor: item.color,
-                                                            borderRadius: 2,
-                                                            px: 2,
-                                                            py: 1,
-                                                            color: 'black',
-                                                            minWidth: 80,
-                                                            textAlign: 'center',
-                                                            flex: '1 1 100px',
-                                                            border: '1px solid rgba(0,0,0,0.2)', // thin neutral border
-                                                            boxShadow: 'inset 0 0 3px rgba(0,0,0,0.1)', // subtle depth
-                                                        }}
-                                                    >
-                                                        <Typography fontWeight="bold">{item.value}</Typography>
-                                                        <Typography fontSize="0.85rem">{item.label}</Typography>
-                                                    </Box>
-                                                ))}
+                                            <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%" mt={2}>
+                                                {categories.map(({ key, color, value }) => {
+                                                    const percent = (value / total) * 100;
+                                                    return (
+                                                        <Box
+                                                            key={key}
+                                                            sx={{
+                                                                width: `${percent}%`,
+                                                                backgroundColor: color,
+                                                                display: percent > 0 ? 'block' : 'none',
+                                                                minWidth: '2px',
+                                                                height: '100%',
+                                                            }}
+                                                        />
+                                                    );
+                                                })}
+                                            </Box>
+
+                                            <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
+                                                {categories.map(({ key, label, color, value }) => {
+                                                    if (!value) return null;
+                                                    return (
+                                                        <Box
+                                                            key={key}
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: 0.5,
+                                                                px: 1,
+                                                                py: 0.5,
+                                                                borderRadius: '20px',
+                                                                backgroundColor: color,
+                                                                color: '#000',
+                                                                fontWeight: 400,
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            {label}: {value}
+                                                        </Box>
+                                                    );
+                                                })}
                                             </Box>
                                         </>
                                     );
                                 })()}
-
                             </Paper>
                         )}
                     </Box>
