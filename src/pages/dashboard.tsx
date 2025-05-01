@@ -202,7 +202,7 @@ export default function TopHolesDashboard() {
 
     useEffect(() => {
         fetchTopHoles()
-        const interval = setInterval(fetchTopHoles, 0.5 * 60 * 1000)
+        const interval = setInterval(fetchTopHoles, 5 * 60 * 1000)
         return () => clearInterval(interval)
     }, [fetchTopHoles])
 
@@ -223,7 +223,7 @@ export default function TopHolesDashboard() {
 
                     modules={[Autoplay]}
                     autoplay={{
-                        delay: 5000,
+                        delay: 15000,
                         disableOnInteraction: false,
                     }}
                     loop
