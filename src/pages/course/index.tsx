@@ -155,9 +155,16 @@ export default function CoursePage() {
                         value={searchInput}
                         onChange={handleSearchChange}
                         sx={{
-                            width: 80,
-                            '& .MuiInputBase-root': {paddingTop: '2px', paddingBottom: '2px', fontSize: '0.8rem'},
-                            '& input': {padding: '6px 8px'}
+                            width: 100,
+                            '& .MuiInputBase-root': {
+                                paddingTop: '0px',
+                                paddingBottom: '0px',
+                                fontSize: '1rem', // <-- update this line (1rem = 16px)
+                            },
+                            '& input': {
+                                padding: '3px 8px',
+                                fontSize: '1rem', // <-- add this line to explicitly set input font size
+                            }
                         }}
                         inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
                     />
