@@ -11,6 +11,11 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import {debounce} from 'lodash'
 
+type HoleCacheEntry = {
+    data: HoleResult
+    fetchedAt: number
+}
+
 export default function CoursePage() {
     const totalCards = 100
     const cards = Array.from({length: totalCards}, (_, i) => i + 1)
@@ -22,8 +27,7 @@ export default function CoursePage() {
     const [swiperInstance, setSwiperInstance] = useState<any>(null)
 
     const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1)
-    const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult | null>>({})
-
+    const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
 
     useEffect(() => {
@@ -38,13 +42,23 @@ export default function CoursePage() {
 
     useEffect(() => {
         const loadHole = async (holeNumber: number) => {
-            if (!holeInfo[holeNumber]) {
-                const data = await getHole(holeNumber)
-                setHoleInfo((prev) => ({
-                    ...prev,
-                    [holeNumber]: data,
-                }))
-            }
+            const cacheEntry = holeInfo[holeNumber]
+            const now = Date.now()
+            const maxAge = 5 * 60 * 1000 // 5 minutes in ms
+
+            // If fresh, skip fetch
+            if (cacheEntry && now - cacheEntry.fetchedAt < maxAge) return
+
+            const data = await getHole(holeNumber)
+            if (!data) return
+
+            setHoleInfo((prev) => ({
+                ...prev,
+                [holeNumber]: {
+                    data,
+                    fetchedAt: now,
+                },
+            }))
         }
 
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
@@ -73,7 +87,7 @@ export default function CoursePage() {
     }
 
     const renderScoreBar = () => {
-        const holeData = holeInfo[currentHoleNumber]?.hole
+        const holeData = holeInfo[currentHoleNumber]?.data.hole
         if (!holeData) return null
 
         const categories = [
@@ -188,7 +202,7 @@ export default function CoursePage() {
                                 borderRadius: '15px',
                                 overflow: 'hidden'
                             }}>
-                                {holeInfo[number]?.hole.length && (
+                                {holeInfo[number]?.data.hole.length && (
                                     <Box sx={{
                                         position: 'absolute',
                                         zIndex: 2,
@@ -201,7 +215,7 @@ export default function CoursePage() {
                                             color: 'black',
                                             fontFamily: 'Alatsi, sans-serif'
                                         }}>
-                                            {holeInfo[number]?.hole.length}m
+                                            {holeInfo[number]?.data.hole.length}m
                                         </Typography>
                                     </Box>
                                 )}
@@ -220,14 +234,14 @@ export default function CoursePage() {
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mt={1}>
                     <IconButton color="primary" ref={prevRef}><ArrowBackIosNewIcon/></IconButton>
-                    {holeInfo[currentHoleNumber]?.hole.coordinates && (
+                    {holeInfo[currentHoleNumber]?.data.hole.coordinates && (
                         <Box>
                             <Button
                                 variant="outlined"
                                 color="primary"
                                 size="small"
                                 onClick={() => {
-                                    const coords = holeInfo[currentHoleNumber]!.hole.coordinates
+                                    const coords = holeInfo[currentHoleNumber]!.data.hole.coordinates
                                     window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`, '_blank')
                                 }}
                             >
@@ -239,7 +253,7 @@ export default function CoursePage() {
                 </Box>
 
 
-                {holeInfo[currentHoleNumber]?.hole.is_ctp && (
+                {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
                     <Box mt={2} textAlign="center">
 
                         <Box mt={1} display="flex" justifyContent="center" gap={2} alignItems="center">
@@ -257,10 +271,10 @@ export default function CoursePage() {
                 )}
                 <Box mt={2} display="flex" justifyContent="space-between" gap={2} alignItems="start">
                     <Typography fontSize={12}>
-                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.hole.rank}</strong>. rada (
-                        {holeInfo[currentHoleNumber]?.hole.average_diff !== undefined
+                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.hole.rank}</strong>. rada (
+                        {holeInfo[currentHoleNumber]?.data.hole.average_diff !== undefined
                             ? (() => {
-                                const diff = holeInfo[currentHoleNumber].hole.average_diff;
+                                const diff = holeInfo[currentHoleNumber].data.hole.average_diff;
                                 const rounded = Number(diff.toFixed(1));
                                 if (rounded === 0) return '0';
                                 return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`;
@@ -270,9 +284,9 @@ export default function CoursePage() {
 
                     <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
 
-                        {holeInfo[currentHoleNumber]?.hole.ob_percent !== undefined
+                        {holeInfo[currentHoleNumber]?.data.hole.ob_percent !== undefined
                             ? (() => {
-                                const rounded = Number(holeInfo[currentHoleNumber]?.hole.ob_percent .toFixed(0));
+                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent .toFixed(0));
                                 if (rounded === 0) return '0';
                                 return rounded;
                             })()
