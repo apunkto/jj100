@@ -11,6 +11,8 @@ export type HoleResult = {
         is_ctp: boolean
         length: number
         coordinates: string
+        rank: number
+        average_diff: number
     }
     ctp: {
         id: number

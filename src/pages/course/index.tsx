@@ -78,11 +78,11 @@ export default function CoursePage() {
 
         const categories = [
             {key: 'eagles', color: '#f8c600', label: 'Eagle'},
-            {key: 'birdies', color: '#7bc87f', label: 'Birdie'},
-            {key: 'pars', color: '#ddd', label: 'Par'},
-            {key: 'bogeys', color: '#ffc6c6', label: 'Bogey'},
-            {key: 'double_bogeys', color: '#f86969', label: 'Double'},
-            {key: 'others', color: '#ff2121', label: 'Triple+'},
+            {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
+            {key: 'pars', color: '#ECECECFF', label: 'Par'},
+            {key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey'},
+            {key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double'},
+            {key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+'},
         ]
 
         const total = categories.reduce(
@@ -92,7 +92,7 @@ export default function CoursePage() {
         if (total === 0) return null
 
         return (
-            <Box mt={3}>
+            <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
                     {categories.map(({key, color, label}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
@@ -255,6 +255,20 @@ export default function CoursePage() {
                         </Box>
                     </Box>
                 )}
+                <Box mt={2} display="flex" justifyContent="start" gap={2} alignItems="start">
+                    <Typography fontSize={12}>
+                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.hole.rank}</strong>. rada (
+                        {holeInfo[currentHoleNumber]?.hole.average_diff !== undefined
+                            ? (() => {
+                                const diff = holeInfo[currentHoleNumber].hole.average_diff;
+                                const rounded = Number(diff.toFixed(1));
+                                if (rounded === 0) return '0';
+                                return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`;
+                            })()
+                            : ''} viset par-ile)
+                    </Typography>
+
+                </Box>
                 {renderScoreBar()}
             </Box>
         </Layout>

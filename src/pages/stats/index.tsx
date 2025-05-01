@@ -174,11 +174,11 @@ export default function CtpStatsPage() {
 
                                     const categories = [
                                         { key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles },
-                                        { key: 'birdies', color: '#7bc87f', label: 'Birdie', value: breakdown.birdies },
-                                        { key: 'pars', color: '#ddd', label: 'Par', value: breakdown.pars },
-                                        { key: 'bogeys', color: '#ffc6c6', label: 'Bogey', value: breakdown.bogeys },
-                                        { key: 'doubleBogeys', color: '#f86969', label: 'Double', value: breakdown.doubleBogeys },
-                                        { key: 'tripleOrWorse', color: '#ff2121', label: 'Triple+', value: breakdown.tripleOrWorse },
+                                        { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie', value: breakdown.birdies },
+                                        { key: 'pars', color: '#ECECECFF', label: 'Par', value: breakdown.pars },
+                                        { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey', value: breakdown.bogeys },
+                                        { key: 'doubleBogeys', color: 'rgba(244,43,3,.26)', label: 'Double', value: breakdown.doubleBogeys },
+                                        { key: 'tripleOrWorse', color: 'rgba(244,43,3,.42)', label: 'Triple+', value: breakdown.tripleOrWorse },
                                     ];
 
                                     const total = categories.reduce((sum, cat) => sum + cat.value, 0);
