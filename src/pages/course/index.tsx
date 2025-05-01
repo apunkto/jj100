@@ -5,7 +5,7 @@ import 'swiper/css/navigation'
 import { Navigation } from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import { Box, IconButton, Typography, TextField, Button } from '@mui/material'
+import { Box, IconButton, Typography, TextField, Button, LinearProgress, Tooltip } from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
@@ -49,14 +49,8 @@ export default function CoursePage() {
 
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
             loadHole(currentHoleNumber)
-
-            if (currentHoleNumber > 1) {
-                loadHole(currentHoleNumber - 1)
-            }
-
-            if (currentHoleNumber < totalCards) {
-                loadHole(currentHoleNumber + 1)
-            }
+            if (currentHoleNumber > 1) loadHole(currentHoleNumber - 1)
+            if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1)
         }
     }, [currentHoleNumber, getHole, holeInfo])
 
@@ -69,43 +63,98 @@ export default function CoursePage() {
         [swiperInstance]
     )
 
-    useEffect(() => {
-        return () => debouncedSlideTo.cancel()
-    }, [debouncedSlideTo])
+    useEffect(() => () => debouncedSlideTo.cancel(), [debouncedSlideTo])
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setSearchInput(value)
-
         const parsed = parseInt(value)
-        if (!isNaN(parsed)) {
-            debouncedSlideTo(parsed)
-        }
+        if (!isNaN(parsed)) debouncedSlideTo(parsed)
     }
+
+    const renderScoreBar = () => {
+        const holeData = holeInfo[currentHoleNumber]?.hole
+        if (!holeData) return null
+
+        const categories = [
+            { key: 'eagles', color: '#f8c600', label: 'Eagle' },
+            { key: 'birdies', color: '#7bc87f', label: 'Birdie' },
+            { key: 'pars', color: '#ddd', label: 'Par' },
+            { key: 'bogeys', color: '#ffc6c6', label: 'Bogey' },
+            { key: 'double_bogeys', color: '#f86969', label: 'Double' },
+            { key: 'others', color: '#ff2121', label: '3+ Bogey' },
+        ]
+
+        const total = categories.reduce(
+            (sum, cat) => sum + Number(holeData[cat.key as keyof typeof holeData] ?? 0),
+            0
+        )
+        if (total === 0) return null
+
+        return (
+            <Box mt={2}>
+                <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
+                    {categories.map(({ key, color, label }) => {
+                        const value = holeData[key as keyof typeof holeData] || 0
+                        const percent = (Number(value) / Number(total)) * 100;
+                        return (
+                            <Box
+                                key={key}
+                                sx={{
+                                    width: `${percent}%`,
+                                    backgroundColor: color,
+                                    display: percent > 0 ? 'block' : 'none',
+                                    minWidth: '2px',
+                                    height: '100%',
+                                }}
+                            />
+
+
+                        )
+                    })}
+                </Box>
+
+                <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
+                    {categories.map(({ key, color, label }) => {
+                        const value = holeData[key as keyof typeof holeData] || 0
+                        if (!value) return null
+                        return (
+                            <Box
+                                key={key}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    px: 1.3,
+                                    py: 0.5,
+                                    borderRadius: '20px',
+                                    backgroundColor: color,
+                                    color: '#000',
+                                    fontWeight: 500,
+                                    fontSize: '12px',
+                                }}
+                            >
+                                {label}: {value}
+                            </Box>
+                        )
+                    })}
+                </Box>
+            </Box>
+        )
+    }
+
 
     return (
         <Layout>
             <Box mt={0}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" fontWeight="bold">
-                        Rada
-                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">Rada</Typography>
                     <TextField
                         size="small"
                         placeholder="Otsi korvi.."
                         value={searchInput}
                         onChange={handleSearchChange}
-                        sx={{
-                            width: 80,
-                            '& .MuiInputBase-root': {
-                                paddingTop: '2px',
-                                paddingBottom: '2px',
-                                fontSize: '0.8rem',
-                            },
-                            '& input': {
-                                padding: '6px 8px',
-                            },
-                        }}
+                        sx={{ width: 80, '& .MuiInputBase-root': { paddingTop: '2px', paddingBottom: '2px', fontSize: '0.8rem' }, '& input': { padding: '6px 8px' } }}
                         inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                     />
                 </Box>
@@ -113,42 +162,18 @@ export default function CoursePage() {
                 <Swiper
                     modules={[Navigation]}
                     spaceBetween={10}
-                    centeredSlides={true}
+                    centeredSlides
                     slidesPerView={'auto'}
-                    onSwiper={(swiper) => setSwiperInstance(swiper)}
+                    onSwiper={setSwiperInstance}
                     onSlideChange={(swiper) => setCurrentHoleNumber(swiper.activeIndex + 1)}
                     style={{ maxWidth: '550px', margin: '0 auto', width: '100%' }}
                 >
                     {cards.map((number) => (
                         <SwiperSlide key={number} style={{ width: '90%' }}>
-                            <Box
-                                sx={{
-                                    position: 'relative',
-                                    width: '100%',
-                                    paddingTop: '141.4%',
-                                    borderRadius: '15px',
-                                    overflow: 'hidden',
-                                }}
-                            >
+                            <Box sx={{ position: 'relative', width: '100%', paddingTop: '141.4%', borderRadius: '15px', overflow: 'hidden' }}>
                                 { holeInfo[number]?.hole.length && (
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            zIndex: 2,
-                                            right: '6.5%',
-                                            top: '7.5%',
-                                            transform: 'translateY(-50%)',
-                                        }}
-                                    >
-                                        <Typography
-                                            variant="h4"
-                                            fontWeight="regular"
-                                            sx={{
-                                                fontSize: 'clamp(4px, 4.2vw, 24px)',
-                                                color: 'black',
-                                                fontFamily: 'Alatsi, sans-serif',
-                                            }}
-                                        >
+                                    <Box sx={{ position: 'absolute', zIndex: 2, right: '6.5%', top: '7.5%', transform: 'translateY(-50%)' }}>
+                                        <Typography variant="h4" fontWeight="regular" sx={{ fontSize: 'clamp(4px, 4.2vw, 24px)', color: 'black', fontFamily: 'Alatsi, sans-serif' }}>
                                             {holeInfo[number]?.hole.length}m
                                         </Typography>
                                     </Box>
@@ -158,9 +183,7 @@ export default function CoursePage() {
                                     alt={`Rada ${number}`}
                                     layout="fill"
                                     objectFit="cover"
-                                    style={{
-                                        borderRadius: '10px',
-                                    }}
+                                    style={{ borderRadius: '10px' }}
                                     sizes="(max-width: 600px) 100vw, 500px"
                                 />
                             </Box>
@@ -169,9 +192,7 @@ export default function CoursePage() {
                 </Swiper>
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mt={1}>
-                    <IconButton color="primary" ref={prevRef}>
-                        <ArrowBackIosNewIcon />
-                    </IconButton>
+                    <IconButton color="primary" ref={prevRef}><ArrowBackIosNewIcon /></IconButton>
                     {holeInfo[currentHoleNumber]?.hole.coordinates && (
                         <Box>
                             <Button
@@ -180,38 +201,31 @@ export default function CoursePage() {
                                 size="small"
                                 onClick={() => {
                                     const coords = holeInfo[currentHoleNumber]!.hole.coordinates
-                                    const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`
-                                    window.open(url, '_blank')
+                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`, '_blank')
                                 }}
                             >
                                 📍 Juhata rajale
                             </Button>
                         </Box>
                     )}
-                    <IconButton color="primary" ref={nextRef}>
-                        <ArrowForwardIosIcon />
-                    </IconButton>
+                    <IconButton color="primary" ref={nextRef}><ArrowForwardIosIcon /></IconButton>
                 </Box>
 
-                {holeInfo[currentHoleNumber] && (
+                {renderScoreBar()}
+
+                {holeInfo[currentHoleNumber]?.hole.is_ctp && (
                     <Box mt={1} textAlign="center">
-                        {holeInfo[currentHoleNumber]?.hole.is_ctp && (
-                            <>
-                                <Typography color="primary">🎯 Sellel korvil on CTP</Typography>
-                                <Box mt={1}>
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        size="small"
-                                        onClick={() => {
-                                            window.location.href = `/ctp/${currentHoleNumber}`
-                                        }}
-                                    >
-                                        Märgi CTP
-                                    </Button>
-                                </Box>
-                            </>
-                        )}
+                        <Typography color="primary">🎯 Sellel korvil on CTP</Typography>
+                        <Box mt={1}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                onClick={() => window.location.href = `/ctp/${currentHoleNumber}`}
+                            >
+                                Märgi CTP
+                            </Button>
+                        </Box>
                     </Box>
                 )}
             </Box>
