@@ -255,7 +255,7 @@ export default function CoursePage() {
                         </Box>
                     </Box>
                 )}
-                <Box mt={2} display="flex" justifyContent="start" gap={2} alignItems="start">
+                <Box mt={2} display="flex" justifyContent="space-between" gap={2} alignItems="start">
                     <Typography fontSize={12}>
                         Raskuselt <strong>{holeInfo[currentHoleNumber]?.hole.rank}</strong>. rada (
                         {holeInfo[currentHoleNumber]?.hole.average_diff !== undefined
@@ -266,6 +266,17 @@ export default function CoursePage() {
                                 return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`;
                             })()
                             : ''} viset par-ile)
+                    </Typography>
+
+                    <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
+
+                        {holeInfo[currentHoleNumber]?.hole.ob_percent !== undefined
+                            ? (() => {
+                                const rounded = Number(holeInfo[currentHoleNumber]?.hole.ob_percent .toFixed(0));
+                                if (rounded === 0) return '0';
+                                return rounded;
+                            })()
+                            : ''}% viskas OB
                     </Typography>
 
                 </Box>

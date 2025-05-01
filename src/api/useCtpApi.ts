@@ -13,6 +13,7 @@ export type HoleResult = {
         coordinates: string
         rank: number
         average_diff: number
+        ob_percent: number
     }
     ctp: {
         id: number
