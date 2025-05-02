@@ -44,6 +44,7 @@ export default function TopHolesDashboard() {
     const [topHoles, setTopHoles] = useState<number[]>([])
     const [topPlayersByDivision, setTopPlayersByDivision] = useState<Record<string, PlayerResult[]>>({})
     const [mostHolesLeft, setMostHolesLeft] = useState<number>(0)
+    const [finishedPlayersCount, setFinishedPlayersCount] = useState<number>(0) // ✅ New state
     const swiperRef = useRef<any>(null)
 
     const countScoreTypes = (player: PlayerResult) => {
@@ -101,7 +102,6 @@ export default function TopHolesDashboard() {
         return maxLeft
     }
 
-
     const fetchTopHoles = useCallback(async () => {
         try {
             const topHolesData = await getTopRankedHoles()
@@ -138,6 +138,15 @@ export default function TopHolesDashboard() {
 
             setTopPlayersByDivision(grouped)
             setMostHolesLeft(getMostRemainingHoles(players))
+
+            // ✅ Count finished players
+            const finished = players.filter(player => {
+                if (player.DNF) return true
+                const holes = player.PlayerResults ?? []
+                return holes.every(h => !Array.isArray(h) || h.length !== 0)
+            }).length
+            setFinishedPlayersCount(finished)
+
         } catch (err) {
             console.error('Failed to load data:', err)
         }
@@ -199,7 +208,6 @@ export default function TopHolesDashboard() {
         )
     }
 
-
     useEffect(() => {
         fetchTopHoles()
         const interval = setInterval(fetchTopHoles, 5 * 60 * 1000)
@@ -217,10 +225,9 @@ export default function TopHolesDashboard() {
                     onSwiper={(swiper) => {
                         console.log("swiper", swiper)
                         swiperRef.current = swiper
-                        swiper.autoplay?.start() // 👈 this manually starts autoplay
+                        swiper.autoplay?.start()
                     }}
-                    key={topHoles.join(',')} // ensures re-render when topHoles changes
-
+                    key={topHoles.join(',')}
                     modules={[Autoplay]}
                     autoplay={{
                         delay: 15000,
@@ -279,9 +286,7 @@ export default function TopHolesDashboard() {
                                     <Typography fontSize={20} sx={{borderTop: '3px solid #f42b03', pt: 0.5}}>
                                         {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
                                     </Typography>
-
                                 </Box>
-                                {/* 🟨 Score distribution bar and chips */}
                                 {renderScoreBar(holeData)}
                             </SwiperSlide>
                         )
@@ -340,37 +345,69 @@ export default function TopHolesDashboard() {
                         })}
                     </Box>
                 ))}
-
-
             </Box>
-            {/* Third section: most holes left */}
+
+            {/* Third section: most holes left + finished players stacked vertically */}
             <Box mt={0} textAlign="center">
-                <Typography variant="h6" fontWeight="bold">
-                    Viimasel puulil jäänud mängida
-                </Typography>
-                <Box
-                    mt={2}
-                    sx={{
-                        width: 100,
-                        height: 100,
-                        margin: '20px auto 0 auto',
-                        marginTop: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: '#f8c600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '32px',
-                        fontWeight: 'bold',
-                        color: '#000',
-                    }}
-                >
-                    {mostHolesLeft}
+                <Box display="flex" flexDirection="column" alignItems="center" gap={4}>
+                    {/* Most holes left */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            Viimasel puulil jäänud mängida
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#f8c600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {mostHolesLeft}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            korvi
+                        </Typography>
+                    </Box>
+
+                    {/* Finished players */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            Lõpetanud mängijaid
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#a6e4a3',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {finishedPlayersCount}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            mängijat
+                        </Typography>
+                    </Box>
                 </Box>
-                <Typography variant="body2" mt={0}>
-                    korvi
-                </Typography>
             </Box>
+
         </Box>
     )
 }
