@@ -42,7 +42,7 @@ export default function CtpStatsPage() {
         const fetchResults = async () => {
             try {
                 const res = await fetch(
-                    'https://discgolfmetrix.com/api.php?content=result&id=2834664'
+                    'https://discgolfmetrix.com/api.php?content=result&id=3204901'
                 );
                 const data = (await res.json()) as MetrixAPIResponse;
                 const players = data.Competition.Results;

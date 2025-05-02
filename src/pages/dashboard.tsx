@@ -112,7 +112,7 @@ export default function TopHolesDashboard() {
             setHoleInfo(holeMap)
             setTopHoles(topHolesData.map(h => h.hole.number))
 
-            const res = await fetch('https://discgolfmetrix.com/api.php?content=result&id=2834664')
+            const res = await fetch('https://discgolfmetrix.com/api.php?content=result&id=3204901')
             const metrixData = (await res.json()) as MetrixAPIResponse
             const players = metrixData.Competition.Results
 
