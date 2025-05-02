@@ -42,6 +42,7 @@ export default function TopHolesDashboard() {
     const {getTopRankedHoles} = useCtpApi()
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult>>({})
     const [topHoles, setTopHoles] = useState<number[]>([])
+    const [playerCount, setPlayerCount] = useState<number>(0)
     const [topPlayersByDivision, setTopPlayersByDivision] = useState<Record<string, PlayerResult[]>>({})
     const [mostHolesLeft, setMostHolesLeft] = useState<number>(0)
     const [finishedPlayersCount, setFinishedPlayersCount] = useState<number>(0) // ✅ New state
@@ -115,6 +116,7 @@ export default function TopHolesDashboard() {
             const res = await fetch('https://discgolfmetrix.com/api.php?content=result&id=3204901')
             const metrixData = (await res.json()) as MetrixAPIResponse
             const players = metrixData.Competition.Results
+            setPlayerCount(players.length)
 
             const grouped: Record<string, PlayerResult[]> = {}
             for (const player of players) {
@@ -374,7 +376,7 @@ export default function TopHolesDashboard() {
                             {mostHolesLeft}
                         </Box>
                         <Typography variant="body2" mt={0}>
-                            korvi
+                            korvi 100st
                         </Typography>
                     </Box>
 
@@ -402,7 +404,7 @@ export default function TopHolesDashboard() {
                             {finishedPlayersCount}
                         </Box>
                         <Typography variant="body2" mt={0}>
-                            mängijat
+                            mängijat {playerCount}st
                         </Typography>
                     </Box>
                 </Box>
