@@ -45,7 +45,9 @@ export default function TopHolesDashboard() {
     const [playerCount, setPlayerCount] = useState<number>(0)
     const [topPlayersByDivision, setTopPlayersByDivision] = useState<Record<string, PlayerResult[]>>({})
     const [mostHolesLeft, setMostHolesLeft] = useState<number>(0)
-    const [finishedPlayersCount, setFinishedPlayersCount] = useState<number>(0) // ✅ New state
+    const [finishedPlayersCount, setFinishedPlayersCount] = useState<number>(0)
+    const [totalThrows, setTotalThrows] = useState<number>(0)
+    const [averageDiff, setAverageDiff] = useState<number>(0)
     const swiperRef = useRef<any>(null)
 
     const countScoreTypes = (player: PlayerResult) => {
@@ -141,7 +143,6 @@ export default function TopHolesDashboard() {
             setTopPlayersByDivision(grouped)
             setMostHolesLeft(getMostRemainingHoles(players))
 
-            // ✅ Count finished players
             const finished = players.filter(player => {
                 if (player.DNF) return true
                 const holes = player.PlayerResults ?? []
@@ -149,6 +150,9 @@ export default function TopHolesDashboard() {
             }).length
             setFinishedPlayersCount(finished)
 
+            const total = players.reduce((sum, player) => sum + (player.Sum || 0), 0)
+            setTotalThrows(total)
+            setAverageDiff(players.reduce((sum, player) => sum + (Number(player.Diff) || 0), 0) / players.length)
         } catch (err) {
             console.error('Failed to load data:', err)
         }
@@ -225,7 +229,6 @@ export default function TopHolesDashboard() {
                 </Typography>
                 <Swiper
                     onSwiper={(swiper) => {
-                        console.log("swiper", swiper)
                         swiperRef.current = swiper
                         swiper.autoplay?.start()
                     }}
@@ -349,13 +352,21 @@ export default function TopHolesDashboard() {
                 ))}
             </Box>
 
-            {/* Third section: most holes left + finished players stacked vertically */}
+            {/* Third section: summary */}
             <Box mt={0} textAlign="center">
                 <Box display="flex" flexDirection="column" alignItems="center" gap={4}>
+                    <Image
+                        src="/white_logo.webp"
+                        alt="Logo"
+                        width={300}
+                        height={255}
+                        priority
+                        style={{ maxWidth: '100%', height: 'auto' }}
+                    />
                     {/* Most holes left */}
                     <Box>
                         <Typography variant="h6" fontWeight="bold">
-                            Viimasel puulil jäänud mängida
+                            🕒 Viimasel puulil jäänud mängida
                         </Typography>
                         <Box
                             mt={2}
@@ -383,7 +394,7 @@ export default function TopHolesDashboard() {
                     {/* Finished players */}
                     <Box>
                         <Typography variant="h6" fontWeight="bold">
-                            Lõpetanud mängijaid
+                            🏁 Lõpetanud mängijaid
                         </Typography>
                         <Box
                             mt={2}
@@ -407,9 +418,40 @@ export default function TopHolesDashboard() {
                             mängijat {playerCount}st
                         </Typography>
                     </Box>
+
+                    {/* Total throws */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            📊 Viskeid kokku
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#b3d4fc',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '28px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {totalThrows}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            keskmiselt {(() => {
+                            const diff = Math.round(averageDiff);
+                            return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
+                        })()} viset par-ile
+                        </Typography>
+
+                    </Box>
                 </Box>
             </Box>
-
         </Box>
     )
 }
