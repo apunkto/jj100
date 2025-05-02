@@ -257,7 +257,7 @@ export default function TopHolesDashboard() {
                                     </Box>
                                     <Box sx={{display: 'flex', justifyContent: 'center', my: 2}}>
                                         <Image
-                                            src={`/cards/${holeNumber}.webp?v=3`}
+                                            src={`/cards/${holeNumber}.webp?v=4`}
                                             alt={`Rada ${holeNumber}`}
                                             layout="intrinsic"
                                             width={450}
