@@ -49,6 +49,10 @@ export default function TopHolesDashboard() {
     const [totalThrows, setTotalThrows] = useState<number>(0)
     const [averageDiff, setAverageDiff] = useState<number>(0)
     const swiperRef = useRef<any>(null)
+    const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+
+
+
 
     const countScoreTypes = (player: PlayerResult) => {
         let birdieOrBetter = 0,
@@ -62,6 +66,8 @@ export default function TopHolesDashboard() {
         }
         return {birdieOrBetter, pars, bogeys}
     }
+
+
 
     const getScoreBreakdown = (player: PlayerResult) => {
         let eagles = 0,
@@ -161,6 +167,27 @@ export default function TopHolesDashboard() {
         }
     }, [getTopRankedHoles])
 
+    useEffect(() => {
+        fetchTopHoles()
+        const interval = setInterval(fetchTopHoles, 5 * 60 * 1000)
+        return () => clearInterval(interval)
+    }, [fetchTopHoles])
+
+    useEffect(() => {
+        const swiper = swiperRef.current
+        if (!swiper) return
+
+        let timeout: NodeJS.Timeout
+
+        const slideDurations = [60000, ...Object.keys(topPlayersByDivision).map(() => 15000), 60000] // ms
+
+        timeout = setTimeout(() => {
+            swiper.slideNext()
+        }, slideDurations[activeSlideIndex] || 1000) // fallback to 60s
+
+        return () => clearTimeout(timeout)
+    }, [activeSlideIndex, topPlayersByDivision])
+
     const renderScoreBar = (hole: HoleResult['hole']) => {
         const total = scoreCategories.reduce(
             (sum, cat) => sum + Number(hole[cat.key as keyof typeof hole] || 0),
@@ -228,14 +255,14 @@ export default function TopHolesDashboard() {
         <Swiper
             onSwiper={(swiper) => {
                 swiperRef.current = swiper
-                swiper.autoplay?.start()
+                setActiveSlideIndex(swiper.realIndex) // set initial index on mount
             }}
+            onSlideChange={(swiper) => {
+                setActiveSlideIndex(swiper.realIndex)
+            }}
+
             modules={[Autoplay]}
-            autoplay={{
-                delay: 120000,
-                disableOnInteraction: false,
-            }}
-            loop
+
             spaceBetween={50}
             slidesPerView={1}
             style={{height: '100vh'}}
