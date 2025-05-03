@@ -182,8 +182,12 @@ export default function TopHolesDashboard() {
         const slideDurations = [60000, ...Object.keys(topPlayersByDivision).map(() => 15000), 60000] // ms
 
         timeout = setTimeout(() => {
-            swiper.slideNext()
-        }, slideDurations[activeSlideIndex] || 60000) // fallback to 60s
+            if (swiper.isEnd) {
+                swiper.slideToLoop(0) // go to first slide, considering looping duplicates
+            } else {
+                swiper.slideNext()
+            }
+        }, slideDurations[activeSlideIndex] || 60000)
 
         return () => clearTimeout(timeout)
     }, [activeSlideIndex, topPlayersByDivision])
