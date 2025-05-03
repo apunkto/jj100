@@ -183,7 +183,7 @@ export default function TopHolesDashboard() {
 
         timeout = setTimeout(() => {
             swiper.slideNext()
-        }, slideDurations[activeSlideIndex] || 1000) // fallback to 60s
+        }, slideDurations[activeSlideIndex] || 60000) // fallback to 60s
 
         return () => clearTimeout(timeout)
     }, [activeSlideIndex, topPlayersByDivision])
