@@ -5,7 +5,13 @@ import 'swiper/css/navigation'
 import {Navigation} from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import {Box, IconButton, Typography, TextField, Button, LinearProgress, Tooltip} from '@mui/material'
+import {
+    Box,
+    IconButton,
+    Typography,
+    TextField,
+    Button
+} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
@@ -29,6 +35,30 @@ export default function CoursePage() {
     const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1)
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
+    const [lastUpdated, setLastUpdated] = useState<number | null>(null)
+
+    const loadHole = async (holeNumber: number, forceRefresh = false) => {
+        const cacheEntry = holeInfo[holeNumber]
+        const now = Date.now()
+        const maxAge = 5 * 60 * 1000
+
+        if (!forceRefresh && cacheEntry && now - cacheEntry.fetchedAt < maxAge) return
+
+        const data = await getHole(holeNumber)
+        if (!data) return
+
+        setHoleInfo((prev) => ({
+            ...prev,
+            [holeNumber]: {
+                data,
+                fetchedAt: now,
+            },
+        }))
+
+        if (holeNumber === currentHoleNumber) {
+            setLastUpdated(now)
+        }
+    }
 
     useEffect(() => {
         if (swiperInstance && prevRef.current && nextRef.current) {
@@ -41,32 +71,27 @@ export default function CoursePage() {
     }, [swiperInstance])
 
     useEffect(() => {
-        const loadHole = async (holeNumber: number) => {
-            const cacheEntry = holeInfo[holeNumber]
-            const now = Date.now()
-            const maxAge = 5 * 60 * 1000 // 5 minutes in ms
-
-            // If fresh, skip fetch
-            if (cacheEntry && now - cacheEntry.fetchedAt < maxAge) return
-
-            const data = await getHole(holeNumber)
-            if (!data) return
-
-            setHoleInfo((prev) => ({
-                ...prev,
-                [holeNumber]: {
-                    data,
-                    fetchedAt: now,
-                },
-            }))
-        }
-
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
             loadHole(currentHoleNumber)
             if (currentHoleNumber > 1) loadHole(currentHoleNumber - 1)
             if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1)
         }
-    }, [currentHoleNumber, getHole, holeInfo])
+    }, [currentHoleNumber])
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadHole(currentHoleNumber, true)
+                if (currentHoleNumber > 1) loadHole(currentHoleNumber - 1, true)
+                if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1, true)
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [currentHoleNumber])
 
     const debouncedSlideTo = useCallback(
         debounce((holeNumber: number) => {
@@ -108,9 +133,9 @@ export default function CoursePage() {
         return (
             <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
-                    {categories.map(({key, color, label}) => {
+                    {categories.map(({key, color}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
-                        const percent = (Number(value) / Number(total)) * 100;
+                        const percent = (Number(value) / Number(total)) * 100
                         return (
                             <Box
                                 key={key}
@@ -122,8 +147,6 @@ export default function CoursePage() {
                                     height: '100%',
                                 }}
                             />
-
-
                         )
                     })}
                 </Box>
@@ -157,7 +180,6 @@ export default function CoursePage() {
         )
     }
 
-
     return (
         <Layout>
             <Box mt={0}>
@@ -173,11 +195,11 @@ export default function CoursePage() {
                             '& .MuiInputBase-root': {
                                 paddingTop: '0px',
                                 paddingBottom: '0px',
-                                fontSize: '1rem', // <-- update this line (1rem = 16px)
+                                fontSize: '1rem',
                             },
                             '& input': {
                                 padding: '3px 8px',
-                                fontSize: '1rem', // <-- add this line to explicitly set input font size
+                                fontSize: '1rem',
                             }
                         }}
                         inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
@@ -252,10 +274,8 @@ export default function CoursePage() {
                     <IconButton color="primary" ref={nextRef}><ArrowForwardIosIcon/></IconButton>
                 </Box>
 
-
                 {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
                     <Box mt={2} textAlign="center">
-
                         <Box mt={1} display="flex" justifyContent="center" gap={2} alignItems="center">
                             <Typography color="primary">🎯 Sellel korvil on CTP</Typography>
                             <Button
@@ -269,6 +289,7 @@ export default function CoursePage() {
                         </Box>
                     </Box>
                 )}
+
                 <Box mt={2} display="flex" justifyContent="space-between" gap={2} alignItems="start">
                     <Typography fontSize={12}>
                         Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.hole.rank}</strong>. rada (
@@ -283,18 +304,23 @@ export default function CoursePage() {
                     </Typography>
 
                     <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
-
                         {holeInfo[currentHoleNumber]?.data.hole.ob_percent !== undefined
                             ? (() => {
-                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent .toFixed(0));
+                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent.toFixed(0));
                                 if (rounded === 0) return '0';
                                 return rounded;
                             })()
                             : ''}% viskas OB
                     </Typography>
-
                 </Box>
+
                 {renderScoreBar()}
+
+                {lastUpdated && (
+                    <Typography fontSize={10} textAlign="center" mt={2} color="gray">
+                        Uuendatud: {new Date(lastUpdated).toLocaleTimeString('et-EE')}
+                    </Typography>
+                )}
             </Box>
         </Layout>
     )
