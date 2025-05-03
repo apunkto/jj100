@@ -140,7 +140,7 @@ export default function TopHolesDashboard() {
                     return 0
                 })
 
-                grouped[division] = grouped[division].slice(0, 10)
+                grouped[division] = grouped[division].slice(0, 4)
             })
 
             setTopPlayersByDivision(grouped)
@@ -199,16 +199,15 @@ export default function TopHolesDashboard() {
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    px: 2,
-                                    py: 1,
+                                    px: 1,
+                                    py: 0.5,
                                     borderRadius: '20px',
                                     backgroundColor: color,
                                     color: '#000',
-                                    fontWeight: 600,
-                                    fontSize: '1.25rem', // ~20px
+                                    fontWeight: 500,
+                                    fontSize: '14px',
                                 }}
                             >
-
                                 {label}: {value}
                             </Box>
                         )
@@ -223,119 +222,107 @@ export default function TopHolesDashboard() {
         const interval = setInterval(fetchTopHoles, 5 * 60 * 1000)
         return () => clearInterval(interval)
     }, [fetchTopHoles])
-// Only the JSX return block is updated. The rest of your logic remains the same.
+
     return (
-        <Swiper
-            onSwiper={(swiper) => {
-                swiperRef.current = swiper
-                swiper.autoplay?.start()
-            }}
-            modules={[Autoplay]}
-            autoplay={{
-                delay: 120000,
-                disableOnInteraction: false,
-            }}
-            loop
-            spaceBetween={50}
-            slidesPerView={1}
-            style={{height: '100vh'}}
-        >
-            {/* Panel 1 - Top Holes */}
-            <SwiperSlide>
-                <Box sx={{p: 6, height: '100vh', boxSizing: 'border-box'}}>
+        <Box sx={{display: 'flex', gap: 10, p: 4}}>
+            {/* First panel */}
 
-                    <Swiper
-                        key={topHoles.join(',')}
-                        modules={[Autoplay]}
-                        autoplay={{delay: 15000, disableOnInteraction: false}}
-                        loop
-                        spaceBetween={30}
-                        slidesPerView={1}
-                    >
-                        {topHoles.map(holeNumber => {
-                            const holeData = holeInfo[holeNumber]?.hole
-                            if (!holeData) return null
-                            return (
-                                <SwiperSlide key={holeNumber}>
-                                    <Box display="flex" justifyContent="center" alignItems="flex-start" gap={6}
-                                         flexWrap="wrap">
-                                        {/* Left: Hole Image */}
-                                        <Box position={'relative'} mb={"4rem"}>
-                                            <Box sx={{
-                                                position: 'absolute',
-                                                zIndex: 2,
-                                                right: '6%',
-                                                top: '8%',
-                                                transform: 'translateY(-50%)'
-                                            }}>
-                                                <Typography
-                                                    variant="h4"
-                                                    fontWeight="bold"
-                                                    sx={{
-                                                        fontSize: 'clamp(24px, 1.7vw, 72px)',
-                                                        color: 'black',
-                                                        fontFamily: 'Alatsi, sans-serif'
-                                                    }}
-                                                >
-                                                    {holeData.length}m
-                                                </Typography>
-                                            </Box>
-                                            <Image
-                                                src={`/cards/${holeNumber}.webp?v=4`}
-                                                alt={`Rada ${holeNumber}`}
-                                                width={600}
-                                                height={840}
-                                                style={{borderRadius: '30px'}}
-                                            />
-                                        </Box>
-
-                                        {/* Right: Hole Info */}
-                                        <Box maxWidth={500}>
-
-                                            <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2}>
-                                                Raskuselt <strong>{holeData.rank}</strong>. rada
-                                            </Typography>
-                                            <Typography fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" mb={2}>
-                                                {holeData.average_diff !== undefined
-                                                    ? `${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)} viset par-ile`
-                                                    : ''}
-                                            </Typography>
-
-                                            <Typography fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" color="#f42b03" mb={2}>
-                                                {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
-                                            </Typography>
-
-                                            {renderScoreBar(holeData)}
-                                        </Box>
+            <Box sx={{maxWidth: 600, flexShrink: 0}}>
+                <Typography variant="h4" textAlign="left" mb={4} fontWeight="bold">
+                    Top 10 raskemad rajad
+                </Typography>
+                <Swiper
+                    onSwiper={(swiper) => {
+                        swiperRef.current = swiper
+                        swiper.autoplay?.start()
+                    }}
+                    key={topHoles.join(',')}
+                    modules={[Autoplay]}
+                    autoplay={{
+                        delay: 15000,
+                        disableOnInteraction: false,
+                    }}
+                    loop
+                    spaceBetween={30}
+                    slidesPerView={1}
+                >
+                    {topHoles.map(holeNumber => {
+                        const holeData = holeInfo[holeNumber]?.hole
+                        if (!holeData) return null
+                        return (
+                            <SwiperSlide key={holeNumber}>
+                                <Box sx={{position: 'relative', borderRadius: '15px', overflow: 'hidden'}}>
+                                    <Box sx={{
+                                        position: 'absolute',
+                                        zIndex: 2,
+                                        right: '17%',
+                                        top: '10%',
+                                        transform: 'translateY(-50%)'
+                                    }}>
+                                        <Typography
+                                            variant="h4"
+                                            fontWeight="bold"
+                                            sx={{
+                                                fontSize: 'clamp(24px, 1.2vw, 42px)',
+                                                color: 'black',
+                                                fontFamily: 'Alatsi, sans-serif'
+                                            }}
+                                        >
+                                            {holeData.length}m
+                                        </Typography>
                                     </Box>
-                                </SwiperSlide>
+                                    <Box sx={{display: 'flex', justifyContent: 'center', my: 2}}>
+                                        <Image
+                                            src={`/cards/${holeNumber}.webp?v=4`}
+                                            alt={`Rada ${holeNumber}`}
+                                            layout="intrinsic"
+                                            width={450}
+                                            height={630}
+                                            style={{borderRadius: '10px'}}
+                                            sizes="(max-width: 600px) 100vw, 450px"
+                                        />
+                                    </Box>
+                                </Box>
 
-                            )
-                        })}
-                    </Swiper>
-                </Box>
-            </SwiperSlide>
+                                <Box mt={3} display="flex" justifyContent="space-between" gap={4} alignItems="start">
+                                    <Typography fontSize={20}>
+                                        Raskuselt <strong>{holeData.rank}</strong>. rada (
+                                        {holeData.average_diff !== undefined
+                                            ? `${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)} viset par-ile`
+                                            : ''}
+                                        )
+                                    </Typography>
+                                    <Typography fontSize={20} sx={{borderTop: '3px solid #f42b03', pt: 0.5}}>
+                                        {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
+                                    </Typography>
+                                </Box>
+                                {renderScoreBar(holeData)}
+                            </SwiperSlide>
+                        )
+                    })}
+                </Swiper>
+            </Box>
 
-            {/* Panel 2 - One Division Per Panel with Top 10 Players (Table Layout) */}
-            {Object.entries(topPlayersByDivision).map(([division, players]) => (
-                <SwiperSlide key={division}>
-                    <Box sx={{p: 6, height: '100vh', overflowY: 'auto'}}>
-                        <Typography variant="h3" fontWeight="bold" mb={4} textAlign="center">
+            {/* Second panel */}
+            <Box sx={{flex: 1, maxWidth: 400, minWidth: 400}}>
+                {Object.entries(topPlayersByDivision).map(([division, players]) => (
+                    <Box key={division} mb={3}>
+                        <Typography variant="h6" fontWeight="bold" mb={1}>
                             {division}
                         </Typography>
                         {players.map((player, index) => {
                             const breakdown = getScoreBreakdown(player)
                             return (
-                                <Box key={player.UserID} mb={2} gap={2}>
-                                    <Box display="flex" alignItems="center" justifyContent={"center"}>
-                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500}>
-                                            {index + 1}. {player.Name}
-                                        </Typography>
-                                        <Box display="flex" alignItems="center" gap={2}>
-                                            <Typography fontSize="clamp(1.5rem, 2vw, 2rem)" fontWeight="bold">
-                                                {Number(player.Diff) > 0 ? `+${player.Diff}` : player.Diff}
-                                            </Typography>
-                                            <Box display="flex" gap={1} minWidth={600}>
+                                <Box key={player.UserID} mb={1}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography>{index + 1}. {player.Name}</Typography>
+                                        <Box display="flex" alignItems="center" gap={1}>
+                                            <Box sx={{width: 40, textAlign: 'right'}}>
+                                                <Typography fontWeight="bold">
+                                                    {Number(player.Diff) > 0 ? `+${player.Diff}` : player.Diff}
+                                                </Typography>
+                                            </Box>
+                                            <Box display="flex" gap={0.5} flexWrap="wrap" width={140}>
                                                 {scoreCategories.map(({key, color}) => {
                                                     const count = breakdown[key as keyof typeof breakdown]
                                                     if (!count) return null
@@ -343,15 +330,16 @@ export default function TopHolesDashboard() {
                                                         <Box
                                                             key={key}
                                                             sx={{
-                                                                width: 60,
-                                                                height: 60,
+                                                                width: 20,
+                                                                height: 20,
                                                                 borderRadius: '50%',
                                                                 backgroundColor: color,
-                                                                fontSize: 'clamp(1.2rem, 1.8vw, 22rem)',
-                                                                fontWeight: 600,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center',
+                                                                fontSize: '12px',
+                                                                fontWeight: 500,
+                                                                color: '#000',
                                                             }}
                                                         >
                                                             {count}
@@ -365,89 +353,109 @@ export default function TopHolesDashboard() {
                             )
                         })}
                     </Box>
-                </SwiperSlide>
-            ))}
+                ))}
+            </Box>
 
-            {/* Panel 3 - Stats */}
-            <SwiperSlide>
-
-                <Box sx={{p: 6, height: '100vh', textAlign: 'center', position: 'relative'}}>
-
-
-                    <Box
-                        display="flex"
-                        flexWrap="wrap"
-                        justifyContent="center"
-                        gap={6}
-                        maxWidth="1200px"
-                        mx="auto"
-                    >
-                        {[{
-                            label: '🕒 Viimasel puulil',
-                            value: mostHolesLeft,
-                            sub: 'korvi 100st',
-                            bg: '#f8c600'
-                        }, {
-                            label: '🏁 Lõpetanud',
-                            value: finishedPlayersCount,
-                            sub: `mängijat ${playerCount}st`,
-                            bg: '#a6e4a3'
-                        }, {
-                            label: '📊 Viskeid kokku',
-                            value: totalThrows,
-                            sub: `keskmiselt ${(() => {
-                                const diff = Math.round(averageDiff);
-                                return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
-                            })()} viset par-ile`,
-                            bg: '#b3d4fc'
-                        }].map((item, i) => (
-                            <Box
-                                key={i}
-                                sx={{
-                                    flex: '1 1 300px',
-                                    minWidth: '300px',
-                                    maxWidth: '400px',
-                                    textAlign: 'center',
-                                }}
-                            >
-                                <Typography variant="h4" fontWeight="bold" mb={2}>
-                                    {item.label}
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        width: '30vh',
-                                        height: '30vh',
-                                        borderRadius: '50%',
-                                        backgroundColor: item.bg,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: 'clamp(2rem, 4.5vw, 44rem)',
-                                        fontWeight: 'bold',
-                                        color: '#000',
-                                        margin: '0 auto',
-                                    }}
-                                >
-                                    {item.value}
-                                </Box>
-                                <Typography variant="h6" mt={2}>
-                                    {item.sub}
-                                </Typography>
-                            </Box>
-                        ))}
-                    </Box>
+            {/* Third panel */}
+            <Box mt={0} textAlign="center">
+                <Box display="flex" flexDirection="column" alignItems="center" gap={4}>
                     <Image
                         src="/white_logo.webp"
                         alt="Logo"
-                        width={400}
-                        height={300}
+                        width={300}
+                        height={255}
                         priority
-                        style={{maxWidth: '80%', height: 'auto', marginBottom: '5vh'}}
+                        style={{ maxWidth: '100%', height: 'auto' }}
                     />
+                    {/* Most holes left */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            🕒 Viimasel puulil jäänud mängida
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#f8c600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {mostHolesLeft}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            korvi 100st
+                        </Typography>
+                    </Box>
+
+                    {/* Finished players */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            🏁 Lõpetanud mängijaid
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#a6e4a3',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {finishedPlayersCount}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            mängijat {playerCount}st
+                        </Typography>
+                    </Box>
+
+                    {/* Total throws */}
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                            📊 Viskeid kokku
+                        </Typography>
+                        <Box
+                            mt={2}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                backgroundColor: '#b3d4fc',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '28px',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                margin: '0 auto',
+                            }}
+                        >
+                            {totalThrows}
+                        </Box>
+                        <Typography variant="body2" mt={0}>
+                            keskmiselt {(() => {
+                            const diff = Math.round(averageDiff);
+                            return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
+                        })()} viset par-ile
+                        </Typography>
+
+                    </Box>
                 </Box>
-            </SwiperSlide>
-        </Swiper>
+            </Box>
+        </Box>
     )
-
-
 }
