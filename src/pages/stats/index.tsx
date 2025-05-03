@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Autocomplete,
     TextField,
@@ -38,31 +38,43 @@ export default function CtpStatsPage() {
     const [selectedPlayer, setSelectedPlayer] = useState<PlayerResult | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchResults = async () => {
-            try {
-                const res = await fetch(
-                    'https://discgolfmetrix.com/api.php?content=result&id=3204901'
-                );
-                const data = (await res.json()) as MetrixAPIResponse;
-                const players = data.Competition.Results;
-                setResults(players);
+    const fetchResults = async () => {
+        try {
+            const res = await fetch(
+                'https://discgolfmetrix.com/api.php?content=result&id=3204901'
+            );
+            const data = (await res.json()) as MetrixAPIResponse;
+            const players = data.Competition.Results;
+            setResults(players);
 
-                const savedPlayerId = localStorage.getItem(LOCAL_STORAGE_KEY);
-                if (savedPlayerId) {
-                    const player = players.find(
-                        (p) => p.UserID.toString() === savedPlayerId
-                    );
-                    if (player) setSelectedPlayer(player);
-                }
-            } catch (err) {
-                console.error('Failed to fetch Metrix results:', err);
-            } finally {
-                setLoading(false);
+            const savedPlayerId = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedPlayerId) {
+                const player = players.find(
+                    (p) => p.UserID.toString() === savedPlayerId
+                );
+                if (player) setSelectedPlayer(player);
+            }
+        } catch (err) {
+            console.error('Failed to fetch Metrix results:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchResults();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchResults();
             }
         };
 
-        fetchResults();
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     const getDelta = () => {
@@ -103,7 +115,7 @@ export default function CtpStatsPage() {
             else if (diff >= 3) tripleOrWorse++;
         }
 
-        return { eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse };
+        return {eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse};
     };
 
     return (
@@ -115,7 +127,7 @@ export default function CtpStatsPage() {
 
                 {loading ? (
                     <Box mt={4} display="flex" justifyContent="center">
-                        <CircularProgress />
+                        <CircularProgress/>
                     </Box>
                 ) : (
                     <Box mt={4}>
@@ -132,12 +144,12 @@ export default function CtpStatsPage() {
                                 }
                             }}
                             renderInput={(params) => (
-                                <TextField {...params} label="Mängija nimi" fullWidth sx={{ mb: 2 }} />
+                                <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
                             )}
                         />
 
                         {selectedPlayer && (
-                            <Paper elevation={3} sx={{ mt: 2, p: 3, textAlign: 'left' }}>
+                            <Paper elevation={3} sx={{mt: 2, p: 3, textAlign: 'left'}}>
                                 <Box display="flex" justifyContent="space-between">
                                     <Typography variant="h6" gutterBottom>
                                         {selectedPlayer.Name}
@@ -146,7 +158,7 @@ export default function CtpStatsPage() {
                                         {Number(selectedPlayer.Diff) > 0 ? `+${selectedPlayer.Diff}` : selectedPlayer.Diff}
                                     </Typography>
                                 </Box>
-                                <Divider sx={{ mb: 2 }} />
+                                <Divider sx={{mb: 2}}/>
                                 <Box display="flex" justifyContent="space-between" mb={1}>
                                     <Typography fontWeight="bold">Klass:</Typography>
                                     <Typography>{selectedPlayer.ClassName}</Typography>
@@ -165,7 +177,7 @@ export default function CtpStatsPage() {
                                     <Typography>{getOverallPlace()}. koht</Typography>
                                 </Box>
 
-                                <Divider sx={{ my: 2 }} />
+                                <Divider sx={{my: 2}}/>
 
                                 {/* Score breakdown bar and chips */}
                                 {(() => {
@@ -173,12 +185,32 @@ export default function CtpStatsPage() {
                                     if (!breakdown) return null;
 
                                     const categories = [
-                                        { key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles },
-                                        { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie', value: breakdown.birdies },
-                                        { key: 'pars', color: '#ECECECFF', label: 'Par', value: breakdown.pars },
-                                        { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey', value: breakdown.bogeys },
-                                        { key: 'doubleBogeys', color: 'rgba(244,43,3,.26)', label: 'Double', value: breakdown.doubleBogeys },
-                                        { key: 'tripleOrWorse', color: 'rgba(244,43,3,.42)', label: 'Triple+', value: breakdown.tripleOrWorse },
+                                        {key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles},
+                                        {
+                                            key: 'birdies',
+                                            color: 'rgba(62,195,0,.34)',
+                                            label: 'Birdie',
+                                            value: breakdown.birdies
+                                        },
+                                        {key: 'pars', color: '#ECECECFF', label: 'Par', value: breakdown.pars},
+                                        {
+                                            key: 'bogeys',
+                                            color: 'rgba(244,43,3,.12)',
+                                            label: 'Bogey',
+                                            value: breakdown.bogeys
+                                        },
+                                        {
+                                            key: 'doubleBogeys',
+                                            color: 'rgba(244,43,3,.26)',
+                                            label: 'Double',
+                                            value: breakdown.doubleBogeys
+                                        },
+                                        {
+                                            key: 'tripleOrWorse',
+                                            color: 'rgba(244,43,3,.42)',
+                                            label: 'Triple+',
+                                            value: breakdown.tripleOrWorse
+                                        },
                                     ];
 
                                     const total = categories.reduce((sum, cat) => sum + cat.value, 0);
@@ -186,8 +218,9 @@ export default function CtpStatsPage() {
 
                                     return (
                                         <>
-                                            <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%" mt={2}>
-                                                {categories.map(({ key, color, value }) => {
+                                            <Box display="flex" height={10} borderRadius={2} overflow="hidden"
+                                                 width="100%" mt={2}>
+                                                {categories.map(({key, color, value}) => {
                                                     const percent = (value / total) * 100;
                                                     return (
                                                         <Box
@@ -205,7 +238,7 @@ export default function CtpStatsPage() {
                                             </Box>
 
                                             <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                                                {categories.map(({ key, label, color, value }) => {
+                                                {categories.map(({key, label, color, value}) => {
                                                     if (!value) return null;
                                                     return (
                                                         <Box
