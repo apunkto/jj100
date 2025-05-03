@@ -422,7 +422,7 @@ export default function TopHolesDashboard() {
                         }, {
                             label: '📊 Viskeid kokku',
                             value: totalThrows,
-                            sub: `keskmiselt ${(() => {
+                            sub: `${(() => {
                                 const diff = Math.round(averageDiff);
                                 return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
                             })()} viset par-ile`,
@@ -449,7 +449,7 @@ export default function TopHolesDashboard() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        fontSize: 'clamp(2rem, 4.5vw, 44rem)',
+                                        fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.5vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
                                         fontWeight: 'bold',
                                         color: '#000',
                                         margin: '0 auto',
@@ -457,7 +457,7 @@ export default function TopHolesDashboard() {
                                 >
                                     {item.value}
                                 </Box>
-                                <Typography variant="h6" mt={2}>
+                                <Typography variant="h6" mt={2} fontSize={30}>
                                     {item.sub}
                                 </Typography>
                             </Box>
