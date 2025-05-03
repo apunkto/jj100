@@ -31,11 +31,11 @@ type MetrixAPIResponse = {
 
 const scoreCategories = [
     {key: 'eagles', color: '#f8c600', label: 'Eagle'},
-    {key: 'birdies', color: 'rgba(62,195,0,.64)', label: 'Birdie'},
-    {key: 'pars', color: '#c6c6c6', label: 'Par'},
-    {key: 'bogeys', color: 'rgba(244,43,3,.30)', label: 'Bogey'},
-    {key: 'doubleBogeys', color: 'rgba(244,43,3,.50)', label: 'Double'},
-    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.70)', label: 'Triple+'},
+    {key: 'birdies', color: 'rgba(62,195,0,.70)', label: 'Birdie'},
+    {key: 'pars', color: '#b1b1b1', label: 'Par'},
+    {key: 'bogeys', color: 'rgba(244,43,3,.50)', label: 'Bogey'},
+    {key: 'doubleBogeys', color: 'rgba(244,43,3,.60)', label: 'Double'},
+    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.80)', label: 'Triple+'},
 ]
 
 export default function TopHolesDashboard() {
