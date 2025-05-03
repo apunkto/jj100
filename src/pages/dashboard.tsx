@@ -32,10 +32,10 @@ type MetrixAPIResponse = {
 const scoreCategories = [
     {key: 'eagles', color: '#f8c600', label: 'Eagle'},
     {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
-    {key: 'pars', color: '#ECECECFF', label: 'Par'},
-    {key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey'},
-    {key: 'doubleBogeys', color: 'rgba(244,43,3,.26)', label: 'Double'},
-    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.42)', label: 'Triple+'},
+    {key: 'pars', color: '#c6c6c6', label: 'Par'},
+    {key: 'bogeys', color: 'rgba(244,43,3,.26)', label: 'Bogey'},
+    {key: 'doubleBogeys', color: 'rgba(244,43,3,.42)', label: 'Double'},
+    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.64)', label: 'Triple+'},
 ]
 
 export default function TopHolesDashboard() {
@@ -199,13 +199,13 @@ export default function TopHolesDashboard() {
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    px: 2,
-                                    py: 1,
-                                    borderRadius: '20px',
+                                    px: 10,
+                                    py: 2,
+                                    borderRadius: '40px',
                                     backgroundColor: color,
                                     color: '#000',
                                     fontWeight: 600,
-                                    fontSize: '2.5rem', // ~20px
+                                    fontSize: '3rem', // ~20px
                                 }}
                             >
 
@@ -292,16 +292,16 @@ export default function TopHolesDashboard() {
                                         {/* Right: Hole Info */}
                                         <Box maxWidth={500}>
 
-                                            <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2}>
+                                            <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2} textAlign={'right'} >
                                                 Raskuselt <strong>{holeData.rank}</strong>. rada
                                             </Typography>
-                                            <Typography textAlign={'right'} fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" mb={10}>
+                                            <Typography textAlign={'right'} fontWeight={600} fontSize="clamp(1rem, 2.3vw, 2.5rem)" mb={2} mt={10}>
                                                 {holeData.average_diff !== undefined
                                                     ? `${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)} viset par-ile`
                                                     : ''}
                                             </Typography>
 
-                                            <Typography textAlign={'right'} fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" borderTop={'3px solid #f42b03'}  mb={10}>
+                                            <Typography textAlign={'right'} fontWeight={600} fontSize="clamp(1rem, 2.3vw, 2.5rem)" borderBottom={'6px solid #f42b03'}  mb={10}>
                                                 {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
                                             </Typography>
 
