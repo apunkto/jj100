@@ -180,6 +180,15 @@ export default function CoursePage() {
         )
     }
 
+    const formatRelativeTime = (timestamp: number): string => {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000)
+        if (seconds < 60) return `${seconds} sek tagasi`
+        const minutes = Math.floor(seconds / 60)
+        if (minutes < 60) return `${minutes} min tagasi`
+        const hours = Math.floor(minutes / 60)
+        return `${hours} h tagasi`
+    }
+
     return (
         <Layout>
             <Box mt={0}>
@@ -316,9 +325,9 @@ export default function CoursePage() {
 
                 {renderScoreBar()}
 
-                {lastUpdated && (
+                {holeInfo[currentHoleNumber]?.fetchedAt && (
                     <Typography fontSize={10} textAlign="center" mt={2} color="gray">
-                        Uuendatud: {new Date(lastUpdated).toLocaleTimeString('et-EE')}
+                        Uuendatud: {formatRelativeTime(holeInfo[currentHoleNumber].fetchedAt)}
                     </Typography>
                 )}
             </Box>
