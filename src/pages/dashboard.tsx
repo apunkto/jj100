@@ -140,7 +140,7 @@ export default function TopHolesDashboard() {
                     return 0
                 })
 
-                grouped[division] = grouped[division].slice(0, 10)
+                grouped[division] = grouped[division].slice(0, 8)
             })
 
             setTopPlayersByDivision(grouped)
