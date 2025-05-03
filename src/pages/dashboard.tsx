@@ -16,7 +16,7 @@ type PlayerResult = {
     UserID: number
     Name: string
     OrderNumber: number
-    Diff: string
+    Diff: number
     ClassName: string
     Sum: number
     DNF?: boolean | null

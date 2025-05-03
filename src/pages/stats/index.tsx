@@ -18,7 +18,7 @@ type PlayerResult = {
     UserID: number;
     Name: string;
     OrderNumber: number;
-    Diff: string;
+    Diff: number;
     ClassName: string;
     Sum: number;
     Dnf?: boolean | null;
@@ -71,9 +71,9 @@ export default function CtpStatsPage() {
             (p) => p.ClassName === selectedPlayer.ClassName
         );
         const leader = sameClassPlayers.reduce((min, p) =>
-            p.Sum < min.Sum ? p : min
+            p.Diff < min.Diff ? p : min
         );
-        return selectedPlayer.Sum - leader.Sum;
+        return selectedPlayer.Diff - leader.Diff;
     };
 
     const getOverallPlace = () => {
