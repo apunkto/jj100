@@ -79,7 +79,7 @@ export default function CtpStatsPage() {
     const getOverallPlace = () => {
         if (!selectedPlayer) return null;
         const validPlayers = results.filter((p) => p.Dnf !== true);
-        const sorted = [...validPlayers].sort((a, b) => a.Sum - b.Sum);
+        const sorted = [...validPlayers].sort((a, b) => a.Diff - b.Diff);
         const index = sorted.findIndex((p) => p.UserID === selectedPlayer.UserID);
         return index >= 0 ? index + 1 : null;
     };
