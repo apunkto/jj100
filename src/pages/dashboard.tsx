@@ -205,7 +205,7 @@ export default function TopHolesDashboard() {
                                     backgroundColor: color,
                                     color: '#000',
                                     fontWeight: 600,
-                                    fontSize: '1.25rem', // ~20px
+                                    fontSize: '2.5rem', // ~20px
                                 }}
                             >
 
@@ -272,7 +272,7 @@ export default function TopHolesDashboard() {
                                                     variant="h4"
                                                     fontWeight="bold"
                                                     sx={{
-                                                        fontSize: 'clamp(24px, 1.7vw, 72px)',
+                                                        fontSize: 'clamp(35px, 1.7vw, 72px)',
                                                         color: 'black',
                                                         fontFamily: 'Alatsi, sans-serif'
                                                     }}
@@ -295,13 +295,13 @@ export default function TopHolesDashboard() {
                                             <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2}>
                                                 Raskuselt <strong>{holeData.rank}</strong>. rada
                                             </Typography>
-                                            <Typography fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" mb={2}>
+                                            <Typography textAlign={'right'} fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" mb={10}>
                                                 {holeData.average_diff !== undefined
                                                     ? `${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)} viset par-ile`
                                                     : ''}
                                             </Typography>
 
-                                            <Typography fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" color="#f42b03" mb={2}>
+                                            <Typography textAlign={'right'} fontSize="clamp(1.5rem, 2.5vw, 2.5rem)" borderTop={'3px solid #f42b03'}  mb={10}>
                                                 {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
                                             </Typography>
 
