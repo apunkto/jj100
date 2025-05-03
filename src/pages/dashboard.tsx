@@ -31,11 +31,11 @@ type MetrixAPIResponse = {
 
 const scoreCategories = [
     {key: 'eagles', color: '#f8c600', label: 'Eagle'},
-    {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
+    {key: 'birdies', color: 'rgba(62,195,0,.64)', label: 'Birdie'},
     {key: 'pars', color: '#c6c6c6', label: 'Par'},
-    {key: 'bogeys', color: 'rgba(244,43,3,.26)', label: 'Bogey'},
-    {key: 'doubleBogeys', color: 'rgba(244,43,3,.42)', label: 'Double'},
-    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.64)', label: 'Triple+'},
+    {key: 'bogeys', color: 'rgba(244,43,3,.30)', label: 'Bogey'},
+    {key: 'doubleBogeys', color: 'rgba(244,43,3,.50)', label: 'Double'},
+    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.70)', label: 'Triple+'},
 ]
 
 export default function TopHolesDashboard() {
@@ -355,7 +355,7 @@ export default function TopHolesDashboard() {
                             return (
                                 <Box key={player.UserID} mb={2} gap={2}>
                                     <Box display="flex" alignItems="center" justifyContent={"center"}>
-                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500}>
+                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500} fontWeight="600">
                                             {index + 1}. {player.Name}
                                         </Typography>
                                         <Box display="flex" alignItems="center" gap={2}>
