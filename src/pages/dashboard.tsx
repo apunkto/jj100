@@ -1,11 +1,13 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {Swiper, SwiperSlide} from 'swiper/react'
-import {Autoplay} from 'swiper/modules'
+import {Autoplay, Keyboard} from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/autoplay'
 import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import {useRouter} from "next/router";
+
 
 // Metrix types
 type HoleResultAPI = {
@@ -32,10 +34,10 @@ type MetrixAPIResponse = {
 const scoreCategories = [
     {key: 'eagles', color: '#f8c600', label: 'Eagle'},
     {key: 'birdies', color: 'rgba(62,195,0,.70)', label: 'Birdie'},
-    {key: 'pars', color: '#b1b1b1', label: 'Par'},
+    {key: 'pars', color: '#c6c6c6', label: 'Par'},
     {key: 'bogeys', color: 'rgba(244,43,3,.50)', label: 'Bogey'},
-    {key: 'doubleBogeys', color: 'rgba(244,43,3,.60)', label: 'Double'},
-    {key: 'tripleOrWorse', color: 'rgba(244,43,3,.80)', label: 'Triple+'},
+    {key: 'double_bogeys', color: 'rgba(244,43,3,.60)', label: 'Double'},
+    {key: 'others', color: 'rgba(244,43,3,.80)', label: 'Triple+'},
 ]
 
 export default function TopHolesDashboard() {
@@ -51,8 +53,9 @@ export default function TopHolesDashboard() {
     const swiperRef = useRef<any>(null)
     const [activeSlideIndex, setActiveSlideIndex] = useState(0)
 
-
-
+    const router = useRouter()
+    const isLooping = router.query.loop !== 'off'
+    const isAutoplay = isLooping
 
     const countScoreTypes = (player: PlayerResult) => {
         let birdieOrBetter = 0,
@@ -66,7 +69,6 @@ export default function TopHolesDashboard() {
         }
         return {birdieOrBetter, pars, bogeys}
     }
-
 
 
     const getScoreBreakdown = (player: PlayerResult) => {
@@ -175,8 +177,7 @@ export default function TopHolesDashboard() {
 
     useEffect(() => {
         const swiper = swiperRef.current
-        if (!swiper) return
-
+        if (!isAutoplay || !swiper) return
         let timeout: NodeJS.Timeout
 
         const slideDurations = [60000, ...Object.keys(topPlayersByDivision).map(() => 15000), 60000] // ms
@@ -193,60 +194,84 @@ export default function TopHolesDashboard() {
     }, [activeSlideIndex, topPlayersByDivision])
 
     const renderScoreBar = (hole: HoleResult['hole']) => {
-        const total = scoreCategories.reduce(
-            (sum, cat) => sum + Number(hole[cat.key as keyof typeof hole] || 0),
-            0
-        )
-        if (total === 0) return null
+        const categoryValues = scoreCategories.map(({ key, label, color }) => ({
+            key,
+            label,
+            color,
+            value: Number(hole[key as keyof typeof hole] || 0),
+        }))
+
+        const maxValue = Math.max(...categoryValues.map(c => c.value))
+        if (maxValue === 0) return null
 
         return (
-            <Box mt={2}>
-                <Box display="flex" height={14} borderRadius={2} overflow="hidden" width="100%">
-                    {scoreCategories.map(({key, color}) => {
-                        const value = hole[key as keyof typeof hole] || 0
-                        const percent = (Number(value) / total) * 100
-                        return (
-                            <Box
-                                key={key}
-                                sx={{
-                                    width: `${percent}%`,
-                                    backgroundColor: color,
-                                    display: percent > 0 ? 'block' : 'none',
-                                    minWidth: '2px',
-                                    height: '100%',
-                                }}
-                            />
-                        )
-                    })}
-                </Box>
+            <Box
+                mt={4}
+                display="flex"
+                flexDirection="column"
+                alignItems="stretch"
+                gap={0.5}
+            >
+                {categoryValues.map(({ key, label, color, value }) => {
+                    if (!value) return null
+                    const widthPercent = (value / maxValue) * 100
 
-                <Box mt={1.5} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                    {scoreCategories.map(({key, color, label}) => {
-                        const value = hole[key as keyof typeof hole] || 0
-                        if (!value) return null
-                        return (
+                    return (
+                        <Box
+                            key={key}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            width="100%"
+                        >
+                            {/* Left: value + label, fixed width */}
                             <Box
-                                key={key}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    px: 10,
-                                    py: 2,
-                                    borderRadius: '40px',
-                                    backgroundColor: color,
-                                    color: '#000',
-                                    fontWeight: 600,
-                                    fontSize: '3rem', // ~20px
-                                }}
+                                display="flex"
+                                alignItems="center"
+                                width={180}
+                                flexShrink={0}
                             >
-
-                                {label}: {value}
+                                <Typography
+                                    fontWeight={700}
+                                    fontSize="2.2rem"
+                                    width={60}
+                                    textAlign="right"
+                                >
+                                    {value}
+                                </Typography>
+                                <Typography
+                                    ml={1}
+                                    fontSize="2.1rem"
+                                    color="#333"
+                                    whiteSpace="nowrap"
+                                >
+                                    {label}
+                                </Typography>
                             </Box>
-                        )
-                    })}
-                </Box>
+
+                            {/* Right: bar container (aligned!) */}
+                            <Box flexGrow={1} pl={2}>
+                                <Box
+                                    height={25}
+                                    borderRadius={9}
+                                    sx={{
+                                        backgroundColor: color,
+                                        width: `${widthPercent}%`,
+                                        transition: 'width 0.3s ease',
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    )
+                })}
             </Box>
         )
+    }
+
+    function getOrdinal(n: number): string {
+        const s = ["th", "st", "nd", "rd"],
+            v = n % 100
+        return n + (s[(v - 20) % 10] || s[v] || s[0])
     }
 
     useEffect(() => {
@@ -265,8 +290,9 @@ export default function TopHolesDashboard() {
                 setActiveSlideIndex(swiper.realIndex)
             }}
 
-            modules={[Autoplay]}
-
+            modules={[Autoplay, Keyboard]} // ← add Keyboard here
+            keyboard={{enabled: true}}   // ← enable keyboard control
+            loop={isLooping}
             spaceBetween={50}
             slidesPerView={1}
             style={{height: '100vh'}}
@@ -288,10 +314,10 @@ export default function TopHolesDashboard() {
                             if (!holeData) return null
                             return (
                                 <SwiperSlide key={holeNumber}>
-                                    <Box display="flex" justifyContent="center" alignItems="flex-start" gap={6}
-                                         flexWrap="wrap">
+                                    <Box display="flex" justifyContent="center" alignItems="stretch" gap={6}
+                                         flexWrap="nowrap" height="100%">
                                         {/* Left: Hole Image */}
-                                        <Box position={'relative'} mb={"4rem"}>
+                                        <Box position="relative" height="100%" display="flex" alignItems="center">
                                             <Box sx={{
                                                 position: 'absolute',
                                                 zIndex: 2,
@@ -321,20 +347,42 @@ export default function TopHolesDashboard() {
                                         </Box>
 
                                         {/* Right: Hole Info */}
-                                        <Box maxWidth={500}>
+                                        <Box
+                                            maxWidth={600}
+                                            width={600}
+                                            height={840}
 
-                                            <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2} textAlign={'right'} >
-                                                Raskuselt <strong>{holeData.rank}</strong>. rada
-                                            </Typography>
-                                            <Typography textAlign={'right'} fontWeight={600} fontSize="clamp(1rem, 2.3vw, 2.5rem)" mb={2} mt={10}>
-                                                {holeData.average_diff !== undefined
-                                                    ? `${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)} viset par-ile`
-                                                    : ''}
-                                            </Typography>
+                                            display="flex"
+                                            flexDirection="column"
+                                            justifyContent="space-between"
+                                        >
+                                            <Box>
+                                                <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2} textAlign="right">
+                                                    Difficulty: <strong>{getOrdinal(holeData.rank)}</strong>
+                                                </Typography>
 
-                                            <Typography textAlign={'right'} fontWeight={600} fontSize="clamp(1rem, 2.3vw, 2.5rem)" borderBottom={'6px solid #f42b03'}  mb={10}>
-                                                {holeData.ob_percent !== undefined ? `${Math.round(holeData.ob_percent)}% viskas OB` : ''}
-                                            </Typography>
+
+                                                <Typography textAlign={'right'} fontWeight={600}
+                                                            fontSize="clamp(1rem, 2.3vw, 2.5rem)" mb={0} mt={2}>
+                                                    {holeData.average_diff !== undefined
+                                                        ? `To par: ${holeData.average_diff > 0 ? '+' : ''}${holeData.average_diff.toFixed(1)}`
+                                                        : ''}
+                                                </Typography>
+
+                                                <Typography textAlign="right" fontWeight={600}
+                                                            fontSize="clamp(1rem, 2.3vw, 2.5rem)" mb={2}>
+                                                    {holeData.ob_percent !== undefined && (
+                                                        <>
+                                                            Went OB:
+                                                            <Box component="span"
+                                                                 sx={{color: '#f42b03', fontWeight: 'bold', ml:1}}>
+                                                                {Math.round(holeData.ob_percent)}%
+                                                            </Box>{' '}
+
+                                                        </>
+                                                    )}
+                                                </Typography>
+                                            </Box>
 
                                             {renderScoreBar(holeData)}
                                         </Box>
@@ -359,8 +407,15 @@ export default function TopHolesDashboard() {
                             return (
                                 <Box key={player.UserID} mb={2} gap={2}>
                                     <Box display="flex" alignItems="center" justifyContent={"center"}>
-                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500} fontWeight="600">
-                                            {index + 1}. {player.Name}
+                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500}
+                                                    fontWeight="600">
+                                            {index === 0 ? (
+                                                <Box component="span" mr={1} fontSize="1.8rem">🔥</Box>
+                                            ) : (
+                                                `${index + 1}. `
+                                            )}
+                                            {player.Name}
+
                                         </Typography>
                                         <Box display="flex" alignItems="center" gap={2}>
                                             <Typography fontSize="clamp(1.5rem, 2vw, 2rem)" fontWeight="bold">
