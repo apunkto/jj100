@@ -129,7 +129,9 @@ export default function TopHolesDashboard() {
 
             Object.keys(grouped).forEach(division => {
                 grouped[division].sort((a, b) => {
-                    if (a.Sum !== b.Sum) return a.Sum - b.Sum
+                    const aDiff = Number(a.Diff) || 0
+                    const bDiff = Number(b.Diff) || 0
+                    if (aDiff !== bDiff) return aDiff - bDiff
                     const aStats = countScoreTypes(a)
                     const bStats = countScoreTypes(b)
                     if (aStats.birdieOrBetter !== bStats.birdieOrBetter) return bStats.birdieOrBetter - aStats.birdieOrBetter
@@ -137,6 +139,7 @@ export default function TopHolesDashboard() {
                     if (aStats.bogeys !== bStats.bogeys) return bStats.bogeys - aStats.bogeys
                     return 0
                 })
+
                 grouped[division] = grouped[division].slice(0, 4)
             })
 
