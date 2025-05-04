@@ -52,6 +52,12 @@ const getTopRankedHoles = async (): Promise<HoleResult[]> => {
     return await res.json()
 }
 
+const getHoles = async (): Promise<HoleResult[]> => {
+    const res = await fetch(`${API_BASE}/holes`)
+    if (!res.ok) throw new Error('Failed to fetch top ranked holes')
+    return await res.json()
+}
+
 const submitCtp = async (holeId: number, playerId: number, distanceCm: number) => {
     const res = await fetch(`${API_BASE}/ctp/${holeId}`, {
         method: 'POST',
@@ -73,6 +79,7 @@ export default function useCtpApi() {
     return {
         getHole,
         getTopRankedHoles,
+        getHoles,
         submitCtp,
         getCtpHoles
     }

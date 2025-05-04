@@ -12,7 +12,7 @@ import {useRouter} from "next/router";
 // Metrix types
 type HoleResultAPI = {
     Diff: number
-    Result: number
+    Result: string
 }
 
 type PlayerResult = {
@@ -42,7 +42,7 @@ const scoreCategories = [
 ]
 
 export default function TopHolesDashboard() {
-    const {getTopRankedHoles} = useCtpApi()
+    const {getTopRankedHoles, getHoles} = useCtpApi()
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult>>({})
     const [topHoles, setTopHoles] = useState<number[]>([])
     const [playerCount, setPlayerCount] = useState<number>(0)
@@ -65,12 +65,14 @@ export default function TopHolesDashboard() {
 
     const [currentStreakIndex, setCurrentStreakIndex] = useState(0)
 
-    const [biggestScores, setBiggestScores] = useState<{
-        value: number
+    const [longestAces, setLongestAces] = useState<{
         player: string
         holeNumber: number
-        hadPenalty: boolean
+        length: number
     }[]>([])
+
+    const [currentAceIndex, setCurrentAceIndex] = useState(0)
+
 
     const router = useRouter()
     const isLooping = router.query.loop !== 'off'
@@ -135,8 +137,10 @@ export default function TopHolesDashboard() {
     const fetchTopHoles = useCallback(async () => {
         try {
             const topHolesData = await getTopRankedHoles()
+            const holesData = await getHoles()
+
             const holeMap: Record<number, HoleResult> = {}
-            topHolesData.forEach(h => {
+            holesData.forEach(h => {
                 holeMap[h.hole.number] = h
             })
             setHoleInfo(holeMap)
@@ -193,39 +197,39 @@ export default function TopHolesDashboard() {
             setLongestStreaks(streaks)
             setCurrentStreakIndex(0)
 
-            let maxScore = 0
-            let worsts: typeof biggestScores = []
+            let maxAceLength = 0
+            let aces: typeof longestAces = []
 
             for (const player of players) {
                 if (player.DNF || !player.PlayerResults) continue
 
-                player.PlayerResults.forEach((holeResult, i) => {
+                player.PlayerResults.forEach((holeResult, index) => {
                     if (!holeResult || Array.isArray(holeResult)) return
-                    const result = holeResult.Result
-                    const pen = parseInt((holeResult as any).PEN || '0', 10)
-
-                    if (result > maxScore) {
-                        maxScore = result
-                        worsts = [{
-                            value: result,
-                            player: player.Name,
-                            holeNumber: i + 1,
-                            hadPenalty: pen > 0
-                        }]
-                    } else if (result === maxScore) {
-                        worsts.push({
-                            value: result,
-                            player: player.Name,
-                            holeNumber: i + 1,
-                            hadPenalty: pen > 0
-                        })
+                    const resultNum = parseInt(holeResult.Result)
+                    if (!isNaN(resultNum) && resultNum === 1) {
+                        const holeNum = index + 1
+                        const holeLength = holeMap[holeNum]?.hole.length ?? 0
+                        console.log(`Player ${player.Name} aced hole ${holeNum} (${holeLength}m)`)
+                        if (holeLength > maxAceLength) {
+                            maxAceLength = holeLength
+                            aces = [{
+                                player: player.Name,
+                                holeNumber: holeNum,
+                                length: holeLength
+                            }]
+                        } else if (holeLength === maxAceLength) {
+                            aces.push({
+                                player: player.Name,
+                                holeNumber: holeNum,
+                                length: holeLength
+                            })
+                        }
                     }
                 })
             }
 
-            setBiggestScores(worsts)
-            setCurrentBiggestIndex(0)
-
+            setLongestAces(aces)
+            setCurrentAceIndex(0)
 
             setPlayerCount(players.length)
 
@@ -295,14 +299,15 @@ export default function TopHolesDashboard() {
     }, [getTopRankedHoles])
 
     useEffect(() => {
-        if (biggestScores.length <= 1) return
+        if (longestAces.length <= 1) return
 
         const interval = setInterval(() => {
-            setCurrentBiggestIndex((prev) => (prev + 1) % biggestScores.length)
+            setCurrentAceIndex((prev) => (prev + 1) % longestAces.length)
         }, 15000)
 
         return () => clearInterval(interval)
-    }, [biggestScores])
+    }, [longestAces])
+
 
     useEffect(() => {
         fetchTopHoles()
@@ -626,7 +631,7 @@ export default function TopHolesDashboard() {
                                 label: '🕒 Viimasel puulil',
                                 value: mostHolesLeft,
                                 sub: 'korvi 100st',
-                                bg: '#f8c600',
+                                bg: '#fb638c',
                             },
                             {
                                 label: '🏁 Lõpetanud',
@@ -662,18 +667,13 @@ export default function TopHolesDashboard() {
                                 ]
                                 : []),
 
-                            ...(biggestScores.length > 0
-                                ? [
-                                    {
-                                        label: '💥 Suurim skoor',
-                                        value: biggestScores[currentBiggestIndex]?.value,
-                                        sub: `${biggestScores[currentBiggestIndex]?.player} (rada ${String(
-                                            biggestScores[currentBiggestIndex]?.holeNumber
-                                        ).padStart(2, '0')})`,
-                                        bg: '#ff9999',
-                                        borderTop: biggestScores[currentBiggestIndex]?.hadPenalty ? '8px solid red' : 'none',
-                                    },
-                                ]
+                            ...(longestAces.length > 0
+                                ? [{
+                                    label: '🎯 Pikim HIO',
+                                    value: `${longestAces[currentAceIndex]?.length}m`,
+                                    sub: `${longestAces[currentAceIndex]?.player} (rada ${String(longestAces[currentAceIndex]?.holeNumber).padStart(2, '0')})`,
+                                    bg: '#f4d774',
+                                }]
                                 : []),
                         ].map((item, i) => (
                             <Box
@@ -708,27 +708,16 @@ export default function TopHolesDashboard() {
                                         component="span"
                                         sx={{
                                             position: 'relative',
-                                            fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.1vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
+                                            fontSize: item.label.includes('Viskeid') || item.label.includes('HIO') ? 'clamp(2rem, 3.1vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
                                             fontWeight: 'bold',
                                             color: '#000',
-                                            '&::before':
-                                                item.label.includes('Suurim skoor') && item.borderTop
-                                                    ? {
-                                                        content: '""',
-                                                        position: 'absolute',
-                                                        top: 10,
-                                                        left: 0,
-                                                        right: 0,
-                                                        height: '6px',
-                                                        backgroundColor: 'red',
-                                                    }
-                                                    : undefined,
+
                                         }}
                                     >
                                         {item.value}
                                     </Typography>
                                 </Box>
-                                <Box mt={1} sx={{fontSize: 27, fontWeight:500, lineHeight: 1.2}}>
+                                <Box mt={1} sx={{fontSize: 27, fontWeight: 500, lineHeight: 1.2}}>
                                     {item.sub.replace(/\s*\(.*\)/, '')}
                                     <br/>
                                     <span style={{fontSize: 25}}>
