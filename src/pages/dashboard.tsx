@@ -387,6 +387,7 @@ export default function TopHolesDashboard() {
                                 <Typography
                                     ml={1}
                                     fontSize="2.1rem"
+                                    fontWeight={500}
                                     color="#333"
                                     whiteSpace="nowrap"
                                 >
@@ -485,8 +486,8 @@ export default function TopHolesDashboard() {
                                             <Image
                                                 src={`/cards/${holeNumber}.webp?v=4`}
                                                 alt={`Rada ${holeNumber}`}
-                                                width={464}
-                                                height={650}
+                                                width={470}
+                                                height={670}
                                                 style={{borderRadius: '30px'}}
                                             />
                                         </Box>
@@ -495,14 +496,14 @@ export default function TopHolesDashboard() {
                                         <Box
                                             maxWidth={600}
                                             width={500}
-                                            height={650}
+                                            height={670}
 
                                             display="flex"
                                             flexDirection="column"
                                             justifyContent="space-between"
                                         >
                                             <Box>
-                                                <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2}
+                                                <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2} fontWeight={500}
                                                             textAlign="right">
                                                     Difficulty: <strong>{getOrdinal(holeData.rank)}</strong>
                                                 </Typography>
