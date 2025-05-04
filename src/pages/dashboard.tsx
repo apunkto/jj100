@@ -7,11 +7,13 @@ import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import {useRouter} from "next/router";
+import StatBox from "@/src/components/AnimatedStats";
 
 
 // Metrix types
 type HoleResultAPI = {
     Diff: number
+    Result: number
 }
 
 type PlayerResult = {
@@ -50,8 +52,26 @@ export default function TopHolesDashboard() {
     const [finishedPlayersCount, setFinishedPlayersCount] = useState<number>(0)
     const [totalThrows, setTotalThrows] = useState<number>(0)
     const [averageDiff, setAverageDiff] = useState<number>(0)
+    const [lakeOBCount, setLakeOBCount] = useState<number>(0)
+    const [lakePlayersCount, setLakePlayersCount] = useState<number>(0)
     const swiperRef = useRef<any>(null)
     const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+    const [currentBiggestIndex, setCurrentBiggestIndex] = useState(0)
+    const [longestStreaks, setLongestStreaks] = useState<{
+        count: number
+        player: string
+        startHole: number
+        endHole: number
+    }[]>([])
+
+    const [currentStreakIndex, setCurrentStreakIndex] = useState(0)
+
+    const [biggestScores, setBiggestScores] = useState<{
+        value: number
+        player: string
+        holeNumber: number
+        hadPenalty: boolean
+    }[]>([])
 
     const router = useRouter()
     const isLooping = router.query.loop !== 'off'
@@ -126,6 +146,89 @@ export default function TopHolesDashboard() {
             const res = await fetch('https://discgolfmetrix.com/api.php?content=result&id=3204902')
             const metrixData = (await res.json()) as MetrixAPIResponse
             const players = metrixData.Competition.Results
+            let bestCount = 0
+            let streaks: typeof longestStreaks = []
+
+            for (const player of players) {
+                if (player.DNF || !player.PlayerResults) continue
+
+                const results = player.PlayerResults
+                const holeCount = results.length
+
+                for (let i = 0; i < holeCount; i++) {
+                    let streak = 0
+
+                    while (streak < holeCount) {
+                        const index = (i + streak) % holeCount
+                        const holeResult = results[index]
+
+                        // Ensure it's a played hole (not [])
+                        if (!holeResult || Array.isArray(holeResult)) break
+
+                        const diff = holeResult.Diff
+                        if (diff >= 0) break
+
+                        streak++
+                    }
+
+                    if (streak > bestCount) {
+                        bestCount = streak
+                        streaks = [{
+                            count: streak,
+                            player: player.Name,
+                            startHole: (i % holeCount) + 1,
+                            endHole: ((i + streak - 1) % holeCount) + 1
+                        }]
+                    } else if (streak === bestCount) {
+                        streaks.push({
+                            count: streak,
+                            player: player.Name,
+                            startHole: (i % holeCount) + 1,
+                            endHole: ((i + streak - 1) % holeCount) + 1
+                        })
+                    }
+
+                }
+            }
+
+            setLongestStreaks(streaks)
+            setCurrentStreakIndex(0)
+
+            let maxScore = 0
+            let worsts: typeof biggestScores = []
+
+            for (const player of players) {
+                if (player.DNF || !player.PlayerResults) continue
+
+                player.PlayerResults.forEach((holeResult, i) => {
+                    if (!holeResult || Array.isArray(holeResult)) return
+                    const result = holeResult.Result
+                    const pen = parseInt((holeResult as any).PEN || '0', 10)
+
+                    if (result > maxScore) {
+                        maxScore = result
+                        worsts = [{
+                            value: result,
+                            player: player.Name,
+                            holeNumber: i + 1,
+                            hadPenalty: pen > 0
+                        }]
+                    } else if (result === maxScore) {
+                        worsts.push({
+                            value: result,
+                            player: player.Name,
+                            holeNumber: i + 1,
+                            hadPenalty: pen > 0
+                        })
+                    }
+                })
+            }
+
+            setBiggestScores(worsts)
+            setCurrentBiggestIndex(0)
+
+
+
             setPlayerCount(players.length)
 
             const grouped: Record<string, PlayerResult[]> = {}
@@ -150,6 +253,31 @@ export default function TopHolesDashboard() {
 
                 grouped[division] = grouped[division].slice(0, 8)
             })
+            let lakePlayers = 0
+            let lakeOBPlayers = 0
+
+            for (const player of players) {
+                if (player.DNF || !player.PlayerResults) continue
+
+                const lakeHoles = player.PlayerResults.slice(6, 17)
+                const playedAnyLakeHole = lakeHoles.some(h => h && !Array.isArray(h))
+
+                if (playedAnyLakeHole) {
+                    lakePlayers++
+
+                    const hadOB = lakeHoles.some(h => {
+                        const pen = parseInt((h as any)?.PEN || '0', 10)
+                        return pen > 0
+                    })
+
+                    if (hadOB) lakeOBPlayers++
+                }
+            }
+
+            setLakeOBCount(lakeOBPlayers)
+            setLakePlayersCount(lakePlayers)
+
+
 
             setTopPlayersByDivision(grouped)
             setMostHolesLeft(getMostRemainingHoles(players))
@@ -170,10 +298,30 @@ export default function TopHolesDashboard() {
     }, [getTopRankedHoles])
 
     useEffect(() => {
+        if (biggestScores.length <= 1) return
+
+        const interval = setInterval(() => {
+            setCurrentBiggestIndex((prev) => (prev + 1) % biggestScores.length)
+        }, 5000)
+
+        return () => clearInterval(interval)
+    }, [biggestScores])
+
+    useEffect(() => {
         fetchTopHoles()
         const interval = setInterval(fetchTopHoles, 5 * 60 * 1000)
         return () => clearInterval(interval)
     }, [fetchTopHoles])
+
+    useEffect(() => {
+        if (longestStreaks.length <= 1) return
+
+        const interval = setInterval(() => {
+            setCurrentStreakIndex((prev) => (prev + 1) % longestStreaks.length)
+        }, 10000)
+
+        return () => clearInterval(interval)
+    }, [longestStreaks])
 
     useEffect(() => {
         const swiper = swiperRef.current
@@ -194,7 +342,7 @@ export default function TopHolesDashboard() {
     }, [activeSlideIndex, topPlayersByDivision])
 
     const renderScoreBar = (hole: HoleResult['hole']) => {
-        const categoryValues = scoreCategories.map(({ key, label, color }) => ({
+        const categoryValues = scoreCategories.map(({key, label, color}) => ({
             key,
             label,
             color,
@@ -212,7 +360,7 @@ export default function TopHolesDashboard() {
                 alignItems="stretch"
                 gap={0.5}
             >
-                {categoryValues.map(({ key, label, color, value }) => {
+                {categoryValues.map(({key, label, color, value}) => {
                     if (!value) return null
                     const widthPercent = (value / maxValue) * 100
 
@@ -228,8 +376,8 @@ export default function TopHolesDashboard() {
                             <Box
                                 display="flex"
                                 alignItems="center"
-                                width={180}
-                                flexShrink={0}
+                                width={190}
+
                             >
                                 <Typography
                                     fontWeight={700}
@@ -357,7 +505,8 @@ export default function TopHolesDashboard() {
                                             justifyContent="space-between"
                                         >
                                             <Box>
-                                                <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2} textAlign="right">
+                                                <Typography fontSize="clamp(1.5rem, 3vw, 3rem)" mb={2}
+                                                            textAlign="right">
                                                     Difficulty: <strong>{getOrdinal(holeData.rank)}</strong>
                                                 </Typography>
 
@@ -375,7 +524,7 @@ export default function TopHolesDashboard() {
                                                         <>
                                                             Went OB:
                                                             <Box component="span"
-                                                                 sx={{color: '#f42b03', fontWeight: 'bold', ml:1}}>
+                                                                 sx={{color: '#f42b03', fontWeight: 'bold', ml: 1}}>
                                                                 {Math.round(holeData.ob_percent)}%
                                                             </Box>{' '}
 
@@ -407,7 +556,7 @@ export default function TopHolesDashboard() {
                             return (
                                 <Box key={player.UserID} mb={2} gap={2}>
                                     <Box display="flex" alignItems="center" justifyContent={"center"}>
-                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={500}
+                                        <Typography fontSize="clamp(1.25rem, 2.5vw, 2rem)" minWidth={450}
                                                     fontWeight="600">
                                             {index === 0 ? (
                                                 <Box component="span" mr={1} fontSize="1.8rem">🔥</Box>
@@ -421,7 +570,7 @@ export default function TopHolesDashboard() {
                                             <Typography fontSize="clamp(1.5rem, 2vw, 2rem)" fontWeight="bold">
                                                 {Number(player.Diff) > 0 ? `+${player.Diff}` : player.Diff}
                                             </Typography>
-                                            <Box display="flex" gap={1} minWidth={600}>
+                                            <Box display="flex" gap={1} minWidth={400}>
                                                 {scoreCategories.map(({key, color}) => {
                                                     const count = breakdown[key as keyof typeof breakdown]
                                                     if (!count) return null
@@ -456,82 +605,88 @@ export default function TopHolesDashboard() {
 
             {/* Panel 3 - Stats */}
             <SwiperSlide>
-
-                <Box sx={{p: 6, height: '100vh', textAlign: 'center', position: 'relative'}}>
-
-
+                <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Box
-                        display="flex"
-                        flexWrap="wrap"
-                        justifyContent="center"
-                        gap={6}
-                        maxWidth="1200px"
-                        mx="auto"
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gridTemplateRows: 'repeat(2, auto)',
+                            gap: 6,
+                            maxWidth: '1400px',
+                            width: '100%',
+                        }}
                     >
-                        {[{
-                            label: '🕒 Viimasel puulil',
-                            value: mostHolesLeft,
-                            sub: 'korvi 100st',
-                            bg: '#f8c600'
-                        }, {
-                            label: '🏁 Lõpetanud',
-                            value: finishedPlayersCount,
-                            sub: `mängijat ${playerCount}st`,
-                            bg: '#a6e4a3'
-                        }, {
-                            label: '📊 Viskeid kokku',
-                            value: totalThrows,
-                            sub: `${(() => {
-                                const diff = Math.round(averageDiff);
-                                return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
-                            })()} viset par-ile`,
-                            bg: '#b3d4fc'
-                        }].map((item, i) => (
-                            <Box
-                                key={i}
-                                sx={{
-                                    flex: '1 1 300px',
-                                    minWidth: '300px',
-                                    maxWidth: '400px',
-                                    textAlign: 'center',
-                                }}
-                            >
-                                <Typography variant="h4" fontWeight="bold" mb={2}>
-                                    {item.label}
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        width: '30vh',
-                                        height: '30vh',
-                                        borderRadius: '50%',
-                                        backgroundColor: item.bg,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.5vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
-                                        fontWeight: 'bold',
-                                        color: '#000',
-                                        margin: '0 auto',
-                                    }}
-                                >
-                                    {item.value}
-                                </Box>
-                                <Typography variant="h6" mt={2} fontSize={30}>
-                                    {item.sub}
-                                </Typography>
-                            </Box>
+                        {[
+                            {
+                                label: '🕒 Viimasel puulil',
+                                value: mostHolesLeft,
+                                sub: 'korvi 100st',
+                                bg: '#f8c600',
+                                animationKey: 'mostHolesLeft-' + mostHolesLeft,
+                            },
+                            {
+                                label: '🏁 Lõpetanud',
+                                value: finishedPlayersCount,
+                                sub: `mängijat ${playerCount}st`,
+                                bg: '#ffcc80',
+                                animationKey: 'finished-' + finishedPlayersCount,
+                            },
+                            {
+                                label: '📊 Viskeid kokku',
+                                value: totalThrows,
+                                sub: `${averageDiff === 0 ? '0' : (averageDiff > 0 ? '+' : '') + Math.round(averageDiff)} viset par-ile`,
+                                bg: '#efb4f5',
+                                animationKey: 'throws-' + totalThrows,
+                            },
+                            {
+                                label: '🌊 Järve viskas',
+                                value: lakeOBCount,
+                                sub: `mängijat (${lakePlayersCount > 0 ? Math.round((lakeOBCount / lakePlayersCount) * 100) : 0}%)`,
+                                bg: '#b3d4fc',
+                                animationKey: 'lake-' + lakeOBCount,
+                            },
+                            ...(longestStreaks.length > 0
+                                ? [
+                                    {
+                                        label: '📈 Pikim birdie jada',
+                                        value: longestStreaks[currentStreakIndex]?.count,
+                                        sub: `${longestStreaks[currentStreakIndex]?.player} (rada ${String(
+                                            longestStreaks[currentStreakIndex]?.startHole
+                                        ).padStart(2, '0')}–${String(longestStreaks[currentStreakIndex]?.endHole).padStart(2, '0')})`,
+                                        bg: '#a6e4a3',
+                                        animationKey: 'streak-' + currentStreakIndex,
+                                    },
+                                ]
+                                : []),
+                            ...(biggestScores.length > 0
+                                ? [
+                                    {
+                                        label: '💥 Suurim skoor',
+                                        value: biggestScores[currentBiggestIndex]?.value,
+                                        sub: `${biggestScores[currentBiggestIndex]?.player} (rada ${String(
+                                            biggestScores[currentBiggestIndex]?.holeNumber
+                                        ).padStart(2, '0')})`,
+                                        bg: '#ff9999',
+                                        animationKey: 'biggest-' + currentBiggestIndex,
+                                        hasTopRedBorder: biggestScores[currentBiggestIndex]?.hadPenalty,
+                                    },
+                                ]
+                                : []),
+                        ].map((item, i) => (
+                            <StatBox
+                                key={item.animationKey || i}
+                                label={item.label}
+                                value={item.value}
+                                sub={item.sub}
+                                bg={item.bg}
+                                hasTopRedBorder={item.hasTopRedBorder}
+                                animationKey={item.animationKey}
+                            />
                         ))}
                     </Box>
-                    <Image
-                        src="/white_logo.webp"
-                        alt="Logo"
-                        width={400}
-                        height={300}
-                        priority
-                        style={{maxWidth: '80%', height: 'auto', marginBottom: '5vh'}}
-                    />
                 </Box>
             </SwiperSlide>
+
         </Swiper>
     )
 

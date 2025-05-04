@@ -4,6 +4,8 @@ import theme from '@/lib/theme'
 import '@/styles/fonts.css'
 import {ToastProvider} from "@/src/contexts/ToastContext";
 import Head from 'next/head' // 👈 ADD THIS
+import '../../styles/globals.css' // if pages is inside src/pages/
+
 
 export default function App({Component, pageProps}: AppProps) {
     return (
