@@ -446,7 +446,7 @@ export default function TopHolesDashboard() {
         >
             {/* Panel 1 - Top Holes */}
             <SwiperSlide>
-                <Box sx={{p: 6, height: '100vh', boxSizing: 'border-box'}}>
+                <Box sx={{px: 6, py: 3, height: '100vh', boxSizing: 'border-box'}}>
 
                     <Swiper
                         key={topHoles.join(',')}
@@ -487,8 +487,8 @@ export default function TopHolesDashboard() {
                                             <Image
                                                 src={`/cards/${holeNumber}.webp?v=4`}
                                                 alt={`Rada ${holeNumber}`}
-                                                width={600}
-                                                height={840}
+                                                width={464}
+                                                height={650}
                                                 style={{borderRadius: '30px'}}
                                             />
                                         </Box>
@@ -496,8 +496,8 @@ export default function TopHolesDashboard() {
                                         {/* Right: Hole Info */}
                                         <Box
                                             maxWidth={600}
-                                            width={600}
-                                            height={840}
+                                            width={500}
+                                            height={650}
 
                                             display="flex"
                                             flexDirection="column"
