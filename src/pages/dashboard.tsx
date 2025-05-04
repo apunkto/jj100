@@ -444,7 +444,7 @@ export default function TopHolesDashboard() {
         >
             {/* Panel 1 - Top Holes */}
             <SwiperSlide>
-                <Box sx={{px: 6, py: 3, height: '100vh', boxSizing: 'border-box'}}>
+                <Box sx={{px: 6, py: 4, height: '100vh', boxSizing: 'border-box'}}>
 
                     <Swiper
                         key={topHoles.join(',')}
@@ -651,7 +651,7 @@ export default function TopHolesDashboard() {
                             ...(longestStreaks.length > 0
                                 ? [
                                     {
-                                        label: '🐤 Järjest Birdie',
+                                        label: '🐤 Pikim birdie jada',
                                         value: longestStreaks[currentStreakIndex]?.count,
                                         sub: `${longestStreaks[currentStreakIndex]?.player} (${String(longestStreaks[currentStreakIndex]?.startHole).padStart(2, '0')}-${String(
                                             longestStreaks[currentStreakIndex]?.endHole
