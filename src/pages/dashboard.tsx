@@ -474,7 +474,7 @@ export default function TopHolesDashboard() {
                                                     variant="h4"
                                                     fontWeight="bold"
                                                     sx={{
-                                                        fontSize: 'clamp(35px, 1.7vw, 72px)',
+                                                        fontSize: 'clamp(25px, 1.5vw, 60px)',
                                                         color: 'black',
                                                         fontFamily: 'Alatsi, sans-serif'
                                                     }}
