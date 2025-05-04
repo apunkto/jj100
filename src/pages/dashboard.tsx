@@ -227,7 +227,6 @@ export default function TopHolesDashboard() {
             setCurrentBiggestIndex(0)
 
 
-
             setPlayerCount(players.length)
 
             const grouped: Record<string, PlayerResult[]> = {}
@@ -275,7 +274,6 @@ export default function TopHolesDashboard() {
 
             setLakeOBCount(lakeOBPlayers)
             setLakePlayersCount(lakePlayers)
-
 
 
             setTopPlayersByDivision(grouped)
@@ -604,7 +602,14 @@ export default function TopHolesDashboard() {
 
             {/* Panel 3 - Stats */}
             <SwiperSlide>
-                <Box sx={{ px: 6, py:3, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{
+                    px: 6,
+                    py: 3,
+                    height: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
                     <Box
                         sx={{
                             display: 'grid',
@@ -646,7 +651,7 @@ export default function TopHolesDashboard() {
                             ...(longestStreaks.length > 0
                                 ? [
                                     {
-                                        label: '📈 Pikim birdie jada',
+                                        label: '🐤 Järjest Birdie',
                                         value: longestStreaks[currentStreakIndex]?.count,
                                         sub: `${longestStreaks[currentStreakIndex]?.player} (${String(longestStreaks[currentStreakIndex]?.startHole).padStart(2, '0')}-${String(
                                             longestStreaks[currentStreakIndex]?.endHole
@@ -671,25 +676,25 @@ export default function TopHolesDashboard() {
                                 : []),
                         ].map((item, i) => (
                             <Box
-                                key={ i}
+                                key={i}
                                 sx={{
                                     textAlign: 'center',
                                     opacity: 0,
                                     animation: 'fadeIn 0.5s forwards',
                                     '@keyframes fadeIn': {
-                                        from: { opacity: 0 },
-                                        to: { opacity: 1 }
+                                        from: {opacity: 0},
+                                        to: {opacity: 1}
                                     },
                                 }}
                             >
 
-                            <Typography variant="h4" fontWeight="bold" mb={2}>
+                                <Typography variant="h4" fontWeight="bold" mb={2}>
                                     {item.label}
                                 </Typography>
                                 <Box
                                     sx={{
-                                        width: '27vh',
-                                        height: '27vh',
+                                        width: '25vh',
+                                        height: '25vh',
                                         borderRadius: '50%',
                                         backgroundColor: item.bg,
                                         display: 'flex',
@@ -702,7 +707,7 @@ export default function TopHolesDashboard() {
                                         component="span"
                                         sx={{
                                             position: 'relative',
-                                            fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.5vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
+                                            fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.1vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
                                             fontWeight: 'bold',
                                             color: '#000',
                                             '&::before':
@@ -722,9 +727,13 @@ export default function TopHolesDashboard() {
                                         {item.value}
                                     </Typography>
                                 </Box>
-                                <Typography variant="h6" mt={2} fontSize={30}>
-                                    {item.sub}
-                                </Typography>
+                                <Box mt={1} sx={{fontSize: 30, lineHeight: 1.2}}>
+                                    {item.sub.replace(/\s*\(.*\)/, '')}
+                                    <br/>
+                                    <span style={{fontSize: 25}}>
+                                     {item.sub.match(/\(.*\)/)?.[0] ?? ''}
+                                    </span>
+                                </Box>
                             </Box>
                         ))}
                     </Box>
