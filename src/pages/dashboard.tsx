@@ -651,7 +651,7 @@ export default function TopHolesDashboard() {
                             {
                                 label: '🌊 Järve viskas',
                                 value: lakeOBCount,
-                                sub: `mängijat (${lakePlayersCount > 0 ? Math.round((lakeOBCount / lakePlayersCount) * 100) : 0}%)`,
+                                sub: `mängijat (${lakePlayersCount > 0 ? Math.round((lakeOBCount / lakePlayersCount) * 100) : 0}% 🤦‍♂️)`,
                                 bg: '#b3d4fc',
                             },
                             ...(longestStreaks.length > 0
