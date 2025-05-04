@@ -728,7 +728,7 @@ export default function TopHolesDashboard() {
                                         {item.value}
                                     </Typography>
                                 </Box>
-                                <Box mt={1} sx={{fontSize: 30, lineHeight: 1.2}}>
+                                <Box mt={1} sx={{fontSize: 27, fontWeight:500, lineHeight: 1.2}}>
                                     {item.sub.replace(/\s*\(.*\)/, '')}
                                     <br/>
                                     <span style={{fontSize: 25}}>
