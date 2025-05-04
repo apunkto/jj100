@@ -7,7 +7,6 @@ import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import {useRouter} from "next/router";
-import StatBox from "@/src/components/AnimatedStats";
 
 
 // Metrix types
@@ -302,7 +301,7 @@ export default function TopHolesDashboard() {
 
         const interval = setInterval(() => {
             setCurrentBiggestIndex((prev) => (prev + 1) % biggestScores.length)
-        }, 5000)
+        }, 15000)
 
         return () => clearInterval(interval)
     }, [biggestScores])
@@ -318,7 +317,7 @@ export default function TopHolesDashboard() {
 
         const interval = setInterval(() => {
             setCurrentStreakIndex((prev) => (prev + 1) % longestStreaks.length)
-        }, 10000)
+        }, 15000)
 
         return () => clearInterval(interval)
     }, [longestStreaks])
@@ -605,7 +604,7 @@ export default function TopHolesDashboard() {
 
             {/* Panel 3 - Stats */}
             <SwiperSlide>
-                <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ px: 6, py:3, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Box
                         sx={{
                             display: 'grid',
@@ -622,42 +621,41 @@ export default function TopHolesDashboard() {
                                 value: mostHolesLeft,
                                 sub: 'korvi 100st',
                                 bg: '#f8c600',
-                                animationKey: 'mostHolesLeft-' + mostHolesLeft,
                             },
                             {
                                 label: '🏁 Lõpetanud',
                                 value: finishedPlayersCount,
                                 sub: `mängijat ${playerCount}st`,
                                 bg: '#ffcc80',
-                                animationKey: 'finished-' + finishedPlayersCount,
                             },
                             {
                                 label: '📊 Viskeid kokku',
                                 value: totalThrows,
-                                sub: `${averageDiff === 0 ? '0' : (averageDiff > 0 ? '+' : '') + Math.round(averageDiff)} viset par-ile`,
+                                sub: `${(() => {
+                                    const diff = Math.round(averageDiff)
+                                    return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`
+                                })()} viset par-ile`,
                                 bg: '#efb4f5',
-                                animationKey: 'throws-' + totalThrows,
                             },
                             {
                                 label: '🌊 Järve viskas',
                                 value: lakeOBCount,
                                 sub: `mängijat (${lakePlayersCount > 0 ? Math.round((lakeOBCount / lakePlayersCount) * 100) : 0}%)`,
                                 bg: '#b3d4fc',
-                                animationKey: 'lake-' + lakeOBCount,
                             },
                             ...(longestStreaks.length > 0
                                 ? [
                                     {
                                         label: '📈 Pikim birdie jada',
                                         value: longestStreaks[currentStreakIndex]?.count,
-                                        sub: `${longestStreaks[currentStreakIndex]?.player} (rada ${String(
-                                            longestStreaks[currentStreakIndex]?.startHole
-                                        ).padStart(2, '0')}–${String(longestStreaks[currentStreakIndex]?.endHole).padStart(2, '0')})`,
+                                        sub: `${longestStreaks[currentStreakIndex]?.player} (${String(longestStreaks[currentStreakIndex]?.startHole).padStart(2, '0')}-${String(
+                                            longestStreaks[currentStreakIndex]?.endHole
+                                        ).padStart(2, '0')})`,
                                         bg: '#a6e4a3',
-                                        animationKey: 'streak-' + currentStreakIndex,
                                     },
                                 ]
                                 : []),
+
                             ...(biggestScores.length > 0
                                 ? [
                                     {
@@ -667,26 +665,71 @@ export default function TopHolesDashboard() {
                                             biggestScores[currentBiggestIndex]?.holeNumber
                                         ).padStart(2, '0')})`,
                                         bg: '#ff9999',
-                                        animationKey: 'biggest-' + currentBiggestIndex,
-                                        hasTopRedBorder: biggestScores[currentBiggestIndex]?.hadPenalty,
+                                        borderTop: biggestScores[currentBiggestIndex]?.hadPenalty ? '8px solid red' : 'none',
                                     },
                                 ]
                                 : []),
                         ].map((item, i) => (
-                            <StatBox
-                                key={item.animationKey || i}
-                                label={item.label}
-                                value={item.value}
-                                sub={item.sub}
-                                bg={item.bg}
-                                hasTopRedBorder={item.hasTopRedBorder}
-                                animationKey={item.animationKey}
-                            />
+                            <Box
+                                key={ i}
+                                sx={{
+                                    textAlign: 'center',
+                                    opacity: 0,
+                                    animation: 'fadeIn 0.5s forwards',
+                                    '@keyframes fadeIn': {
+                                        from: { opacity: 0 },
+                                        to: { opacity: 1 }
+                                    },
+                                }}
+                            >
+
+                            <Typography variant="h4" fontWeight="bold" mb={2}>
+                                    {item.label}
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        width: '27vh',
+                                        height: '27vh',
+                                        borderRadius: '50%',
+                                        backgroundColor: item.bg,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: '0 auto',
+                                    }}
+                                >
+                                    <Typography
+                                        component="span"
+                                        sx={{
+                                            position: 'relative',
+                                            fontSize: item.label.includes('Viskeid') ? 'clamp(2rem, 3.5vw, 4rem)' : 'clamp(2rem, 5vw, 64rem)',
+                                            fontWeight: 'bold',
+                                            color: '#000',
+                                            '&::before':
+                                                item.label.includes('Suurim skoor') && item.borderTop
+                                                    ? {
+                                                        content: '""',
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        height: '6px',
+                                                        backgroundColor: 'red',
+                                                    }
+                                                    : undefined,
+                                        }}
+                                    >
+                                        {item.value}
+                                    </Typography>
+                                </Box>
+                                <Typography variant="h6" mt={2} fontSize={30}>
+                                    {item.sub}
+                                </Typography>
+                            </Box>
                         ))}
                     </Box>
                 </Box>
             </SwiperSlide>
-
         </Swiper>
     )
 
