@@ -69,7 +69,7 @@ export default function TopHolesDashboard() {
             pars = 0,
             bogeys = 0,
             doubleBogeys = 0,
-            tripleOrWorse = 0
+            others = 0
 
         for (const hole of player.PlayerResults || []) {
             const diff = hole.Diff
@@ -78,10 +78,9 @@ export default function TopHolesDashboard() {
             else if (diff === 0) pars++
             else if (diff === 1) bogeys++
             else if (diff === 2) doubleBogeys++
-            else if (diff >= 3) tripleOrWorse++
+            else if (diff >= 3) others++
         }
-
-        return {eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse}
+        return {eagles, birdies, pars, bogeys, doubleBogeys, others}
     }
 
     const getMostRemainingHoles = (players: PlayerResult[]): number => {
@@ -325,6 +324,7 @@ export default function TopHolesDashboard() {
                                             <Box display="flex" gap={0.5} flexWrap="wrap" width={140}>
                                                 {scoreCategories.map(({key, color}) => {
                                                     const count = breakdown[key as keyof typeof breakdown]
+
                                                     if (!count) return null
                                                     return (
                                                         <Box
