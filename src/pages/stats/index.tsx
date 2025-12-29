@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Autocomplete,
     TextField,
@@ -9,64 +9,60 @@ import {
     Divider,
 } from '@mui/material';
 import Layout from '@/src/components/Layout';
-
-type HoleResult = {
-    Diff: number;
-};
-
-type PlayerResult = {
-    UserID: number;
-    Name: string;
-    OrderNumber: number;
-    Diff: number;
-    ClassName: string;
-    Sum: number;
-    Dnf?: boolean | null;
-    PlayerResults?: HoleResult[];
-};
-
-type MetrixAPIResponse = {
-    Competition: {
-        Results: PlayerResult[];
-    };
-};
+import useMetrixApi, {MetrixPlayerListItem, MetrixPlayerStats} from "@/src/api/useMetrixApi";
 
 const LOCAL_STORAGE_KEY = 'selectedPlayerId';
 
 export default function CtpStatsPage() {
-    const [results, setResults] = useState<PlayerResult[]>([]);
-    const [selectedPlayer, setSelectedPlayer] = useState<PlayerResult | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { getMetrixPlayers, getMetrixPlayerStats } = useMetrixApi();
 
-    const fetchResults = async () => {
+    const [players, setPlayers] = useState<MetrixPlayerListItem[]>([]);
+    const [selectedPlayer, setSelectedPlayer] = useState<MetrixPlayerListItem | null>(null);
+    const [stats, setStats] = useState<MetrixPlayerStats | null>(null);
+
+    const [loadingPlayers, setLoadingPlayers] = useState(true);
+    const [loadingStats, setLoadingStats] = useState(false);
+
+    const loadPlayers = async () => {
+        setLoadingPlayers(true);
         try {
-            const res = await fetch(
-                'https://discgolfmetrix.com/api.php?content=result&id=3204902'
-            );
-            const data = (await res.json()) as MetrixAPIResponse;
-            const players = data.Competition.Results;
-            setResults(players);
+            const list = await getMetrixPlayers();
+            setPlayers(list);
 
-            const savedPlayerId = localStorage.getItem(LOCAL_STORAGE_KEY);
+            const savedPlayerId =
+                typeof window !== 'undefined' ? localStorage.getItem(LOCAL_STORAGE_KEY) : null;
+
             if (savedPlayerId) {
-                const player = players.find(
-                    (p) => p.UserID.toString() === savedPlayerId
-                );
-                if (player) setSelectedPlayer(player);
+                const found = list.find((p) => p.userId.toString() === savedPlayerId);
+                if (found) setSelectedPlayer(found);
             }
         } catch (err) {
-            console.error('Failed to fetch Metrix results:', err);
+            console.error('Failed to load metrix players:', err);
         } finally {
-            setLoading(false);
+            setLoadingPlayers(false);
+        }
+    };
+
+    const loadStats = async (userId: number) => {
+        setLoadingStats(true);
+        try {
+            const data = await getMetrixPlayerStats(userId);
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to load metrix player stats:', err);
+            setStats(null);
+        } finally {
+            setLoadingStats(false);
         }
     };
 
     useEffect(() => {
-        fetchResults();
+        loadPlayers();
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                fetchResults();
+                loadPlayers();
+                if (selectedPlayer) loadStats(selectedPlayer.userId);
             }
         };
 
@@ -75,48 +71,35 @@ export default function CtpStatsPage() {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const getDelta = () => {
-        if (!selectedPlayer) return null;
-        const sameClassPlayers = results.filter(
-            (p) => p.ClassName === selectedPlayer.ClassName
-        );
-        const leader = sameClassPlayers.reduce((min, p) =>
-            p.Diff < min.Diff ? p : min
-        );
-        return selectedPlayer.Diff - leader.Diff;
-    };
-
-    const getOverallPlace = () => {
-        if (!selectedPlayer) return null;
-        const validPlayers = results.filter((p) => p.Dnf !== true);
-        const sorted = [...validPlayers].sort((a, b) => a.Diff - b.Diff);
-        const index = sorted.findIndex((p) => p.UserID === selectedPlayer.UserID);
-        return index >= 0 ? index + 1 : null;
-    };
-
-    const getScoreBreakdown = () => {
-        if (!selectedPlayer?.PlayerResults) return null;
-        let eagles = 0,
-            birdies = 0,
-            pars = 0,
-            bogeys = 0,
-            doubleBogeys = 0,
-            tripleOrWorse = 0;
-
-        for (const hole of selectedPlayer.PlayerResults) {
-            const diff = hole.Diff;
-            if (diff <= -2) eagles++;
-            else if (diff === -1) birdies++;
-            else if (diff === 0) pars++;
-            else if (diff === 1) bogeys++;
-            else if (diff === 2) doubleBogeys++;
-            else if (diff >= 3) tripleOrWorse++;
+    // when restored from localStorage after players load
+    useEffect(() => {
+        if (selectedPlayer?.userId) {
+            loadStats(selectedPlayer.userId);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPlayer?.userId]);
 
-        return {eagles, birdies, pars, bogeys, doubleBogeys, tripleOrWorse};
-    };
+    const breakdownCategories = useMemo(() => {
+        const breakdown = stats?.scoreBreakdown;
+        if (!breakdown) return null;
+
+        const categories = [
+            { key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles },
+            { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie', value: breakdown.birdies },
+            { key: 'pars', color: '#ECECECFF', label: 'Par', value: breakdown.pars },
+            { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey', value: breakdown.bogeys },
+            { key: 'doubleBogeys', color: 'rgba(244,43,3,.26)', label: 'Double', value: breakdown.doubleBogeys },
+            { key: 'tripleOrWorse', color: 'rgba(244,43,3,.42)', label: 'Triple+', value: breakdown.tripleOrWorse },
+        ];
+
+        const total = categories.reduce((sum, c) => sum + c.value, 0);
+        if (total === 0) return null;
+
+        return { categories, total };
+    }, [stats?.scoreBreakdown]);
 
     return (
         <Layout>
@@ -125,103 +108,95 @@ export default function CtpStatsPage() {
                     Mängija statistika
                 </Typography>
 
-                {loading ? (
+                {loadingPlayers ? (
                     <Box mt={4} display="flex" justifyContent="center">
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 ) : (
                     <Box mt={4}>
-                        <Autocomplete<PlayerResult>
-                            options={results}
-                            getOptionLabel={(option) => option.Name}
+                        <Autocomplete<MetrixPlayerListItem>
+                            options={players}
+                            getOptionLabel={(option) => option.name}
                             value={selectedPlayer}
+                            loading={loadingStats}
                             onChange={(_, newValue) => {
                                 setSelectedPlayer(newValue);
+
+                                if (typeof window !== 'undefined') {
+                                    if (newValue) {
+                                        localStorage.setItem(LOCAL_STORAGE_KEY, newValue.userId.toString());
+                                    } else {
+                                        localStorage.removeItem(LOCAL_STORAGE_KEY);
+                                    }
+                                }
+
                                 if (newValue) {
-                                    localStorage.setItem(LOCAL_STORAGE_KEY, newValue.UserID.toString());
+                                    loadStats(newValue.userId);
                                 } else {
-                                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                                    setStats(null);
                                 }
                             }}
                             renderInput={(params) => (
-                                <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
+                                <TextField {...params} label="Mängija nimi" fullWidth sx={{ mb: 2 }} />
                             )}
                         />
 
-                        {selectedPlayer && (
-                            <Paper elevation={3} sx={{mt: 2, p: 3, textAlign: 'left'}}>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="h6" gutterBottom>
-                                        {selectedPlayer.Name}
-                                    </Typography>
-                                    <Typography variant="h6" fontWeight={700}>
-                                        {Number(selectedPlayer.Diff) > 0 ? `+${selectedPlayer.Diff}` : selectedPlayer.Diff}
-                                    </Typography>
-                                </Box>
-                                <Divider sx={{mb: 2}}/>
-                                <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography fontWeight="bold">Klass:</Typography>
-                                    <Typography>{selectedPlayer.ClassName}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography fontWeight="bold">Koht:</Typography>
-                                    <Typography>{selectedPlayer.OrderNumber}</Typography>
-                                </Box>
+                        {loadingStats && selectedPlayer ? (
+                            <Box mt={4} display="flex" justifyContent="center">
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            stats && (
+                                <Paper elevation={3} sx={{ mt: 2, p: 3, textAlign: 'left' }}>
+                                    <Box display="flex" justifyContent="space-between">
+                                        <Typography variant="h6" gutterBottom>
+                                            {stats.player.name}
+                                        </Typography>
+                                        <Typography variant="h6" fontWeight={700}>
+                                            {Number(stats.player.diff) > 0 ? `+${stats.player.diff}` : stats.player.diff}
+                                        </Typography>
+                                    </Box>
 
-                                <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography fontWeight="bold">Liidrist maas:</Typography>
-                                    <Typography>{getDelta()} viset</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between" mb={1}>
-                                    <Typography fontWeight="bold">Üldjärjestus:</Typography>
-                                    <Typography>{getOverallPlace()}. koht</Typography>
-                                </Box>
+                                    <Divider sx={{ mb: 2 }} />
 
-                                <Divider sx={{my: 2}}/>
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography fontWeight="bold">Klass:</Typography>
+                                        <Typography>{stats.player.className}</Typography>
+                                    </Box>
 
-                                {/* Score breakdown bar and chips */}
-                                {(() => {
-                                    const breakdown = getScoreBreakdown();
-                                    if (!breakdown) return null;
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography fontWeight="bold">Koht:</Typography>
+                                        <Typography>{stats.player.orderNumber}</Typography>
+                                    </Box>
 
-                                    const categories = [
-                                        {key: 'eagles', color: '#f8c600', label: 'Eagle', value: breakdown.eagles},
-                                        {
-                                            key: 'birdies',
-                                            color: 'rgba(62,195,0,.34)',
-                                            label: 'Birdie',
-                                            value: breakdown.birdies
-                                        },
-                                        {key: 'pars', color: '#ECECECFF', label: 'Par', value: breakdown.pars},
-                                        {
-                                            key: 'bogeys',
-                                            color: 'rgba(244,43,3,.12)',
-                                            label: 'Bogey',
-                                            value: breakdown.bogeys
-                                        },
-                                        {
-                                            key: 'doubleBogeys',
-                                            color: 'rgba(244,43,3,.26)',
-                                            label: 'Double',
-                                            value: breakdown.doubleBogeys
-                                        },
-                                        {
-                                            key: 'tripleOrWorse',
-                                            color: 'rgba(244,43,3,.42)',
-                                            label: 'Triple+',
-                                            value: breakdown.tripleOrWorse
-                                        },
-                                    ];
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography fontWeight="bold">Liidrist maas:</Typography>
+                                        <Typography>
+                                            {stats.deltaToClassLeader === null ? '-' : `${stats.deltaToClassLeader} viset`}
+                                        </Typography>
+                                    </Box>
 
-                                    const total = categories.reduce((sum, cat) => sum + cat.value, 0);
-                                    if (total === 0) return null;
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography fontWeight="bold">Üldjärjestus:</Typography>
+                                        <Typography>
+                                            {stats.overallPlace === null ? '-' : `${stats.overallPlace}. koht`}
+                                        </Typography>
+                                    </Box>
 
-                                    return (
+                                    <Divider sx={{ my: 2 }} />
+
+                                    {breakdownCategories && (
                                         <>
-                                            <Box display="flex" height={10} borderRadius={2} overflow="hidden"
-                                                 width="100%" mt={2}>
-                                                {categories.map(({key, color, value}) => {
-                                                    const percent = (value / total) * 100;
+                                            <Box
+                                                display="flex"
+                                                height={10}
+                                                borderRadius={2}
+                                                overflow="hidden"
+                                                width="100%"
+                                                mt={2}
+                                            >
+                                                {breakdownCategories.categories.map(({ key, color, value }) => {
+                                                    const percent = (value / breakdownCategories.total) * 100;
                                                     return (
                                                         <Box
                                                             key={key}
@@ -238,7 +213,7 @@ export default function CtpStatsPage() {
                                             </Box>
 
                                             <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                                                {categories.map(({key, label, color, value}) => {
+                                                {breakdownCategories.categories.map(({ key, label, color, value }) => {
                                                     if (!value) return null;
                                                     return (
                                                         <Box
@@ -262,9 +237,9 @@ export default function CtpStatsPage() {
                                                 })}
                                             </Box>
                                         </>
-                                    );
-                                })()}
-                            </Paper>
+                                    )}
+                                </Paper>
+                            )
                         )}
                     </Box>
                 )}

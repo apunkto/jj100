@@ -45,7 +45,7 @@ export default function InfoPage() {
                 <Button
                     variant="outlined"
                     color="primary"
-                    href="https://discgolfmetrix.com/3204900"
+                    href="https://discgolfmetrix.com/3522494"
                     target="_blank"
                     rel="noopener noreferrer"
                 >
