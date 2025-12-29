@@ -68,7 +68,7 @@ export default function Layout({children}: { children: ReactNode }) {
                                 src="/logo.webp"
                                 alt="Logo"
                                 width={57}
-                                height={35}
+                                height={49}
                                 priority
                             />
                         </Box>
