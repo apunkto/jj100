@@ -1,3 +1,5 @@
+import {ApiResponse, authedFetch} from "@/src/api/authedFetch";
+
 export type HoleEntity = {
     id: number
     number: number
@@ -41,36 +43,45 @@ if (!API_BASE) {
 }
 
 const getHole = async (holeNumber: number): Promise<HoleResult | null> => {
-    const res = await fetch(`${API_BASE}/hole/${holeNumber}`)
+    const res = await authedFetch(`${API_BASE}/hole/${holeNumber}`)
     if (!res.ok) return null
     return await res.json()
 }
 
 const getTopRankedHoles = async (): Promise<HoleResult[]> => {
-    const res = await fetch(`${API_BASE}/holes/top-ranked`)
+    const res = await authedFetch(`${API_BASE}/holes/top-ranked`)
     if (!res.ok) throw new Error('Failed to fetch top ranked holes')
     return await res.json()
 }
 
 const getHoles = async (): Promise<HoleResult[]> => {
-    const res = await fetch(`${API_BASE}/holes`)
+    const res = await authedFetch(`${API_BASE}/holes`)
     if (!res.ok) throw new Error('Failed to fetch top ranked holes')
     return await res.json()
 }
 
-const submitCtp = async (holeId: number, playerId: number, distanceCm: number) => {
-    const res = await fetch(`${API_BASE}/ctp/${holeId}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({player_id: playerId, distance_cm: distanceCm}),
+export const submitCtp = async (holeId: number, distanceCm: number) => {
+    const res = await authedFetch(`${API_BASE}/ctp/${holeId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ distance_cm: distanceCm }),
     })
 
-    if (!res.ok) throw new Error('Failed to submit CTP')
-    return await res.json()
+    const payload = (await res.json().catch(() => null)) as ApiResponse<unknown> | null
+
+    if (!res.ok || payload?.success === false) {
+        const msg = payload?.error?.message ?? "CTP sisestamine ebaõnnestus!"
+        const err: any = new Error(msg)
+        err.code = payload?.error?.code
+        throw err
+    }
+
+    return payload
 }
 
+
 const getCtpHoles = async (): Promise<HoleResult[]> => {
-    const res = await fetch(`${API_BASE}/holes/ctp`)
+    const res = await authedFetch(`${API_BASE}/holes/ctp`)
     if (!res.ok) throw new Error(`Failed to fetch CTP holes: ${res.status}`)
     return await res.json()
 }

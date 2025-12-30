@@ -1,72 +1,81 @@
-import React, {useState, useEffect} from 'react'
-import LockIcon from '@mui/icons-material/Lock'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import React, {useEffect, useState} from "react"
+import LockIcon from "@mui/icons-material/Lock"
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined"
 import {
+    Alert,
     Box,
-    Typography,
     Button,
-    TextField,
+    CircularProgress,
     Dialog,
-    DialogTitle,
-    DialogContent,
     DialogActions,
-    Autocomplete,
-    AutocompleteRenderInputParams,
-    CircularProgress, Alert,
-} from '@mui/material'
-import Layout from '@/src/components/Layout'
-import usePlayerApi, {Player} from '@/src/api/usePlayerApi'
-import {useCheckinApi} from '@/src/api/useCheckinApi'
-import {useToast} from '@/src/contexts/ToastContext'
-import useConfigApi from '@/src/api/useConfigApi'
+    DialogContent,
+    DialogTitle,
+    Typography,
+} from "@mui/material"
+import Layout from "@/src/components/Layout"
+import {useCheckinApi} from "@/src/api/useCheckinApi"
+import {useToast} from "@/src/contexts/ToastContext"
+import useConfigApi from "@/src/api/useConfigApi"
 
 export default function CheckInPage() {
-    const {getPlayers} = usePlayerApi()
-    const {checkIn} = useCheckinApi()
-    const {showToast} = useToast()
-    const {isCheckinEnabled} = useConfigApi()
+    const { checkIn, getMyCheckin, unregisterMe } = useCheckinApi()
+    const { showToast } = useToast()
+    const { isCheckinEnabled } = useConfigApi()
 
-    const [players, setPlayers] = useState<Player[]>([])
-    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [checkedIn, setCheckedIn] = useState(false)
 
     const [checkinEnabled, setCheckinEnabled] = useState(false)
-    const [configLoading, setConfigLoading] = useState(true) // 👈 Add loading state
+    const [configLoading, setConfigLoading] = useState(true)
+
+    const [unregisterLoading, setUnregisterLoading] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [players, enabled] = await Promise.all([
-                    getPlayers(),
-                    isCheckinEnabled()
-                ])
-                setPlayers(players)
+                const enabled = await isCheckinEnabled()
                 setCheckinEnabled(enabled)
+
+                // ✅ new: fetch current user's check-in status
+                const me = await getMyCheckin()
+                setCheckedIn(me.checkedIn)
             } catch (err) {
-                console.error('Failed to fetch players or config', err)
+                console.error("Failed to fetch config or my check-in status", err)
             } finally {
-                setConfigLoading(false) // 👈 Only after config is fetched
+                setConfigLoading(false)
             }
         }
 
         fetchData()
-    }, [])
+    }, [isCheckinEnabled, getMyCheckin])
 
     const handleCheckIn = async () => {
-        if (!selectedPlayer) return
         try {
-            await checkIn(selectedPlayer.id)
-            showToast('Registreeritud!', 'success')
+            await checkIn()
+            showToast("Registreeritud!", "success")
             setCheckedIn(true)
         } catch (err: any) {
-            if (err.message === 'already_checked_in') {
-                showToast('Mängija on juba loosimängu registreeritud!', 'error')
+            if (err?.message === "already_checked_in") {
+                setCheckedIn(true)
+                showToast("Mängija on juba loosimängu registreeritud!", "error")
             } else {
-                showToast('Registreerimisel tekkis viga!', 'error')
+                showToast("Registreerimisel tekkis viga!", "error")
             }
         } finally {
             setConfirmOpen(false)
+        }
+    }
+
+    const handleUnregister = async () => {
+        setUnregisterLoading(true)
+        try {
+            await unregisterMe()
+            setCheckedIn(false)
+            showToast("Registreering tühistatud!", "success")
+        } catch (err) {
+            showToast("Registreeringu tühistamine ebaõnnestus!", "error")
+        } finally {
+            setUnregisterLoading(false)
         }
     }
 
@@ -83,20 +92,30 @@ export default function CheckInPage() {
 
                 {configLoading ? (
                     <Box mt={4} display="flex" justifyContent="center">
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 ) : !checkinEnabled ? (
-                    <Box mt={4} display="flex" alignItems="center" justifyContent={'center'}>
-                        <LockIcon sx={{fontSize: 24, color: 'grey.500'}}/>
+                    <Box mt={4} display="flex" alignItems="center" justifyContent="center">
+                        <LockIcon sx={{ fontSize: 24, color: "grey.500", mr: 1 }} />
                         <Typography variant="body1" color="textSecondary">
                             Registreerumine ei ole veel avatud!
                         </Typography>
                     </Box>
                 ) : checkedIn ? (
                     <Box mt={4}>
-                        <Typography variant="h5" color="success.main" gutterBottom>
-                            ✅ Oled loosimisse registreeritud!
+                        <Typography variant="h5" gutterBottom>
+                            Oled loosimisse registreeritud!
                         </Typography>
+
+                        <Button
+                            style={{marginTop: "1rem"}}
+                            variant="outlined"
+                            color="error"
+                            onClick={handleUnregister}
+                            disabled={unregisterLoading}
+                        >
+                            {unregisterLoading ? <CircularProgress size={20} /> : "Tühista registreering"}
+                        </Button>
                     </Box>
                 ) : (
                     <Box mt={4}>
@@ -105,31 +124,16 @@ export default function CheckInPage() {
                             icon={<InfoOutlinedIcon />}
                             sx={{
                                 mb: 2,
-                                textAlign: 'left',
-                                backgroundColor: 'primary.light',
-                                color: 'primary.contrastText',
-                                '& .MuiAlert-icon': { color: 'primary.contrastText' },
+                                textAlign: "left",
+                                backgroundColor: "primary.light",
+                                color: "primary.contrastText",
+                                "& .MuiAlert-icon": { color: "primary.contrastText" },
                             }}
                         >
                             Auhinna saamiseks peab mängija olema loosimise hetkel kohal!
                         </Alert>
-                        <Autocomplete<Player>
 
-                            options={players}
-                            getOptionLabel={(option) => option.name}
-                            value={selectedPlayer}
-                            onChange={(_: React.SyntheticEvent, newValue: Player | null) => setSelectedPlayer(newValue)}
-                            renderInput={(params: AutocompleteRenderInputParams) => (
-                                <TextField {...params} label="Mängija nimi" fullWidth sx={{mb: 2}}/>
-                            )}
-                        />
-
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleSubmit}
-                            disabled={!selectedPlayer}
-                        >
+                        <Button variant="contained" color="primary" onClick={handleSubmit}>
                             Registreeri
                         </Button>
                     </Box>
@@ -140,8 +144,10 @@ export default function CheckInPage() {
                 <DialogTitle>Registreeru loosimängu?</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Kas oled kindel, et soovid mängija <strong>{selectedPlayer?.name}</strong> loosimängu
-                        registreerida?<br/><br/> Kinnitan, et olen loosimise ajal kohal!
+                        Kas oled kindel, et soovid end loosimängu registreerida?
+                        <br />
+                        <br />
+                        Kinnitan, et olen loosimise ajal kohal!
                     </Typography>
                 </DialogContent>
                 <DialogActions>

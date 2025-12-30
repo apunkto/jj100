@@ -1,5 +1,5 @@
 import Layout from '@/src/components/Layout'
-import { Box, Typography, Button } from '@mui/material'
+import {Box, Button, Typography} from '@mui/material'
 import FacebookIcon from '@mui/icons-material/Facebook'
 
 export default function InfoPage() {
@@ -56,7 +56,7 @@ export default function InfoPage() {
                 <Button
                     variant="outlined"
                     color="primary"
-                    href="https://www.facebook.com/events/1377448620276469"
+                    href="https://www.facebook.com/events/1663196438386742"
                     target="_blank"
                     rel="noopener noreferrer"
                     startIcon={<FacebookIcon />}
@@ -64,16 +64,6 @@ export default function InfoPage() {
                     Facebooki Leht
                 </Button>
 
-                {/* Crowdpurr Game Link */}
-                <Button
-                    variant="outlined"
-                    color="primary"
-                    href="https://www.crowd.live/GZSVK"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    🧠 Discolfi Viktoriin
-                </Button>
             </Box>
         </Layout>
     )

@@ -1,5 +1,7 @@
 // src/api/metrixApi.ts
 
+import {authedFetch} from "@/src/api/authedFetch";
+
 export type MetrixPlayerListItem = {
     userId: number;
     name: string;
@@ -31,6 +33,8 @@ export type MetrixPlayerStats = {
         doubleBogeys: number;
         tripleOrWorse: number;
     } | null;
+    holes: { played: number; total: number; playedPct: number | null };
+    obHoles: number;
 };
 
 // Generic envelope your BE returns: { success: true, data: ... }
@@ -44,6 +48,10 @@ type PlayersPayload = {
     players: MetrixPlayerListItem[];
 };
 
+type CheckEmailPayload = {
+    metrixUserId: number | null
+}
+
 type StatsPayload = MetrixPlayerStats;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -53,7 +61,7 @@ if (!API_BASE) {
 }
 
 const getMetrixPlayers = async (): Promise<MetrixPlayerListItem[]> => {
-    const res = await fetch(`${API_BASE}/metrix/players`);
+    const res = await authedFetch(`${API_BASE}/metrix/players`);
     if (!res.ok) throw new Error('Failed to fetch metrix players');
 
     const result = (await res.json()) as ApiResponse<PlayersPayload>;
@@ -62,8 +70,8 @@ const getMetrixPlayers = async (): Promise<MetrixPlayerListItem[]> => {
     return result.data.players;
 };
 
-const getMetrixPlayerStats = async (userId: number): Promise<MetrixPlayerStats> => {
-    const res = await fetch(`${API_BASE}/metrix/player/${userId}/stats`);
+const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
+    const res = await authedFetch(`${API_BASE}/metrix/player/stats`);
     if (!res.ok) throw new Error('Failed to fetch metrix player stats');
 
     const result = (await res.json()) as ApiResponse<StatsPayload>;
@@ -72,9 +80,28 @@ const getMetrixPlayerStats = async (userId: number): Promise<MetrixPlayerStats> 
     return result.data;
 };
 
+const checkMetrixEmail = async (email: string): Promise<number | null> => {
+    const res = await fetch(`${API_BASE}/metrix/check-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+    })
+
+    if (!res.ok) throw new Error('Failed to check email')
+
+    const result = (await res.json()) as ApiResponse<CheckEmailPayload>
+    if (!result.success) throw new Error('Backend returned error checking email')
+
+    return result.data.metrixUserId
+}
+
+
 export default function useMetrixApi() {
     return {
         getMetrixPlayers,
         getMetrixPlayerStats,
+        checkMetrixEmail,
     };
 }
+
+

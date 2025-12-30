@@ -1,8 +1,4 @@
-export type Player = {
-    id: string
-    name: string
-}
-
+import {authedFetch} from "@/src/api/authedFetch";
 
 
 export type CheckedInPlayer = {
@@ -22,11 +18,11 @@ if (!API_BASE) {
     throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
 }
 export const useCheckinApi = () => {
-    const checkIn = async (playerId: number) => {
-        const res = await fetch(`${API_BASE}/lottery/checkin`, {
+    const checkIn = async () => {
+        const res = await authedFetch(`${API_BASE}/lottery/checkin`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({player_id: playerId}),
+            body: JSON.stringify({}),
         })
 
         if (res.status === 409) {
@@ -41,7 +37,7 @@ export const useCheckinApi = () => {
     }
 
     const getCheckins = async (): Promise<CheckedInPlayer[]> => {
-        const res = await fetch(`${API_BASE}/lottery/checkins`)
+        const res = await authedFetch(`${API_BASE}/lottery/checkins`)
         if (!res.ok) {
             throw new Error('Failed to fetch check-ins')
         }
@@ -52,7 +48,7 @@ export const useCheckinApi = () => {
 
     const drawWinner = async (finalGame: boolean = false): Promise<CheckedInPlayer> => {
         const params = finalGame ? '?final_game=true' : ''
-        const res = await fetch(`${API_BASE}/lottery/draw${params}`, {
+        const res = await authedFetch(`${API_BASE}/lottery/draw${params}`, {
             method: 'POST'
         })
 
@@ -64,7 +60,7 @@ export const useCheckinApi = () => {
     }
 
     const deleteCheckin = async (playerId: number) => {
-        const res = await fetch(`${API_BASE}/lottery/checkin/${playerId}`, {
+        const res = await authedFetch(`${API_BASE}/lottery/checkin/${playerId}`, {
             method: 'DELETE'
         })
         if (!res.ok) {
@@ -73,7 +69,7 @@ export const useCheckinApi = () => {
     }
 
     const confirmFinalGameCheckin = async (playerId: number) => {
-        const res = await fetch(`${API_BASE}/lottery/checkin/final/${playerId}`, {
+        const res = await authedFetch(`${API_BASE}/lottery/checkin/final/${playerId}`, {
             method: 'POST'
         })
         if (!res.ok) {
@@ -81,6 +77,28 @@ export const useCheckinApi = () => {
         }
     }
 
-    return {checkIn, getCheckins, drawWinner, deleteCheckin, confirmFinalGameCheckin}
+    const getMyCheckin = async (): Promise<{ checkedIn: boolean; checkin: any | null }> => {
+        const res = await authedFetch(`${API_BASE}/lottery/checkin/me`)
+        if (!res.ok) throw new Error("Failed to fetch my check-in")
+
+        const json = (await res.json()) as { data: { checkedIn: boolean; checkin: any | null } }
+        return json.data
+    }
+
+    const unregisterMe = async () => {
+        const res = await authedFetch(`${API_BASE}/lottery/checkin/me`, {method: "DELETE"})
+        if (!res.ok) throw new Error("Failed to unregister")
+    }
+
+
+    return {
+        checkIn,
+        getCheckins,
+        drawWinner,
+        deleteCheckin,
+        confirmFinalGameCheckin,
+        getMyCheckin,
+        unregisterMe,
+    }
 }
 
