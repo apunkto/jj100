@@ -1,3 +1,4 @@
+import {alpha, darken, lighten} from '@mui/material/styles'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {Swiper, SwiperSlide} from 'swiper/react'
 import 'swiper/css'
@@ -19,10 +20,10 @@ type HoleCacheEntry = {
 
 export default function CoursePage() {
     const totalCards = 100
-    const cards = Array.from({ length: totalCards }, (_, i) => i + 1)
+    const cards = Array.from({length: totalCards}, (_, i) => i + 1)
 
-    const { getHole } = useCtpApi()
-    const { getUserCurrentHoleNumber } = useMetrixApi()
+    const {getHole} = useCtpApi()
+    const {getUserCurrentHoleNumber} = useMetrixApi()
 
     const prevRef = useRef<HTMLButtonElement | null>(null)
     const nextRef = useRef<HTMLButtonElement | null>(null)
@@ -147,12 +148,12 @@ export default function CoursePage() {
         if (!holeData) return null
 
         const categories = [
-            { key: 'eagles', color: '#f8c600', label: 'Eagle' },
-            { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie' },
-            { key: 'pars', color: '#ECECECFF', label: 'Par' },
-            { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey' },
-            { key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double' },
-            { key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+' },
+            {key: 'eagles', color: '#f8c600', label: 'Eagle'},
+            {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
+            {key: 'pars', color: '#ECECECFF', label: 'Par'},
+            {key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey'},
+            {key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double'},
+            {key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+'},
         ]
 
         const total = categories.reduce(
@@ -164,7 +165,7 @@ export default function CoursePage() {
         return (
             <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
-                    {categories.map(({ key, color }) => {
+                    {categories.map(({key, color}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         const percent = (Number(value) / Number(total)) * 100
                         return (
@@ -183,7 +184,7 @@ export default function CoursePage() {
                 </Box>
 
                 <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                    {categories.map(({ key, color, label }) => {
+                    {categories.map(({key, color, label}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         if (!value) return null
                         return (
@@ -244,7 +245,7 @@ export default function CoursePage() {
                                 fontSize: '1rem',
                             },
                         }}
-                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                        inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
                     />
                 </Box>
 
@@ -258,58 +259,246 @@ export default function CoursePage() {
                         const hole = swiper.activeIndex + 1
                         setCurrentHoleNumber(hole)
                     }}
-                    style={{ maxWidth: '550px', margin: '0 auto', width: '100%' }}
+                    style={{maxWidth: '550px', margin: '0 auto', width: '100%'}}
                 >
-                    {cards.map((number) => (
-                        <SwiperSlide key={number} style={{ width: '90%' }}>
-                            <Box
-                                sx={{
-                                    position: 'relative',
-                                    width: '100%',
-                                    paddingTop: '141.4%',
-                                    borderRadius: '15px',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                {holeInfo[number]?.data.hole.length && (
+                    {cards.map((number) => {
+                        const hole = holeInfo[number]?.data?.hole
+                        const par = hole?.par ?? 3
+                        const length = hole?.length
+
+                        return (
+                            <SwiperSlide key={number} style={{ width: '90%' }}>
+                                <Box
+                                    sx={(theme) => {
+                                        const p = theme.palette.primary.main
+                                        const pDark = darken(p, 0.55)
+                                        const pMid = darken(p, 0.25)
+                                        const pLight = lighten(p, 0.65)
+
+                                        return {
+                                            position: 'relative',
+                                            width: '100%',
+                                            maxWidth: 500,
+                                            mx: 'auto',
+                                            borderRadius: '6% / 4.3%',
+                                            overflow: 'hidden',
+                                            aspectRatio: '5 / 7',
+                                            outline: `1px solid ${alpha('#000', 0.08)}`,
+
+                                            /* ✅ Enable container units */
+                                            containerType: 'inline-size',
+                                            containerName: 'card',
+
+                                            /* ✅ PURE ratio tokens (based on card width) */
+                                            '--pad': '3cqw',
+                                            '--badge': '22cqw',
+                                            '--pillW': '22cqw',
+                                            '--pillH': '12cqw',
+
+                                            background: `
+          radial-gradient(120% 85% at 50% 8%,
+            ${alpha('#fff', 0.14)} 0%,
+            ${alpha('#fff', 0.00)} 55%
+          ),
+          radial-gradient(140% 95% at 25% 105%,
+            ${alpha(pLight, 0.55)} 0%,
+            ${alpha(pLight, 0.00)} 55%
+          ),
+          linear-gradient(180deg,
+            ${pMid} 0%,
+            ${pDark} 100%
+          )
+        `,
+
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                inset: 0,
+                                                zIndex: 0,
+                                                pointerEvents: 'none',
+                                                background: `radial-gradient(120% 90% at 50% 45%,
+            ${alpha('#000', 0)} 55%,
+            ${alpha('#000', 0.22)} 100%
+          )`,
+                                            },
+                                        }
+                                    }}
+                                >
+                                    {/* ───────────────── TOP BADGES ───────────────── */}
                                     <Box
                                         sx={{
                                             position: 'absolute',
-                                            zIndex: 2,
-                                            right: '6.5%',
-                                            top: '7.5%',
-                                            transform: 'translateY(-50%)',
+                                            top: 'var(--pad)',
+                                            left: 'var(--pad)',
+                                            right: 'var(--pad)',
+                                            zIndex: 5,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            pointerEvents: 'none',
                                         }}
                                     >
-                                        <Typography
-                                            variant="h4"
-                                            fontWeight="regular"
-                                            sx={{
-                                                fontSize: 'clamp(4px, 4.2vw, 24px)',
-                                                color: 'black',
-                                                fontFamily: 'Alatsi, sans-serif',
-                                            }}
+                                        {/* Hole number */}
+                                        <Box
+                                            sx={(theme) => ({
+                                                width: 'var(--badge)',
+                                                aspectRatio: '1 / 1',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#fff',
+                                                display: 'grid',
+                                                placeItems: 'center',
+                                                boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
+                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+                                            })}
                                         >
-                                            {holeInfo[number]?.data.hole.length}m
-                                        </Typography>
+                                            <Typography
+                                                sx={{
+                                                    /* ✅ EXACT ratio to badge size */
+                                                    fontSize: 'calc(var(--badge) * 0.45)',
+                                                    fontWeight: 800,
+                                                    lineHeight: 1,
+                                                }}
+                                            >
+                                                {number}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* PAR pill */}
+                                        <Box
+                                            sx={(theme) => ({
+                                                width: 'var(--badge)',
+                                                aspectRatio: '1 / 1',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#fff',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
+                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+                                                // optional: tighten vertical spacing a bit
+                                                gap: 'calc(var(--badge) * 0.03)',
+                                            })}
+                                        >
+                                            {length ? (
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: 'calc(var(--badge) * 0.19)',
+                                                        fontWeight: 700,
+                                                        lineHeight: 1,
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    {length}m
+                                                </Typography>
+                                            ) : (
+                                                // keep space consistent if you want (optional)
+                                                <Box sx={{ height: 'calc(var(--badge) * 0.19)' }} />
+                                            )}
+
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 'calc(var(--badge) * 0.19)', // slightly smaller
+                                                    fontWeight: 800,
+                                                    lineHeight: 1,
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                PAR {par}
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                )}
-                                <Image
-                                    src={`/cards/${number}.webp?v=4`}
-                                    alt={`Rada ${number}`}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    style={{ borderRadius: '10px' }}
-                                    sizes="(max-width: 600px) 100vw, 500px"
-                                />
-                            </Box>
-                        </SwiperSlide>
-                    ))}
+
+                                    {/* ───────────────── IMAGE AREA ───────────────── */}
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            zIndex: 2,
+                                            px: '7.5%',
+                                            pt: '7.5%',
+                                            pb: { xs: 92, sm: 98 },
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'flex-start',
+                                        }}
+                                    >
+                                        <Box
+                                            sx={(theme) => ({
+                                                width: '100%',
+                                                aspectRatio: '4 / 5',
+                                                borderRadius: '6% / 4.8%',
+                                                overflow: 'hidden',
+                                                backgroundColor: '#fff',
+                                                position: 'relative',
+                                                boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
+                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                                            })}
+                                        >
+                                            <Image
+                                                src={`/cards/1.webp?v=5`}
+                                                alt={`Rada ${number}`}
+                                                fill
+                                                style={{ objectFit: 'contain' }}
+                                                sizes="(max-width: 600px) 80vw, 400px"
+                                                priority={number === currentHoleNumber}
+                                            />
+
+                                        </Box>
+                                    </Box>
+
+                                    {/* ───────────────── BOTTOM INFO ───────────────── */}
+                                    <Box
+                                        sx={(theme) => ({
+                                            position: 'absolute',
+                                            left: '3%',
+                                            right: '3%',
+                                            bottom: '3%',
+                                            height: { xs: 74, sm: 82 },
+                                            borderRadius: 3,
+                                            backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
+                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+                                            px: 1.2,
+                                            py: 1,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'flex-start',
+                                            gap: 1,
+                                            zIndex: 4,
+                                            boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
+                                        })}
+                                    >
+                                        <Typography sx={{ fontSize: { xs: 12, sm: 13 }, fontWeight: 800 }}>
+                                            Erireeglid puuduvad
+                                        </Typography>
+
+                                        <Box
+                                            sx={(theme) => ({
+                                                width: { xs: 44, sm: 50 },
+                                                height: { xs: 44, sm: 50 },
+                                                borderRadius: '50%',
+                                                backgroundColor: alpha(darken(theme.palette.primary.main, 0.65), 0.92),
+                                                display: 'grid',
+                                                placeItems: 'center',
+                                            })}
+                                        >
+                                            <Typography sx={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>
+                                                JJ100
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            </SwiperSlide>
+
+
+                        )
+                    })}
+
                 </Swiper>
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mt={1}>
                     <IconButton color="primary" ref={prevRef}>
-                        <ArrowBackIosNewIcon />
+                        <ArrowBackIosNewIcon/>
                     </IconButton>
                     {holeInfo[currentHoleNumber]?.data.hole.coordinates && (
                         <Box>
@@ -330,7 +519,7 @@ export default function CoursePage() {
                         </Box>
                     )}
                     <IconButton color="primary" ref={nextRef}>
-                        <ArrowForwardIosIcon />
+                        <ArrowForwardIosIcon/>
                     </IconButton>
                 </Box>
 
@@ -364,7 +553,7 @@ export default function CoursePage() {
                         viset par-ile)
                     </Typography>
 
-                    <Typography fontSize={12} sx={{ borderTop: '3px solid #f42b03' }}>
+                    <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
                         {holeInfo[currentHoleNumber]?.data.hole.ob_percent !== undefined
                             ? (() => {
                                 const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent.toFixed(0))
