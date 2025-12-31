@@ -285,15 +285,14 @@ export default function CoursePage() {
                                             aspectRatio: '5 / 7',
                                             outline: `1px solid ${alpha('#000', 0.08)}`,
 
-                                            /* ✅ Enable container units */
                                             containerType: 'inline-size',
                                             containerName: 'card',
 
-                                            /* ✅ PURE ratio tokens (based on card width) */
+                                            /* tokens */
                                             '--pad': '3cqw',
                                             '--badge': '22cqw',
-                                            '--pillW': '22cqw',
-                                            '--pillH': '12cqw',
+                                            '--gutter': '7.5cqw',
+                                            '--infoH': '18cqw',
 
                                             background: `
           radial-gradient(120% 85% at 50% 8%,
@@ -309,7 +308,6 @@ export default function CoursePage() {
             ${pDark} 100%
           )
         `,
-
                                             '&::after': {
                                                 content: '""',
                                                 position: 'absolute',
@@ -353,7 +351,6 @@ export default function CoursePage() {
                                         >
                                             <Typography
                                                 sx={{
-                                                    /* ✅ EXACT ratio to badge size */
                                                     fontSize: 'calc(var(--badge) * 0.45)',
                                                     fontWeight: 800,
                                                     lineHeight: 1,
@@ -363,7 +360,7 @@ export default function CoursePage() {
                                             </Typography>
                                         </Box>
 
-                                        {/* PAR pill */}
+                                        {/* PAR circle */}
                                         <Box
                                             sx={(theme) => ({
                                                 width: 'var(--badge)',
@@ -376,7 +373,6 @@ export default function CoursePage() {
                                                 justifyContent: 'center',
                                                 boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
                                                 border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                                                // optional: tighten vertical spacing a bit
                                                 gap: 'calc(var(--badge) * 0.03)',
                                             })}
                                         >
@@ -392,13 +388,12 @@ export default function CoursePage() {
                                                     {length}m
                                                 </Typography>
                                             ) : (
-                                                // keep space consistent if you want (optional)
                                                 <Box sx={{ height: 'calc(var(--badge) * 0.19)' }} />
                                             )}
 
                                             <Typography
                                                 sx={{
-                                                    fontSize: 'calc(var(--badge) * 0.19)', // slightly smaller
+                                                    fontSize: 'calc(var(--badge) * 0.19)',
                                                     fontWeight: 800,
                                                     lineHeight: 1,
                                                     whiteSpace: 'nowrap',
@@ -409,24 +404,22 @@ export default function CoursePage() {
                                         </Box>
                                     </Box>
 
-                                    {/* ───────────────── IMAGE AREA ───────────────── */}
+                                    {/* ───────────────── WHITE CARD WITH IMAGE ───────────────── */}
                                     <Box
                                         sx={{
                                             position: 'absolute',
                                             inset: 0,
                                             zIndex: 2,
-                                            px: '7.5%',
-                                            pt: '7.5%',
-                                            pb: { xs: 92, sm: 98 },
+                                            px: 'var(--gutter)',
+                                            pt: 'var(--gutter)',
+                                            pb: 'var(--gutter)',
                                             display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'flex-start',
                                         }}
                                     >
                                         <Box
                                             sx={(theme) => ({
                                                 width: '100%',
-                                                aspectRatio: '4 / 5',
+                                                height: '100%',
                                                 borderRadius: '6% / 4.8%',
                                                 overflow: 'hidden',
                                                 backgroundColor: '#fff',
@@ -436,7 +429,7 @@ export default function CoursePage() {
                                             })}
                                         >
                                             <Image
-                                                src={`/cards/1.webp?v=5`}
+                                                src={`/cards/${number}.webp?v=5`}
                                                 alt={`Rada ${number}`}
                                                 fill
                                                 style={{ objectFit: 'contain' }}
@@ -444,51 +437,75 @@ export default function CoursePage() {
                                                 priority={number === currentHoleNumber}
                                             />
 
+                                            {/* bottom info overlay inside the white card */}
+                                            <Box
+                                                sx={(theme) => ({
+                                                    position: 'absolute',
+                                                    left: '3%',
+                                                    right: '3%',
+                                                    bottom: '3%',
+                                                    height: 'var(--infoH)',
+                                                    borderRadius: 3,
+                                                    backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
+                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+                                                    px: 1.2,
+                                                    py: 1,
+                                                    display: 'flex',
+                                                    justifyContent: 'flex-start',
+                                                    alignItems: 'flex-start',
+                                                    gap: 1,
+                                                    zIndex: 4,
+                                                    boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
+                                                })}
+                                            >
+                                                <Typography sx={{ fontSize: { xs: 12, sm: 13 }, fontWeight: 800 }}>
+                                                    Erireeglid puuduvad
+                                                </Typography>
+                                            </Box>
                                         </Box>
                                     </Box>
 
-                                    {/* ───────────────── BOTTOM INFO ───────────────── */}
+                                    {/* ───────────────── BOTTOM BADGES (SYMMETRIC TO TOP) ───────────────── */}
                                     <Box
-                                        sx={(theme) => ({
+                                        sx={{
                                             position: 'absolute',
-                                            left: '3%',
-                                            right: '3%',
-                                            bottom: '3%',
-                                            height: { xs: 74, sm: 82 },
-                                            borderRadius: 3,
-                                            backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
-                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-                                            px: 1.2,
-                                            py: 1,
+                                            bottom: 'var(--pad)', // ✅ same distance from bottom as top badges from top
+                                            left: 'var(--pad)',
+                                            right: 'var(--pad)',
+                                            zIndex: 6,
                                             display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'flex-start',
-                                            gap: 1,
-                                            zIndex: 4,
-                                            boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
-                                        })}
+                                            justifyContent: 'flex-end', // ✅ no left badge
+                                            alignItems: 'center',
+                                            pointerEvents: 'none',
+                                        }}
                                     >
-                                        <Typography sx={{ fontSize: { xs: 12, sm: 13 }, fontWeight: 800 }}>
-                                            Erireeglid puuduvad
-                                        </Typography>
-
                                         <Box
                                             sx={(theme) => ({
-                                                width: { xs: 44, sm: 50 },
-                                                height: { xs: 44, sm: 50 },
+                                                width: 'var(--badge)', // ✅ same size as other badges
+                                                aspectRatio: '1 / 1',
                                                 borderRadius: '50%',
-                                                backgroundColor: alpha(darken(theme.palette.primary.main, 0.65), 0.92),
+                                                backgroundColor: theme.palette.primary.main, // ✅ theme color bg
                                                 display: 'grid',
                                                 placeItems: 'center',
+                                                boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
+                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+                                                overflow: 'hidden',
                                             })}
                                         >
-                                            <Typography sx={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>
-                                                JJ100
-                                            </Typography>
+                                            <Box sx={{ position: 'relative', width: '90%', height: '90%' }}>
+                                                <Image
+                                                    src="/logo.webp"
+                                                    alt="Logo"
+                                                    fill
+                                                    style={{ objectFit: 'contain' }} // ✅ fully visible
+                                                    sizes="80px"
+                                                />
+                                            </Box>
                                         </Box>
                                     </Box>
                                 </Box>
                             </SwiperSlide>
+
 
 
                         )
