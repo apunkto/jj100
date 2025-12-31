@@ -5,16 +5,11 @@ import 'swiper/css/navigation'
 import {Navigation} from 'swiper/modules'
 import Layout from '@/src/components/Layout'
 import Image from 'next/image'
-import {
-    Box,
-    IconButton,
-    Typography,
-    TextField,
-    Button
-} from '@mui/material'
+import {Box, Button, IconButton, TextField, Typography} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useMetrixApi from '@/src/api/useMetrixApi'
 import {debounce} from 'lodash'
 
 type HoleCacheEntry = {
@@ -24,15 +19,19 @@ type HoleCacheEntry = {
 
 export default function CoursePage() {
     const totalCards = 100
-    const cards = Array.from({length: totalCards}, (_, i) => i + 1)
+    const cards = Array.from({ length: totalCards }, (_, i) => i + 1)
 
-    const {getHole} = useCtpApi()
+    const { getHole } = useCtpApi()
+    const { getUserCurrentHoleNumber } = useMetrixApi()
 
     const prevRef = useRef<HTMLButtonElement | null>(null)
     const nextRef = useRef<HTMLButtonElement | null>(null)
     const [swiperInstance, setSwiperInstance] = useState<any>(null)
 
     const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1)
+    const [initialHole, setInitialHole] = useState<number | null>(null)
+    const [initialSlideToDone, setInitialSlideToDone] = useState(false)
+
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
     const [lastUpdated, setLastUpdated] = useState<number | null>(null)
@@ -60,6 +59,7 @@ export default function CoursePage() {
         }
     }
 
+    // wire swiper nav buttons after instance exists
     useEffect(() => {
         if (swiperInstance && prevRef.current && nextRef.current) {
             swiperInstance.params.navigation.prevEl = prevRef.current
@@ -70,13 +70,43 @@ export default function CoursePage() {
         }
     }, [swiperInstance])
 
+    // fetch user's current hole once; set initialHole (fallback to 1)
     useEffect(() => {
+        const init = async () => {
+            try {
+                const ch = await getUserCurrentHoleNumber()
+                const hole = ch && ch >= 1 && ch <= totalCards ? ch : 1
+                setInitialHole(hole)
+            } catch (e) {
+                console.warn('Failed to load current hole, defaulting to 1:', e)
+                setInitialHole(1)
+            }
+        }
+        init()
+    }, [getUserCurrentHoleNumber])
+
+    // after swiper is ready AND initialHole is known, jump once (no animation)
+    useEffect(() => {
+        if (!swiperInstance) return
+        if (initialHole == null) return
+        if (initialSlideToDone) return
+
+        swiperInstance.slideTo(initialHole - 1, 0)
+        setCurrentHoleNumber(initialHole)
+        setInitialSlideToDone(true)
+    }, [swiperInstance, initialHole, initialSlideToDone])
+
+    // preload current, prev, next — but only after initial slide has been applied
+    useEffect(() => {
+        if (!initialSlideToDone) return
+
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
             loadHole(currentHoleNumber)
             if (currentHoleNumber > 1) loadHole(currentHoleNumber - 1)
             if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1)
         }
-    }, [currentHoleNumber])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentHoleNumber, initialSlideToDone])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -91,6 +121,7 @@ export default function CoursePage() {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentHoleNumber])
 
     const debouncedSlideTo = useCallback(
@@ -116,12 +147,12 @@ export default function CoursePage() {
         if (!holeData) return null
 
         const categories = [
-            {key: 'eagles', color: '#f8c600', label: 'Eagle'},
-            {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
-            {key: 'pars', color: '#ECECECFF', label: 'Par'},
-            {key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey'},
-            {key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double'},
-            {key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+'},
+            { key: 'eagles', color: '#f8c600', label: 'Eagle' },
+            { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie' },
+            { key: 'pars', color: '#ECECECFF', label: 'Par' },
+            { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey' },
+            { key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double' },
+            { key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+' },
         ]
 
         const total = categories.reduce(
@@ -133,7 +164,7 @@ export default function CoursePage() {
         return (
             <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
-                    {categories.map(({key, color}) => {
+                    {categories.map(({ key, color }) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         const percent = (Number(value) / Number(total)) * 100
                         return (
@@ -152,7 +183,7 @@ export default function CoursePage() {
                 </Box>
 
                 <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                    {categories.map(({key, color, label}) => {
+                    {categories.map(({ key, color, label }) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         if (!value) return null
                         return (
@@ -193,7 +224,9 @@ export default function CoursePage() {
         <Layout>
             <Box mt={0}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" fontWeight="bold">Rada</Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                        Rada
+                    </Typography>
                     <TextField
                         size="small"
                         placeholder="Otsi korvi.."
@@ -209,9 +242,9 @@ export default function CoursePage() {
                             '& input': {
                                 padding: '3px 8px',
                                 fontSize: '1rem',
-                            }
+                            },
                         }}
-                        inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                     />
                 </Box>
 
@@ -221,31 +254,42 @@ export default function CoursePage() {
                     centeredSlides
                     slidesPerView={'auto'}
                     onSwiper={setSwiperInstance}
-                    onSlideChange={(swiper) => setCurrentHoleNumber(swiper.activeIndex + 1)}
-                    style={{maxWidth: '550px', margin: '0 auto', width: '100%'}}
+                    onSlideChange={(swiper) => {
+                        const hole = swiper.activeIndex + 1
+                        setCurrentHoleNumber(hole)
+                    }}
+                    style={{ maxWidth: '550px', margin: '0 auto', width: '100%' }}
                 >
                     {cards.map((number) => (
-                        <SwiperSlide key={number} style={{width: '90%'}}>
-                            <Box sx={{
-                                position: 'relative',
-                                width: '100%',
-                                paddingTop: '141.4%',
-                                borderRadius: '15px',
-                                overflow: 'hidden'
-                            }}>
+                        <SwiperSlide key={number} style={{ width: '90%' }}>
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    paddingTop: '141.4%',
+                                    borderRadius: '15px',
+                                    overflow: 'hidden',
+                                }}
+                            >
                                 {holeInfo[number]?.data.hole.length && (
-                                    <Box sx={{
-                                        position: 'absolute',
-                                        zIndex: 2,
-                                        right: '6.5%',
-                                        top: '7.5%',
-                                        transform: 'translateY(-50%)'
-                                    }}>
-                                        <Typography variant="h4" fontWeight="regular" sx={{
-                                            fontSize: 'clamp(4px, 4.2vw, 24px)',
-                                            color: 'black',
-                                            fontFamily: 'Alatsi, sans-serif'
-                                        }}>
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            zIndex: 2,
+                                            right: '6.5%',
+                                            top: '7.5%',
+                                            transform: 'translateY(-50%)',
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="h4"
+                                            fontWeight="regular"
+                                            sx={{
+                                                fontSize: 'clamp(4px, 4.2vw, 24px)',
+                                                color: 'black',
+                                                fontFamily: 'Alatsi, sans-serif',
+                                            }}
+                                        >
                                             {holeInfo[number]?.data.hole.length}m
                                         </Typography>
                                     </Box>
@@ -255,7 +299,7 @@ export default function CoursePage() {
                                     alt={`Rada ${number}`}
                                     layout="fill"
                                     objectFit="cover"
-                                    style={{borderRadius: '10px'}}
+                                    style={{ borderRadius: '10px' }}
                                     sizes="(max-width: 600px) 100vw, 500px"
                                 />
                             </Box>
@@ -264,7 +308,9 @@ export default function CoursePage() {
                 </Swiper>
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} mt={1}>
-                    <IconButton color="primary" ref={prevRef}><ArrowBackIosNewIcon/></IconButton>
+                    <IconButton color="primary" ref={prevRef}>
+                        <ArrowBackIosNewIcon />
+                    </IconButton>
                     {holeInfo[currentHoleNumber]?.data.hole.coordinates && (
                         <Box>
                             <Button
@@ -273,14 +319,19 @@ export default function CoursePage() {
                                 size="small"
                                 onClick={() => {
                                     const coords = holeInfo[currentHoleNumber]!.data.hole.coordinates
-                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`, '_blank')
+                                    window.open(
+                                        `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`,
+                                        '_blank'
+                                    )
                                 }}
                             >
                                 📍 Juhata rajale
                             </Button>
                         </Box>
                     )}
-                    <IconButton color="primary" ref={nextRef}><ArrowForwardIosIcon/></IconButton>
+                    <IconButton color="primary" ref={nextRef}>
+                        <ArrowForwardIosIcon />
+                    </IconButton>
                 </Box>
 
                 {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
@@ -291,7 +342,7 @@ export default function CoursePage() {
                                 variant="contained"
                                 color="primary"
                                 size="small"
-                                onClick={() => window.location.href = `/ctp/${currentHoleNumber}`}
+                                onClick={() => (window.location.href = `/ctp/${currentHoleNumber}`)}
                             >
                                 Märgi CTP
                             </Button>
@@ -304,22 +355,24 @@ export default function CoursePage() {
                         Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.hole.rank}</strong>. rada (
                         {holeInfo[currentHoleNumber]?.data.hole.average_diff !== undefined
                             ? (() => {
-                                const diff = holeInfo[currentHoleNumber].data.hole.average_diff;
-                                const rounded = Number(diff.toFixed(1));
-                                if (rounded === 0) return '0';
-                                return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`;
+                                const diff = holeInfo[currentHoleNumber].data.hole.average_diff
+                                const rounded = Number(diff.toFixed(1))
+                                if (rounded === 0) return '0'
+                                return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`
                             })()
-                            : ''} viset par-ile)
+                            : ''}{' '}
+                        viset par-ile)
                     </Typography>
 
-                    <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
+                    <Typography fontSize={12} sx={{ borderTop: '3px solid #f42b03' }}>
                         {holeInfo[currentHoleNumber]?.data.hole.ob_percent !== undefined
                             ? (() => {
-                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent.toFixed(0));
-                                if (rounded === 0) return '0';
-                                return rounded;
+                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent.toFixed(0))
+                                if (rounded === 0) return '0'
+                                return rounded
                             })()
-                            : ''}% viskas OB
+                            : ''}
+                        % viskas OB
                     </Typography>
                 </Box>
 
