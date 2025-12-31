@@ -60,15 +60,6 @@ if (!API_BASE) {
     throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
 }
 
-const getMetrixPlayers = async (): Promise<MetrixPlayerListItem[]> => {
-    const res = await authedFetch(`${API_BASE}/metrix/players`);
-    if (!res.ok) throw new Error('Failed to fetch metrix players');
-
-    const result = (await res.json()) as ApiResponse<PlayersPayload>;
-    if (!result.success) throw new Error('Backend returned error fetching metrix players');
-
-    return result.data.players;
-};
 
 const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
     const res = await authedFetch(`${API_BASE}/metrix/player/stats`);
@@ -98,7 +89,6 @@ const checkMetrixEmail = async (email: string): Promise<number | null> => {
 
 export default function useMetrixApi() {
     return {
-        getMetrixPlayers,
         getMetrixPlayerStats,
         checkMetrixEmail,
     };

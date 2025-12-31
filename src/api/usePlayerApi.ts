@@ -7,6 +7,18 @@ export type Player = {
     name: string
 }
 
+export type UserParticipation = {
+    year: number
+    place: number
+    score: number
+}
+
+export type ParticipationLeader = {
+    metrixUserId: number
+    name: string
+    participationYears: number
+}
+
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -16,15 +28,31 @@ if (!API_BASE) {
 
 
 const getLoggedInUser = async (): Promise<Player | null> => {
-    const res = await authedFetch(`${API_BASE}/me` )
+    const res = await authedFetch(`${API_BASE}/me`)
     if (!res.ok) return null
     const result = await res.json() as { data: Player }
     return result.data
 }
 
 
+const getPlayerParticipations = async (): Promise<UserParticipation[]> => {
+    const res = await authedFetch(`${API_BASE}/player/participations`)
+    if (!res.ok) return []
+    const result = await res.json() as { data: UserParticipation[] }
+    return result.data
+}
+
+async function getParticipationLeaders(): Promise<ParticipationLeader[]> {
+    const res = await authedFetch(`${API_BASE}/player/participations/leaders`)
+    if (!res.ok) return []
+    const json = await res.json() as { data: ParticipationLeader[] }
+    return json.data ?? []
+}
+
+
+
 export default function usePlayerApi() {
     return {
-        getLoggedInUser,
+        getLoggedInUser, getPlayerParticipations, getParticipationLeaders
     }
 }

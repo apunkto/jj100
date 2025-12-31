@@ -23,6 +23,7 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import MapIcon from '@mui/icons-material/Map'
 import InfoIcon from '@mui/icons-material/Info'
 import FeedbackIcon from '@mui/icons-material/Feedback'
+import HistoryIcon from '@mui/icons-material/History'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
 import {useRouter} from 'next/router'
@@ -66,12 +67,13 @@ export default function Layout({
     }
 
     const menuItems = [
+        { href: '/info', label: 'Info', icon: <InfoIcon /> },
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
         { href: '/stats', label: 'Statistika', icon: <LineChartIcon /> },
         { href: '/check-in', label: 'Loosimängud', icon: <CardGiftcardIcon /> },
-        { href: '/info', label: 'Info', icon: <InfoIcon /> },
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
+        { href: '/history', label: 'Ajalugu', icon: <HistoryIcon /> },
     ]
 
     return (
