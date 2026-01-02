@@ -428,14 +428,23 @@ export default function CoursePage() {
                                                 border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
                                             })}
                                         >
-                                            <Image
-                                                src={`/cards/${number}.webp?v=5`}
-                                                alt={`Rada ${number}`}
-                                                fill
-                                                style={{ objectFit: 'contain' }}
-                                                sizes="(max-width: 600px) 80vw, 400px"
-                                                priority={number === currentHoleNumber}
-                                            />
+                                            <Box
+                                                sx={{
+                                                    position: 'absolute',
+                                                    inset: 0,
+                                                    // ✅ 10% padding only at the bottom
+                                                    bottom: '20%',
+                                                }}
+                                            >
+                                                <Image
+                                                    src={`/cards/${number}.webp?v=5`}
+                                                    alt={`Rada ${number}`}
+                                                    fill
+                                                    style={{ objectFit: 'contain' }}
+                                                    sizes="(max-width: 600px) 80vw, 400px"
+                                                    priority={number === currentHoleNumber}
+                                                />
+                                            </Box>
 
                                             {/* bottom info overlay inside the white card */}
                                             <Box
