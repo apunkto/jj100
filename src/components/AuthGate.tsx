@@ -28,9 +28,6 @@ export default function AuthGate({
 
             const { data } = await supabase.auth.getSession();
             const session = data.session;
-            const token = data.session!.access_token
-            const header = JSON.parse(atob(token.split('.')[0].replace(/-/g,'+').replace(/_/g,'/')))
-            console.log(header)
             if (!mounted) return;
 
             if (!session) {
