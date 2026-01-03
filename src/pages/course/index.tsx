@@ -292,7 +292,8 @@ export default function CoursePage() {
                                             '--pad': '3cqw',
                                             '--badge': '22cqw',
                                             '--gutter': '7.5cqw',
-                                            '--infoH': '18cqw',
+                                            '--infoH': '20cqw',
+                                            '--inner': '3cqw',
 
                                             background: `
           radial-gradient(120% 85% at 50% 8%,
@@ -435,34 +436,82 @@ export default function CoursePage() {
                                             </Box>
 
                                             {/* INFO BOX BELOW (scales with card) */}
+                                            {/* ───────────────── WHITE CARD WITH IMAGE ───────────────── */}
                                             <Box
-                                                sx={(theme) => ({
-                                                    margin: '3%',
-                                                    height: 'var(--infoH)',
-                                                    borderRadius: '3cqw',
-                                                    px: '3.2cqw',
-                                                    py: '2.2cqw',
-                                                    backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
-                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-                                                    boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
+                                                sx={{
+                                                    position: 'absolute',
+                                                    inset: 0,
+                                                    zIndex: 2,
+                                                    px: 'var(--gutter)',
+                                                    pt: 'var(--gutter)',
+                                                    pb: 'var(--gutter)',
                                                     display: 'flex',
-                                                    alignItems: 'flex-start',
-                                                    justifyContent: 'flex-start',
-                                                })}
+                                                }}
                                             >
-                                                <Typography
-                                                    sx={{
-                                                        fontSize: '3.0cqw',
-                                                        fontWeight: 500,
+                                                <Box
+                                                    sx={(theme) => ({
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        borderRadius: '6% / 4.8%',
                                                         overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        display: '-webkit-box',
-                                                        WebkitBoxOrient: 'vertical',
-                                                    }}
+                                                        backgroundColor: '#fff',
+                                                        boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                    })}
                                                 >
-                                                    { hole?.rules || 'Erireeglid puuduvad' }
-                                                </Typography>
+                                                    {/* ✅ IMAGE AREA: always full width, always 4/5 */}
+                                                    <Box
+                                                        sx={{
+                                                            width: '100%',
+                                                            aspectRatio: '400 / 425',
+                                                            position: 'relative', // needed for Image fill
+                                                            flexShrink: 0,
+                                                        }}
+                                                    >
+                                                        <Image
+                                                            src={`/cards/${number}.webp?v=5`}
+                                                            alt={`Rada ${number}`}
+                                                            fill
+                                                            sizes="(max-width: 600px) 80vw, 400px"
+                                                            priority={number === currentHoleNumber}
+                                                            style={{ objectFit: 'contain' }} // ✅ no distortion
+                                                        />
+                                                    </Box>
+
+                                                    {/* ✅ INFO AREA: gets all remaining height */}
+                                                    <Box
+                                                        sx={(theme) => ({
+                                                            flex: 1,
+                                                            minHeight: 0, // ✅ allows ellipsis/clamp to work
+                                                            mx: 'var(--inner)',
+                                                            my: 'calc(var(--inner) * 0.8)',
+                                                            borderRadius: '3cqw',
+                                                            px: '3.2cqw',
+                                                            py: '2.2cqw',
+                                                            backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
+                                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+                                                            boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
+                                                            overflow: 'hidden',
+                                                        })}
+                                                    >
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: '3.0cqw',
+                                                                fontWeight: 500,
+                                                                lineHeight: 1.2,
+                                                                overflow: 'hidden',
+                                                                display: '-webkit-box',
+                                                                WebkitBoxOrient: 'vertical',
+                                                                WebkitLineClamp: 4, // adjust
+                                                            }}
+                                                        >
+                                                            {hole?.rules || 'Erireeglid puuduvad'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
                                             </Box>
+
                                         </Box>
 
                                     </Box>
