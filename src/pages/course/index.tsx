@@ -498,6 +498,7 @@ export default function CoursePage() {
                                                     >
                                                         <Typography
                                                             sx={{
+                                                                whiteSpace: 'break-spaces',
                                                                 fontSize: '3.0cqw',
                                                                 fontWeight: 500,
                                                                 lineHeight: 1.2,
