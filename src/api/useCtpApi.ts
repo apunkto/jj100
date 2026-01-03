@@ -23,6 +23,7 @@ export type HoleResult = {
         bogeys?: number
         double_bogeys?: number
         others?: number
+        rules: string
     }
     ctp: {
         id: number

@@ -429,7 +429,6 @@ export default function CoursePage() {
                                                     src={`/cards/${number}.webp?v=5`}
                                                     alt={`Rada ${number}`}
                                                     fill
-                                                    style={{ objectFit: 'contain' }}
                                                     sizes="(max-width: 600px) 80vw, 400px"
                                                     priority={number === currentHoleNumber}
                                                 />
@@ -453,15 +452,15 @@ export default function CoursePage() {
                                             >
                                                 <Typography
                                                     sx={{
-                                                        fontSize: '3.2cqw',
-                                                        fontWeight: 600,
+                                                        fontSize: '3.0cqw',
+                                                        fontWeight: 500,
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                         display: '-webkit-box',
                                                         WebkitBoxOrient: 'vertical',
                                                     }}
                                                 >
-                                                    Erireeglid puuduvad
+                                                    { hole?.rules || 'Erireeglid puuduvad' }
                                                 </Typography>
                                             </Box>
                                         </Box>
