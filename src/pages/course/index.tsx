@@ -308,17 +308,7 @@ export default function CoursePage() {
             ${pDark} 100%
           )
         `,
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                inset: 0,
-                                                zIndex: 0,
-                                                pointerEvents: 'none',
-                                                background: `radial-gradient(120% 90% at 50% 45%,
-            ${alpha('#000', 0)} 55%,
-            ${alpha('#000', 0.22)} 100%
-          )`,
-                                            },
+
                                         }
                                     }}
                                 >
@@ -424,8 +414,6 @@ export default function CoursePage() {
                                                 overflow: 'hidden',
                                                 backgroundColor: '#fff',
                                                 boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
-                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                             })}
@@ -496,10 +484,10 @@ export default function CoursePage() {
                                     >
                                         <Box
                                             sx={(theme) => ({
-                                                width: 'var(--badge)', // ✅ same size as other badges
+                                                width: 'var(--badge)',
                                                 aspectRatio: '1 / 1',
                                                 borderRadius: '50%',
-                                                backgroundColor: theme.palette.primary.main, // ✅ theme color bg
+                                                bgcolor: theme.palette.primary.main,
                                                 display: 'grid',
                                                 placeItems: 'center',
                                                 boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
@@ -507,13 +495,31 @@ export default function CoursePage() {
                                                 overflow: 'hidden',
                                             })}
                                         >
-                                            <Box sx={{position: 'relative', width: '90%', height: '90%'}}>
+                                            <Box
+                                                sx={(theme) => ({
+                                                    width: 'var(--badge)',
+                                                    aspectRatio: '1 / 1',
+                                                    borderRadius: '50%',
+                                                    bgcolor: theme.palette.primary.main,
+                                                    display: 'grid',
+                                                    placeItems: 'center',
+                                                    boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
+                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+                                                    overflow: 'hidden',
+                                                })}
+                                            >
                                                 <Image
                                                     src="/logo.webp"
                                                     alt="Logo"
-                                                    fill
-                                                    style={{objectFit: 'contain'}} // ✅ fully visible
-                                                    sizes="80px"
+                                                    width={400}     // any “large enough” intrinsic size
+                                                    height={400}    // doesn't distort; only used for ratio box
+                                                    style={{
+                                                        maxWidth: '85%',
+                                                        maxHeight: '85%',
+                                                        width: 'auto',
+                                                        height: 'auto',
+                                                        objectFit: 'contain',
+                                                    }}
                                                 />
                                             </Box>
                                         </Box>
