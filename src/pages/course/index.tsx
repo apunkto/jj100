@@ -267,7 +267,7 @@ export default function CoursePage() {
                         const length = hole?.length
 
                         return (
-                            <SwiperSlide key={number} style={{ width: '90%' }}>
+                            <SwiperSlide key={number} style={{width: '90%'}}>
                                 <Box
                                     sx={(theme) => {
                                         const p = theme.palette.primary.main
@@ -388,7 +388,7 @@ export default function CoursePage() {
                                                     {length}m
                                                 </Typography>
                                             ) : (
-                                                <Box sx={{ height: 'calc(var(--badge) * 0.19)' }} />
+                                                <Box sx={{height: 'calc(var(--badge) * 0.19)'}}/>
                                             )}
 
                                             <Typography
@@ -423,17 +423,18 @@ export default function CoursePage() {
                                                 borderRadius: '6% / 4.8%',
                                                 overflow: 'hidden',
                                                 backgroundColor: '#fff',
-                                                position: 'relative',
                                                 boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
                                                 border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+
+                                                display: 'flex',
+                                                flexDirection: 'column',
                                             })}
                                         >
+                                            {/* IMAGE AREA (takes remaining space) */}
                                             <Box
                                                 sx={{
-                                                    position: 'absolute',
-                                                    inset: 0,
-                                                    // ✅ 10% padding only at the bottom
-                                                    bottom: '20%',
+                                                    position: 'relative', // ✅ needed for <Image fill>
+                                                    flex: 1,
                                                 }}
                                             >
                                                 <Image
@@ -446,32 +447,37 @@ export default function CoursePage() {
                                                 />
                                             </Box>
 
-                                            {/* bottom info overlay inside the white card */}
+                                            {/* INFO BOX BELOW (scales with card) */}
                                             <Box
                                                 sx={(theme) => ({
-                                                    position: 'absolute',
-                                                    left: '3%',
-                                                    right: '3%',
-                                                    bottom: '3%',
+                                                    margin: '3%',
                                                     height: 'var(--infoH)',
-                                                    borderRadius: 3,
+                                                    borderRadius: '3cqw',
+                                                    px: '3.2cqw',
+                                                    py: '2.2cqw',
                                                     backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
                                                     border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-                                                    px: 1.2,
-                                                    py: 1,
-                                                    display: 'flex',
-                                                    justifyContent: 'flex-start',
-                                                    alignItems: 'flex-start',
-                                                    gap: 1,
-                                                    zIndex: 4,
                                                     boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
+                                                    display: 'flex',
+                                                    alignItems: 'flex-start',
+                                                    justifyContent: 'flex-start',
                                                 })}
                                             >
-                                                <Typography sx={{ fontSize: { xs: 12, sm: 13 }, fontWeight: 800 }}>
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: '3.2cqw',
+                                                        fontWeight: 600,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitBoxOrient: 'vertical',
+                                                    }}
+                                                >
                                                     Erireeglid puuduvad
                                                 </Typography>
                                             </Box>
                                         </Box>
+
                                     </Box>
 
                                     {/* ───────────────── BOTTOM BADGES (SYMMETRIC TO TOP) ───────────────── */}
@@ -501,12 +507,12 @@ export default function CoursePage() {
                                                 overflow: 'hidden',
                                             })}
                                         >
-                                            <Box sx={{ position: 'relative', width: '90%', height: '90%' }}>
+                                            <Box sx={{position: 'relative', width: '90%', height: '90%'}}>
                                                 <Image
                                                     src="/logo.webp"
                                                     alt="Logo"
                                                     fill
-                                                    style={{ objectFit: 'contain' }} // ✅ fully visible
+                                                    style={{objectFit: 'contain'}} // ✅ fully visible
                                                     sizes="80px"
                                                 />
                                             </Box>
@@ -514,7 +520,6 @@ export default function CoursePage() {
                                     </Box>
                                 </Box>
                             </SwiperSlide>
-
 
 
                         )
