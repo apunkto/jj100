@@ -467,6 +467,7 @@ export default function CoursePage() {
                                                             aspectRatio: '400 / 425',
                                                             position: 'relative', // needed for Image fill
                                                             flexShrink: 0,
+                                                            paddingTop: '7%'
                                                         }}
                                                     >
                                                         <Image
