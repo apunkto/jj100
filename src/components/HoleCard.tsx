@@ -26,9 +26,9 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
         <Box
             sx={(theme) => {
                 const p = theme.palette.primary.main
-                const base1 = darken(p, 0.55)
-                const base2 = darken(p, 0.72)
-                const hi = lighten(p, 0.62)
+                const pLite = lighten(p, 0.62)
+                const pMid  = darken(p, 0.18)
+                const pDark = darken(p, 0.60)
 
                 return {
                     position: 'relative',
@@ -42,7 +42,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     "@media print": {
                         width: "100%",
                         maxWidth: "100%",
-                        height: "100%",       // ✅ fill 266mm wrapper height
+                        height: "100%",
                         outline: "none",
                     },
                     containerType: 'inline-size',
@@ -55,27 +55,38 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     '--inner': '3cqw',
 
                     background: `
-  repeating-linear-gradient(45deg,
-    ${alpha('#fff', 0.06)} 0px,
-    ${alpha('#fff', 0.06)} 4px,
-    ${alpha('#000', 0.08)} 4px,
-    ${alpha('#000', 0.08)} 8px
-  ),
-  repeating-linear-gradient(-45deg,
-    ${alpha('#fff', 0.04)} 0px,
-    ${alpha('#fff', 0.04)} 4px,
-    ${alpha('#000', 0.06)} 4px,
-    ${alpha('#000', 0.06)} 8px
-  ),
-  radial-gradient(120% 70% at 50% 0%,
-    ${alpha('#fff', 0.16)} 0%,
-    ${alpha('#fff', 0.00)} 60%
-  ),
-  linear-gradient(180deg,
-    ${darken(theme.palette.primary.main, 0.30)} 0%,
-    ${darken(theme.palette.primary.main, 0.72)} 100%
-  )
-`,
+      /* carbon weave — TINTED with primary */
+      repeating-linear-gradient(45deg,
+        ${alpha(pLite, 0.18)} 0px,
+        ${alpha(pLite, 0.18)} 4px,
+        ${alpha(pDark, 0.20)} 4px,
+        ${alpha(pDark, 0.20)} 8px
+      ),
+      repeating-linear-gradient(-45deg,
+        ${alpha(pLite, 0.12)} 0px,
+        ${alpha(pLite, 0.12)} 4px,
+        ${alpha(pDark, 0.16)} 4px,
+        ${alpha(pDark, 0.16)} 8px
+      ),
+
+      /* top light (slightly stronger) */
+      radial-gradient(120% 70% at 50% 0%,
+        ${alpha('#fff', 0.18)} 0%,
+        ${alpha('#fff', 0.00)} 60%
+      ),
+
+      /* subtle depth */
+      radial-gradient(110% 90% at 85% 95%,
+        ${alpha('#000', 0.14)} 0%,
+        ${alpha('#000', 0.00)} 62%
+      ),
+
+      /* blue base */
+      linear-gradient(180deg,
+        ${pMid} 0%,
+        ${pDark} 100%
+      )
+    `,
                 }
             }}
         >
