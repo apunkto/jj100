@@ -7,24 +7,7 @@ export type HoleEntity = {
 }
 
 export type HoleResult = {
-    hole: {
-        id: number
-        number: number
-        is_ctp: boolean
-        par: number
-        length: number
-        coordinates: string
-        rank: number
-        average_diff: number
-        ob_percent: number
-        eagles?: number
-        birdies?: number
-        pars?: number
-        bogeys?: number
-        double_bogeys?: number
-        others?: number
-        rules: string
-    }
+    hole: Hole,
     ctp: {
         id: number
         hole_id: number
@@ -38,6 +21,25 @@ export type HoleResult = {
     }[]
 }
 
+export type Hole = {
+    id: number
+    number: number
+    is_ctp: boolean
+    par: number
+    length: number
+    coordinates: string
+    rank: number
+    average_diff: number
+    ob_percent: number
+    eagles?: number
+    birdies?: number
+    pars?: number
+    bogeys?: number
+    double_bogeys?: number
+    others?: number
+    rules: string
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
 if (!API_BASE) {
@@ -47,6 +49,12 @@ if (!API_BASE) {
 const getHole = async (holeNumber: number): Promise<HoleResult | null> => {
     const res = await authedFetch(`${API_BASE}/hole/${holeNumber}`)
     if (!res.ok) return null
+    return await res.json()
+}
+
+const getAllHoles = async (): Promise<Hole[]> => {
+    const res = await authedFetch(`${API_BASE}/holes/all`)
+    if (!res.ok) throw new Error('Failed to fetch all holes')
     return await res.json()
 }
 
@@ -65,8 +73,8 @@ const getHoles = async (): Promise<HoleResult[]> => {
 export const submitCtp = async (holeId: number, distanceCm: number) => {
     const res = await authedFetch(`${API_BASE}/ctp/${holeId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ distance_cm: distanceCm }),
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({distance_cm: distanceCm}),
     })
 
     const payload = (await res.json().catch(() => null)) as ApiResponse<unknown> | null
@@ -94,6 +102,6 @@ export default function useCtpApi() {
         getTopRankedHoles,
         getHoles,
         submitCtp,
-        getCtpHoles
+        getCtpHoles,
     }
 }

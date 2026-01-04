@@ -2,6 +2,7 @@ import React, {createContext, useContext, useEffect, useMemo, useRef, useState} 
 import type {Session} from "@supabase/supabase-js"
 import {supabase} from "@/src/lib/supabaseClient"
 import usePlayerApi, {Player} from "@/src/api/usePlayerApi"
+import {setAccessToken} from "@/src/contexts/tokenStore"
 
 type AuthState = {
     loading: boolean
@@ -52,14 +53,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let mounted = true
 
         ;(async () => {
+            console.log("AuthProvider: checking initial session")
+            const tTok = performance.now();
             const { data } = await supabase.auth.getSession()
+            const tTokEnd = performance.now();
+            console.log("AuthProvider: checking initial session took", (tTokEnd - tTok).toFixed(2), "ms")
             if (!mounted) return
+
             setSession(data.session ?? null)
+            setAccessToken(data.session?.access_token ?? null) // ✅ add
             setLoading(false)
         })()
 
         const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
             setSession(newSession ?? null)
+            setAccessToken(newSession?.access_token ?? null)
         })
 
         return () => {

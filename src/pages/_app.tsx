@@ -29,11 +29,11 @@ export default function App({Component, pageProps}: AppProps) {
                 <CssBaseline/>
                 <ToastProvider>
 
-                    <AuthGate publicRoutes={['/login']}>
-                        <AuthProvider>
+                    <AuthProvider>
+                        <AuthGate publicRoutes={['/login']}>
                             <Component {...pageProps} />
-                        </AuthProvider>
-                    </AuthGate>
+                        </AuthGate>
+                    </AuthProvider>
                 </ToastProvider>
             </ThemeProvider>
         </>

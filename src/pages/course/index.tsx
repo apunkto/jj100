@@ -1,17 +1,16 @@
-import {alpha, darken, lighten} from '@mui/material/styles'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {Swiper, SwiperSlide} from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import {Navigation} from 'swiper/modules'
 import Layout from '@/src/components/Layout'
-import Image from 'next/image'
 import {Box, Button, IconButton, TextField, Typography} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 import {debounce} from 'lodash'
+import HoleCard from "@/src/components/HoleCard";
 
 type HoleCacheEntry = {
     data: HoleResult
@@ -71,6 +70,26 @@ export default function CoursePage() {
         }
     }, [swiperInstance])
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        // Logs whenever the main thread is blocked for >50ms
+        const obs = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                // entry.duration is how long the main thread was blocked
+                console.log("[LongTask]", entry.duration.toFixed(1), "ms", entry);
+            }
+        });
+
+        try {
+            // "longtask" supported in Chromium; Firefox may not show it
+            obs.observe({entryTypes: ["longtask"] as any});
+        } catch {
+        }
+
+        return () => obs.disconnect();
+    }, []);
+
     // fetch user's current hole once; set initialHole (fallback to 1)
     useEffect(() => {
         const init = async () => {
@@ -78,13 +97,15 @@ export default function CoursePage() {
                 const ch = await getUserCurrentHoleNumber()
                 const hole = ch && ch >= 1 && ch <= totalCards ? ch : 1
                 setInitialHole(hole)
+                console.log('Initial hole set to', hole)
             } catch (e) {
                 console.warn('Failed to load current hole, defaulting to 1:', e)
                 setInitialHole(1)
             }
         }
+        console.log('Fetching user current hole number...')
         init()
-    }, [getUserCurrentHoleNumber])
+    }, [])
 
     // after swiper is ready AND initialHole is known, jump once (no animation)
     useEffect(() => {
@@ -262,319 +283,33 @@ export default function CoursePage() {
                     style={{maxWidth: '550px', margin: '0 auto', width: '100%'}}
                 >
                     {cards.map((number) => {
-                        const hole = holeInfo[number]?.data?.hole
-                        const par = hole?.par ?? 3
-                        const length = hole?.length
+                        const isNear = Math.abs(number - currentHoleNumber) <= 2 // tune: 1..3
 
                         return (
-                            <SwiperSlide key={number} style={{width: '90%'}}>
-                                <Box
-                                    sx={(theme) => {
-                                        const p = theme.palette.primary.main
-                                        const pDark = darken(p, 0.55)
-                                        const pMid = darken(p, 0.25)
-                                        const pLight = lighten(p, 0.65)
 
-                                        return {
-                                            position: 'relative',
-                                            width: '100%',
-                                            maxWidth: 500,
-                                            mx: 'auto',
-                                            borderRadius: '6% / 4.3%',
-                                            overflow: 'hidden',
-                                            aspectRatio: '5 / 7',
-                                            outline: `1px solid ${alpha('#000', 0.08)}`,
-
-                                            containerType: 'inline-size',
-                                            containerName: 'card',
-
-                                            /* tokens */
-                                            '--pad': '3cqw',
-                                            '--badge': '22cqw',
-                                            '--gutter': '7.5cqw',
-                                            '--infoH': '20cqw',
-                                            '--inner': '3cqw',
-
-                                            background: `
-          radial-gradient(120% 85% at 50% 8%,
-            ${alpha('#fff', 0.14)} 0%,
-            ${alpha('#fff', 0.00)} 55%
-          ),
-          radial-gradient(140% 95% at 25% 105%,
-            ${alpha(pLight, 0.55)} 0%,
-            ${alpha(pLight, 0.00)} 55%
-          ),
-          linear-gradient(180deg,
-            ${pMid} 0%,
-            ${pDark} 100%
-          )
-        `,
-
-                                        }
-                                    }}
-                                >
-                                    {/* ───────────────── TOP BADGES ───────────────── */}
+                            <SwiperSlide key={number} style={{width: "90%"}}>
+                                {haba}
+                                {isNear ? (
+                                    <HoleCard
+                                        maxWidth={500}
+                                        number={number}
+                                        hole={holeInfo[number]?.data?.hole}
+                                        isPriority={number === currentHoleNumber}
+                                    />
+                                ) : (
+                                    // lightweight placeholder to keep Swiper layout stable
                                     <Box
                                         sx={{
-                                            position: 'absolute',
-                                            top: 'var(--pad)',
-                                            left: 'var(--pad)',
-                                            right: 'var(--pad)',
-                                            zIndex: 5,
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            pointerEvents: 'none',
+                                            width: "100%",
+                                            maxWidth: "500px",
+                                            mx: "auto",
+                                            aspectRatio: "5 / 7",
+                                            borderRadius: "6% / 4.3%",
+                                            outline: "1px solid rgba(0,0,0,0.08)",
+                                            background: "rgba(0,0,0,0.03)",
                                         }}
-                                    >
-                                        {/* Hole number */}
-                                        <Box
-                                            sx={(theme) => ({
-                                                width: 'var(--badge)',
-                                                aspectRatio: '1 / 1',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#fff',
-                                                display: 'grid',
-                                                placeItems: 'center',
-                                                boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
-                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                                            })}
-                                        >
-                                            <Typography
-                                                sx={{
-                                                    fontSize: 'calc(var(--badge) * 0.45)',
-                                                    fontWeight: 800,
-                                                    lineHeight: 1,
-                                                }}
-                                            >
-                                                {number}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* PAR circle */}
-                                        <Box
-                                            sx={(theme) => ({
-                                                width: 'var(--badge)',
-                                                aspectRatio: '1 / 1',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#fff',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
-                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                                                gap: 'calc(var(--badge) * 0.03)',
-                                            })}
-                                        >
-                                            {length ? (
-                                                <Typography
-                                                    sx={{
-                                                        fontSize: 'calc(var(--badge) * 0.19)',
-                                                        fontWeight: 700,
-                                                        lineHeight: 1,
-                                                        whiteSpace: 'nowrap',
-                                                    }}
-                                                >
-                                                    {length}m
-                                                </Typography>
-                                            ) : (
-                                                <Box sx={{height: 'calc(var(--badge) * 0.19)'}}/>
-                                            )}
-
-                                            <Typography
-                                                sx={{
-                                                    fontSize: 'calc(var(--badge) * 0.19)',
-                                                    fontWeight: 800,
-                                                    lineHeight: 1,
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
-                                                PAR {par}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* ───────────────── WHITE CARD WITH IMAGE ───────────────── */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            zIndex: 2,
-                                            px: 'var(--gutter)',
-                                            pt: 'var(--gutter)',
-                                            pb: 'var(--gutter)',
-                                            display: 'flex',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={(theme) => ({
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '6% / 4.8%',
-                                                overflow: 'hidden',
-                                                backgroundColor: '#fff',
-                                                boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                            })}
-                                        >
-                                            {/* IMAGE AREA (takes remaining space) */}
-                                            <Box
-                                                sx={{
-                                                    position: 'relative', // ✅ needed for <Image fill>
-                                                    flex: 1,
-                                                }}
-                                            >
-                                                <Image
-                                                    src={`/cards/${number}.webp?v=5`}
-                                                    alt={`Rada ${number}`}
-                                                    fill
-                                                    sizes="(max-width: 600px) 80vw, 400px"
-                                                    priority={number === currentHoleNumber}
-                                                />
-                                            </Box>
-
-                                            {/* INFO BOX BELOW (scales with card) */}
-                                            {/* ───────────────── WHITE CARD WITH IMAGE ───────────────── */}
-                                            <Box
-                                                sx={{
-                                                    position: 'absolute',
-                                                    inset: 0,
-                                                    zIndex: 2,
-                                                    px: 'var(--gutter)',
-                                                    pt: 'var(--gutter)',
-                                                    pb: 'var(--gutter)',
-                                                    display: 'flex',
-                                                }}
-                                            >
-                                                <Box
-                                                    sx={(theme) => ({
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        borderRadius: '6% / 4.8%',
-                                                        overflow: 'hidden',
-                                                        backgroundColor: '#fff',
-                                                        boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                    })}
-                                                >
-                                                    {/* ✅ IMAGE AREA: always full width, always 4/5 */}
-                                                    <Box
-                                                        sx={{
-                                                            width: '100%',
-                                                            aspectRatio: '400 / 425',
-                                                            position: 'relative', // needed for Image fill
-                                                            flexShrink: 0,
-                                                            paddingTop: '7%'
-                                                        }}
-                                                    >
-                                                        <Image
-                                                            src={`/cards/${number}.webp?v=5`}
-                                                            alt={`Rada ${number}`}
-                                                            fill
-                                                            sizes="(max-width: 600px) 80vw, 400px"
-                                                            priority={number === currentHoleNumber}
-                                                            style={{ objectFit: 'contain' }} // ✅ no distortion
-                                                        />
-                                                    </Box>
-
-                                                    {/* ✅ INFO AREA: gets all remaining height */}
-                                                    <Box
-                                                        sx={(theme) => ({
-                                                            flex: 1,
-                                                            minHeight: 0, // ✅ allows ellipsis/clamp to work
-                                                            mx: 'var(--inner)',
-                                                            my: 'calc(var(--inner) * 0.8)',
-                                                            borderRadius: '3cqw',
-                                                            px: '3.2cqw',
-                                                            py: '2.2cqw',
-                                                            backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
-                                                            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-                                                            boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
-                                                            overflow: 'hidden',
-                                                        })}
-                                                    >
-                                                        <Typography
-                                                            sx={{
-                                                                whiteSpace: 'break-spaces',
-                                                                fontSize: '3.0cqw',
-                                                                fontWeight: 500,
-                                                                lineHeight: 1.2,
-                                                                overflow: 'hidden',
-                                                                display: '-webkit-box',
-                                                                WebkitBoxOrient: 'vertical',
-                                                                WebkitLineClamp: 4, // adjust
-                                                            }}
-                                                        >
-                                                            {hole?.rules || 'Erireeglid puuduvad'}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-
-                                        </Box>
-
-                                    </Box>
-
-                                    {/* ───────────────── BOTTOM BADGES (SYMMETRIC TO TOP) ───────────────── */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            bottom: 'var(--pad)', // ✅ same distance from bottom as top badges from top
-                                            left: 'var(--pad)',
-                                            right: 'var(--pad)',
-                                            zIndex: 6,
-                                            display: 'flex',
-                                            justifyContent: 'flex-end', // ✅ no left badge
-                                            alignItems: 'center',
-                                            pointerEvents: 'none',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={(theme) => ({
-                                                width: 'var(--badge)',
-                                                aspectRatio: '1 / 1',
-                                                borderRadius: '50%',
-                                                bgcolor: theme.palette.primary.main,
-                                                display: 'grid',
-                                                placeItems: 'center',
-                                                boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
-                                                border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-                                                overflow: 'hidden',
-                                            })}
-                                        >
-                                            <Box
-                                                sx={(theme) => ({
-                                                    width: 'var(--badge)',
-                                                    aspectRatio: '1 / 1',
-                                                    borderRadius: '50%',
-                                                    bgcolor: theme.palette.primary.main,
-                                                    display: 'grid',
-                                                    placeItems: 'center',
-                                                    boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
-                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-                                                    overflow: 'hidden',
-                                                })}
-                                            >
-                                                <Image
-                                                    src="/logo.webp"
-                                                    alt="Logo"
-                                                    width={400}     // any “large enough” intrinsic size
-                                                    height={400}    // doesn't distort; only used for ratio box
-                                                    style={{
-                                                        maxWidth: '85%',
-                                                        maxHeight: '85%',
-                                                        width: 'auto',
-                                                        height: 'auto',
-                                                        objectFit: 'contain',
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                </Box>
+                                    />
+                                )}
                             </SwiperSlide>
 
 

@@ -1,68 +1,37 @@
-import {ReactNode, useEffect, useState} from 'react';
-import {useRouter} from 'next/router';
-import {supabase} from '@/src/lib/supabaseClient';
-import {Box, CircularProgress} from '@mui/material';
+import {ReactNode, useEffect} from "react"
+import {useRouter} from "next/router"
+import {Box, CircularProgress} from "@mui/material"
+import {useAuth} from "@/src/contexts/AuthContext"
 
 type Props = {
-    children: ReactNode;
-    publicRoutes?: string[];
-};
+    children: ReactNode
+    publicRoutes?: string[]
+}
 
-export default function AuthGate({
-                                     children,
-                                     publicRoutes = ['/login'],
-                                 }: Props) {
-    const router = useRouter();
-    const [checking, setChecking] = useState(true);
+export default function AuthGate({children, publicRoutes = ["/login"]}: Props) {
+    const router = useRouter()
+    const {loading, session} = useAuth()
 
-    const isPublicRoute = publicRoutes.includes(router.pathname);
+    const isPublicRoute = publicRoutes.includes(router.pathname)
 
     useEffect(() => {
-        let mounted = true;
+        if (loading) return
+        if (isPublicRoute) return
 
-        const run = async () => {
-            if (isPublicRoute) {
-                if (mounted) setChecking(false);
-                return;
-            }
+        if (!session) {
+            const next = encodeURIComponent(router.asPath)
+            router.replace(`/login?next=${next}`)
+        }
+    }, [loading, session, isPublicRoute, router])
 
-            const { data } = await supabase.auth.getSession();
-            const session = data.session;
-            if (!mounted) return;
-
-            if (!session) {
-                // preserve where user wanted to go
-                const next = encodeURIComponent(router.asPath);
-                router.replace(`/login?next=${next}`);
-                return;
-            }
-
-            setChecking(false);
-        };
-
-        run();
-
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-            // if user logs out, kick them to login (unless already on public route)
-            if (!session && !publicRoutes.includes(router.pathname)) {
-                const next = encodeURIComponent(router.asPath);
-                router.replace(`/login?next=${next}`);
-            }
-        });
-
-        return () => {
-            mounted = false;
-            sub.subscription.unsubscribe();
-        };
-    }, [router.pathname, router.asPath, isPublicRoute, publicRoutes, router]);
-
-    if (checking) {
+    // While auth is loading, block only protected routes
+    if (!isPublicRoute && (loading || !session)) {
         return (
             <Box mt={6} display="flex" justifyContent="center">
-                <CircularProgress />
+                <CircularProgress/>
             </Box>
-        );
+        )
     }
 
-    return <>{children}</>;
+    return <>{children}</>
 }
