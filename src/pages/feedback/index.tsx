@@ -1,14 +1,6 @@
-import { useState } from 'react'
-import {
-    Box,
-    Button,
-    Container,
-    Typography,
-    TextField,
-    Rating,
-    Alert,
-} from '@mui/material'
-import { useForm, Controller } from 'react-hook-form'
+import {useState} from 'react'
+import {Alert, Box, Button, Container, Rating, TextField, Typography,} from '@mui/material'
+import {Controller, useForm} from 'react-hook-form'
 import Layout from '@/src/components/Layout'
 import useFeedbackApi from '@/src/api/useFeedbackApi'
 
@@ -50,8 +42,6 @@ export default function FeedbackPage() {
                 <Typography
                     variant="h4"
                     fontWeight="bold"
-                    textAlign="center"
-                    gutterBottom
                 >
                     Tagasiside
                 </Typography>
@@ -65,7 +55,7 @@ export default function FeedbackPage() {
                 <Box
                     component="form"
                     onSubmit={handleSubmit(onSubmit)}
-                    mt={2}
+                    mt={4}
                 >
                     <Box display="flex" flexDirection="column" gap={2}>
                         <Box textAlign="center">

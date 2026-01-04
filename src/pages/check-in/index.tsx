@@ -6,6 +6,7 @@ import {
     Box,
     Button,
     CircularProgress,
+    Container,
     Dialog,
     DialogActions,
     DialogContent,
@@ -85,8 +86,8 @@ export default function CheckInPage() {
 
     return (
         <Layout>
-            <Box textAlign="center" mt={2}>
-                <Typography variant="h4" gutterBottom>
+            <Container maxWidth="sm" sx={{ mt: 0 }}>
+                <Typography variant="h4" fontWeight="bold">
                     Loosimängu registreerimine
                 </Typography>
 
@@ -118,7 +119,7 @@ export default function CheckInPage() {
                         </Button>
                     </Box>
                 ) : (
-                    <Box mt={4}>
+                    <Box mt={6}>
                         <Alert
                             severity="info"
                             icon={<InfoOutlinedIcon />}
@@ -133,12 +134,12 @@ export default function CheckInPage() {
                             Auhinna saamiseks peab mängija olema loosimise hetkel kohal!
                         </Alert>
 
-                        <Button variant="contained" color="primary" onClick={handleSubmit}>
+                        <Button variant="contained" color="primary" onClick={handleSubmit} sx={{mt:4}}>
                             Registreeri
                         </Button>
                     </Box>
                 )}
-            </Box>
+            </Container>
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
                 <DialogTitle>Registreeru loosimängu?</DialogTitle>

@@ -1,14 +1,8 @@
-import { useEffect, useState } from 'react'
-import {
-    Box,
-    Container,
-    CircularProgress,
-    Typography,
-    Link as MuiLink
-} from '@mui/material'
+import {useEffect, useState} from 'react'
+import {Box, CircularProgress, Container, Link as MuiLink, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import Link from 'next/link'
-import useCtpApi, { HoleResult } from '@/src/api/useCtpApi'
+import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import EditIcon from '@mui/icons-material/Edit';
 
 export default function CtpListPage() {
@@ -27,8 +21,8 @@ export default function CtpListPage() {
     return (
         <Layout>
             <Container maxWidth="sm" sx={{ mt: 0 }}>
-                <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-                    CTP Rajad
+                <Typography variant="h4" fontWeight="bold">
+                CTP Rajad
                 </Typography>
 
                 {loading ? (

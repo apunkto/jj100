@@ -144,8 +144,8 @@ export default function HistoryPage() {
 
     return (
         <Layout>
-            <Box mt={2} display="flex" flexDirection="column" alignItems="center" textAlign="center" gap={2}>
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: 22, sm: 28 } }}>
+            <Box display="flex" flexDirection="column"   gap={2}>
+                <Typography variant="h4" fontWeight="bold" >
                     Minu osalemised
                 </Typography>
 
