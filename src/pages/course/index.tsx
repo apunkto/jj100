@@ -288,7 +288,6 @@ export default function CoursePage() {
                         return (
 
                             <SwiperSlide key={number} style={{width: "90%"}}>
-                                {haba}
                                 {isNear ? (
                                     <HoleCard
                                         maxWidth={500}
