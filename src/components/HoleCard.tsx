@@ -18,9 +18,8 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
     const rules = hole?.rules || "Erireeglid puuduvad";
 
     const imageNumber = useMemo(() => {
-        if ([1, 2, 3].includes(number)) return number;
-        return (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3; // 1..3
-    }, [number]);
+        return (((number - 1) % 3) + 1) as 1 | 2 | 3
+    }, [number])
 
     return (
         <Box
