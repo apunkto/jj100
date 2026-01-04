@@ -74,8 +74,8 @@ const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
 const checkMetrixEmail = async (email: string): Promise<number | null> => {
     const res = await fetch(`${API_BASE}/metrix/check-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email}),
     })
 
     if (!res.ok) throw new Error('Failed to check email')
@@ -87,12 +87,15 @@ const checkMetrixEmail = async (email: string): Promise<number | null> => {
 }
 
 const getUserCurrentHoleNumber = async (): Promise<number | null> => {
+    //TODO: switch to api call when competition is created
+    return 1;
+    /*
     const res = await authedFetch(`${API_BASE}/metrix/player/current-hole`);
     if (!res.ok) throw new Error('Failed to fetch user current hole number');
 
     const result = (await res.json()) as ApiResponse<{ currentHole: number | null }>;
     if (!result.success) throw new Error('Backend returned error fetching user current hole number');
-    return result.data.currentHole;
+    return result.data.currentHole;*/
 }
 
 
