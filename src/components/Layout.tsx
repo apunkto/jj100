@@ -194,8 +194,7 @@ export default function Layout({
 
             <Container
                 sx={{
-                    mt: 4,
-                    mb: 6,
+                    mt: 3,
                     flexGrow: 1,
                     display: 'flex',
                     flexDirection: 'column',

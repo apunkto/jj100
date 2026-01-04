@@ -38,6 +38,7 @@ export type Hole = {
     double_bogeys?: number
     others?: number
     rules: string
+    is_food: boolean
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL

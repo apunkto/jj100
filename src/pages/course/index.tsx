@@ -11,6 +11,7 @@ import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 import {debounce} from 'lodash'
 import HoleCard from "@/src/components/HoleCard";
+import RestaurantIcon from '@mui/icons-material/Restaurant'
 
 type HoleCacheEntry = {
     data: HoleResult
@@ -345,7 +346,7 @@ export default function CoursePage() {
                 </Box>
 
                 {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
-                    <Box mt={2} textAlign="center">
+                    <Box  textAlign="center">
                         <Box mt={1} display="flex" justifyContent="center" gap={2} alignItems="center">
                             <Typography color="primary">🎯 Sellel korvil on CTP</Typography>
                             <Button
@@ -356,6 +357,15 @@ export default function CoursePage() {
                             >
                                 Märgi CTP
                             </Button>
+                        </Box>
+                    </Box>
+                )}
+
+                {holeInfo[currentHoleNumber]?.data.hole.is_food && (
+                    <Box  textAlign="center">
+                        <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
+                            <RestaurantIcon color="primary" fontSize="small" />
+                            <Typography color="primary">Toidupunkt</Typography>
                         </Box>
                     </Box>
                 )}
