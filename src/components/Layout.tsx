@@ -216,7 +216,8 @@ export default function Layout({
                     width: '100%',
                 }}
             >
-                <Typography variant="body2">Probleem? Helista +372 51994444</Typography>
+                <Typography variant="body2" sx={{fontSize: '0.8rem'}}>
+                    Probleem? Helista +372 51994444</Typography>
             </Box>
         </Box>
     )
