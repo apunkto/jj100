@@ -12,6 +12,7 @@ import useMetrixApi from '@/src/api/useMetrixApi'
 import {debounce} from 'lodash'
 import HoleCard from "@/src/components/HoleCard";
 import RestaurantIcon from '@mui/icons-material/Restaurant'
+import GpsFixedIcon from '@mui/icons-material/GpsFixed'
 
 type HoleCacheEntry = {
     data: HoleResult
@@ -35,7 +36,6 @@ export default function CoursePage() {
 
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
-    const [lastUpdated, setLastUpdated] = useState<number | null>(null)
 
     const loadHole = async (holeNumber: number, forceRefresh = false) => {
         const cacheEntry = holeInfo[holeNumber]
@@ -55,9 +55,7 @@ export default function CoursePage() {
             },
         }))
 
-        if (holeNumber === currentHoleNumber) {
-            setLastUpdated(now)
-        }
+
     }
 
     // wire swiper nav buttons after instance exists
@@ -184,6 +182,8 @@ export default function CoursePage() {
         )
         if (total === 0) return null
 
+
+
         return (
             <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
@@ -243,13 +243,41 @@ export default function CoursePage() {
         return `${hours} h tagasi`
     }
 
+    const currentHole = holeInfo[currentHoleNumber]?.data?.hole
+    const hasCtp = !!currentHole?.is_ctp
+    const hasFood = !!currentHole?.is_food
+
     return (
         <Layout>
             <Box mt={0}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" fontWeight="bold">
-                        Rada
-                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="h4" fontWeight="bold">
+                            Korv {currentHoleNumber}
+                        </Typography>
+
+                        {/* icons shown only when current hole has flags */}
+                        {hasCtp && (
+                            <Box
+                                title="CTP"
+                                sx={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
+                            >
+                                {/* use either emoji or MUI icon */}
+                                {/* <Typography fontSize={22}>🎯</Typography> */}
+                                <GpsFixedIcon color="primary" fontSize="small" />
+                            </Box>
+                        )}
+
+                        {hasFood && (
+                            <Box
+                                title="Toidupunkt"
+                                sx={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
+                            >
+                                <RestaurantIcon color="primary" fontSize="small" />
+                            </Box>
+                        )}
+                    </Box>
+
                     <TextField
                         size="small"
                         placeholder="Otsi korvi.."
@@ -267,7 +295,7 @@ export default function CoursePage() {
                                 fontSize: '1rem',
                             },
                         }}
-                        inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                     />
                 </Box>
 
@@ -347,8 +375,9 @@ export default function CoursePage() {
 
                 {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
                     <Box  textAlign="center">
-                        <Box mt={1} display="flex" justifyContent="center" gap={2} alignItems="center">
-                            <Typography color="primary">🎯 Sellel korvil on CTP</Typography>
+                        <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
+                            <GpsFixedIcon color="primary" fontSize="small" />
+                            <Typography color="primary">Sellel korvil on CTP</Typography>
                             <Button
                                 variant="contained"
                                 color="primary"
