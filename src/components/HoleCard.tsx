@@ -26,9 +26,9 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
         <Box
             sx={(theme) => {
                 const p = theme.palette.primary.main
-                const pDark = darken(p, 0.55)
-                const pMid = darken(p, 0.25)
-                const pLight = lighten(p, 0.65)
+                const base1 = darken(p, 0.55)
+                const base2 = darken(p, 0.72)
+                const hi = lighten(p, 0.62)
 
                 return {
                     position: 'relative',
@@ -55,19 +55,27 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     '--inner': '3cqw',
 
                     background: `
-            radial-gradient(120% 85% at 50% 8%,
-              ${alpha('#fff', 0.14)} 0%,
-              ${alpha('#fff', 0.00)} 55%
-            ),
-            radial-gradient(140% 95% at 25% 105%,
-              ${alpha(pLight, 0.55)} 0%,
-              ${alpha(pLight, 0.00)} 55%
-            ),
-            linear-gradient(180deg,
-              ${pMid} 0%,
-              ${pDark} 100%
-            )
-          `,
+  repeating-linear-gradient(45deg,
+    ${alpha('#fff', 0.06)} 0px,
+    ${alpha('#fff', 0.06)} 4px,
+    ${alpha('#000', 0.08)} 4px,
+    ${alpha('#000', 0.08)} 8px
+  ),
+  repeating-linear-gradient(-45deg,
+    ${alpha('#fff', 0.04)} 0px,
+    ${alpha('#fff', 0.04)} 4px,
+    ${alpha('#000', 0.06)} 4px,
+    ${alpha('#000', 0.06)} 8px
+  ),
+  radial-gradient(120% 70% at 50% 0%,
+    ${alpha('#fff', 0.16)} 0%,
+    ${alpha('#fff', 0.00)} 60%
+  ),
+  linear-gradient(180deg,
+    ${darken(theme.palette.primary.main, 0.30)} 0%,
+    ${darken(theme.palette.primary.main, 0.72)} 100%
+  )
+`,
                 }
             }}
         >
