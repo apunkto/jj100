@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {Alert, Box, Button, Container, Rating, TextField, Typography,} from '@mui/material'
+import {Alert, Box, Button, Rating, TextField, Typography,} from '@mui/material'
 import {Controller, useForm} from 'react-hook-form'
 import Layout from '@/src/components/Layout'
 import useFeedbackApi from '@/src/api/useFeedbackApi'
@@ -38,8 +38,8 @@ export default function FeedbackPage() {
 
     return (
         <Layout>
-            <Container maxWidth="sm" sx={{ mt: 0 }}>
-                <Typography
+            <Box display="flex"  flexDirection="column" alignItems="center">
+            <Typography
                     variant="h4"
                     fontWeight="bold"
                 >
@@ -114,7 +114,7 @@ export default function FeedbackPage() {
                         </Button>
                     </Box>
                 </Box>
-            </Container>
+            </Box>
         </Layout>
     )
 }

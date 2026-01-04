@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Box, CircularProgress, Container, Link as MuiLink, Typography} from '@mui/material'
+import {Box, CircularProgress, Link as MuiLink, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import Link from 'next/link'
 import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
@@ -20,7 +20,7 @@ export default function CtpListPage() {
 
     return (
         <Layout>
-            <Container maxWidth="sm" sx={{ mt: 0 }}>
+            <Box display="flex"  flexDirection="column" alignItems="center">
                 <Typography variant="h4" fontWeight="bold">
                 CTP Rajad
                 </Typography>
@@ -30,7 +30,7 @@ export default function CtpListPage() {
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <Box mt={2}>
+                    <Box mt={2} width="100%">
                         <Box display="flex" py={1} borderBottom={2} borderColor="primary.main" fontWeight="bold">
                             <Typography sx={{ flexBasis: '15%' }} fontSize="16px" color="primary.main">
                                 Korv
@@ -86,7 +86,7 @@ export default function CtpListPage() {
                         })}
                     </Box>
                 )}
-            </Container>
+            </Box>
         </Layout>
     )
 }

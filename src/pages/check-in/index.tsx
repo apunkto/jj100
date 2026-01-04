@@ -6,7 +6,6 @@ import {
     Box,
     Button,
     CircularProgress,
-    Container,
     Dialog,
     DialogActions,
     DialogContent,
@@ -86,8 +85,8 @@ export default function CheckInPage() {
 
     return (
         <Layout>
-            <Container maxWidth="sm" sx={{ mt: 0 }}>
-                <Typography variant="h4" fontWeight="bold">
+            <Box display="flex"  flexDirection="column" alignItems="center">
+            <Typography variant="h4" fontWeight="bold">
                     Loosimängu registreerimine
                 </Typography>
 
@@ -139,7 +138,7 @@ export default function CheckInPage() {
                         </Button>
                     </Box>
                 )}
-            </Container>
+            </Box>
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
                 <DialogTitle>Registreeru loosimängu?</DialogTitle>

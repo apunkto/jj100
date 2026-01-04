@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
-import {Box, CircularProgress, Container, Divider, Paper, Typography} from '@mui/material'
+import {Box, CircularProgress, Divider, Paper, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useMetrixApi, {MetrixPlayerStats} from '@/src/api/useMetrixApi'
 
@@ -48,12 +48,12 @@ export default function CtpStatsPage() {
 
     return (
         <Layout>
-            <Container maxWidth="sm" sx={{ mt: 0 }}>
+            <Box display="flex"  flexDirection="column" alignItems="center">
                 <Typography variant="h4" fontWeight="bold">
                 Mängija statistika
                 </Typography>
 
-                <Box mt={4}>
+                <Box mt={2}>
                     {loadingStats ? (
                         <Box mt={4} display="flex" justifyContent="center">
                             <CircularProgress />
@@ -173,7 +173,7 @@ export default function CtpStatsPage() {
                         </Paper>
                     )}
                 </Box>
-            </Container>
+            </Box>
         </Layout>
     )
 }

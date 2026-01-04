@@ -144,13 +144,15 @@ export default function HistoryPage() {
 
     return (
         <Layout>
-            <Box display="flex" flexDirection="column"   gap={2}>
-                <Typography variant="h4" fontWeight="bold" >
+            <Box display="flex"  flexDirection="column" alignItems="center">
+
+
+            <Typography variant="h4" fontWeight="bold" >
                     Minu osalemised
                 </Typography>
 
                 {/* Participation list FIRST */}
-                <Box width="100%" maxWidth={720}>
+                <Box width="100%" maxWidth={720} mt={2}>
                     <List sx={{ py: 0 }}>
                         {years.map((year, idx) => {
                             const results = byYear.get(year) ?? []
