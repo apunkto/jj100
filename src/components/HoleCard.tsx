@@ -34,7 +34,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     width: '100%',
                     maxWidth: `${maxWidth}px`,
                     mx: 'auto',
-                    borderRadius: '6% / 4.3%',
+                    borderRadius: 'calc(var(--pad) * 1.2)',
                     overflow: 'hidden',
                     aspectRatio: '5 / 7',
                     outline: `1px solid ${alpha('#000', 0.08)}`,
@@ -189,7 +189,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     sx={(theme) => ({
                         width: '100%',
                         height: '100%',
-                        borderRadius: '6% / 4.8%',
+                        borderRadius: 'calc(var(--pad) * 1.2)',
                         overflow: 'hidden',
                         backgroundColor: '#fff',
                         boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
@@ -224,7 +224,8 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                             minHeight: 0,
                             mx: 'var(--inner)',
                             my: 'calc(var(--inner) * 0.8)',
-                            borderRadius: '3cqw',
+                            borderRadius: 'calc(var(--pad) * 1)',
+
                             px: '3.2cqw',
                             py: '2.2cqw',
                             backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
