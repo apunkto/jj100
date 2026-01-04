@@ -207,7 +207,7 @@ export default function Layout({
             <Box
                 component="footer"
                 sx={{
-                    py: 2,
+                    py: 1,
                     px: 2,
                     mt: 'auto',
                     backgroundColor: 'secondary.main',
