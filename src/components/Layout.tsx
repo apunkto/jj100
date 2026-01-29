@@ -209,7 +209,7 @@ export default function Layout({
                 sx={{
                     py: 1,
                     px: 2,
-                    mt: 'auto',
+                    mt: '1rem',
                     backgroundColor: 'secondary.main',
                     color: 'white',
                     textAlign: 'center',

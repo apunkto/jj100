@@ -427,11 +427,6 @@ export default function CoursePage() {
 
                 {renderScoreBar()}
 
-                {holeInfo[currentHoleNumber]?.fetchedAt && (
-                    <Typography fontSize={10} textAlign="center" mt={2} color="gray">
-                        Uuendatud: {formatRelativeTime(holeInfo[currentHoleNumber].fetchedAt)}
-                    </Typography>
-                )}
             </Box>
         </Layout>
     )

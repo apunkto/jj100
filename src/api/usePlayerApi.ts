@@ -45,7 +45,7 @@ const getPlayerParticipations = async (): Promise<UserParticipation[]> => {
 }
 
 async function getParticipationLeaders(): Promise<ParticipationLeaderboard | null> {
-    const res = await authedFetch(`${API_BASE}/player/participations/leaders?v=2`)
+    const res = await authedFetch(`${API_BASE}/player/participations/leaders?v=3`)
     if (!res.ok) return null
     const json = (await res.json()) as { data: ParticipationLeaderboard }
     return json.data ?? null
