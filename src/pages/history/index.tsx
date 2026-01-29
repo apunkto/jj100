@@ -15,32 +15,32 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import SickIcon from '@mui/icons-material/Sick'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import StarIcon from '@mui/icons-material/Star'
-import usePlayerApi, {ParticipationLeader, Player, UserParticipation,} from '@/src/api/usePlayerApi'
+import usePlayerApi, {ParticipationLeaderboard, Player, UserParticipation,} from '@/src/api/usePlayerApi'
 import {useEffect, useMemo, useState} from 'react'
 
 export default function HistoryPage() {
     const [participations, setParticipations] = useState<UserParticipation[]>([])
-    const [leaders, setLeaders] = useState<ParticipationLeader[]>([])
+    const [leaderboard, setLeaderboard] = useState<ParticipationLeaderboard | null>(null)
     const [me, setMe] = useState<Player | null>(null)
 
-    const { getPlayerParticipations, getParticipationLeaders, getLoggedInUser } = usePlayerApi()
+    const {getPlayerParticipations, getParticipationLeaders, getLoggedInUser} = usePlayerApi()
     const timesLabel = (n: number) => (n === 1 ? 'kord' : 'korda')
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [p, l, u] = await Promise.all([
+                const [p, lb, u] = await Promise.all([
                     getPlayerParticipations(),
                     getParticipationLeaders(),
                     getLoggedInUser(),
                 ])
                 setParticipations(p ?? [])
-                setLeaders(l ?? [])
+                setLeaderboard(lb ?? null)
                 setMe(u ?? null)
             } catch (err) {
                 console.error('Failed to load history page data:', err)
                 setParticipations([])
-                setLeaders([])
+                setLeaderboard(null)
                 setMe(null)
             }
         }
@@ -50,7 +50,7 @@ export default function HistoryPage() {
     const years = useMemo(() => {
         const start = 2017
         const end = 2025
-        return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+        return Array.from({length: end - start + 1}, (_, i) => start + i)
     }, [])
 
     const byYear = useMemo(() => {
@@ -73,25 +73,6 @@ export default function HistoryPage() {
         return s.size
     }, [participations])
 
-    const leaderboard = useMemo(() => {
-        if (!leaders.length) return null
-
-        const groups = leaders.reduce((acc, l) => {
-            const k = l.participationYears
-            if (!acc[k]) acc[k] = []
-            acc[k].push(l)
-            return acc
-        }, {} as Record<number, ParticipationLeader[]>)
-
-        const amounts = Object.keys(groups).map(Number).sort((a, b) => b - a)
-
-        for (const amt of amounts) {
-            groups[amt].sort((a, b) => a.name.localeCompare(b.name, 'et'))
-        }
-
-        return { groups, amounts, maxAmount: amounts[0] }
-    }, [leaders])
-
     // open max bucket by default
     const [expandedAmount, setExpandedAmount] = useState<number | false>(false)
 
@@ -113,13 +94,13 @@ export default function HistoryPage() {
                                 list,
                                 meMetrixId,
                             }: {
-        list: ParticipationLeader[]
+        list: Array<{ metrixUserId: number; name: string }>
         meMetrixId?: number
     }) => {
         return (
             <Typography
                 sx={{
-                    fontSize: { xs: 12, sm: 13 },
+                    fontSize: {xs: 12, sm: 13},
                     lineHeight: 1.35,
                     wordBreak: 'break-word',
                     whiteSpace: 'normal',
@@ -131,7 +112,7 @@ export default function HistoryPage() {
                         <Box
                             key={p.metrixUserId}
                             component="span"
-                            sx={{ fontWeight: isMe ? 800 : 400 }}
+                            sx={{fontWeight: isMe ? 800 : 400}}
                         >
                             {p.name}
                             {idx < list.length - 1 ? ', ' : ''}
@@ -144,27 +125,27 @@ export default function HistoryPage() {
 
     return (
         <Layout>
-            <Box display="flex"  flexDirection="column" alignItems="center">
+            <Box display="flex" flexDirection="column" alignItems="center">
 
 
-            <Typography variant="h4" fontWeight="bold" >
+                <Typography variant="h4" fontWeight="bold">
                     Minu osalemised
                 </Typography>
 
                 {/* Participation list FIRST */}
                 <Box width="100%" maxWidth={720} mt={2}>
-                    <List sx={{ py: 0 }}>
+                    <List sx={{py: 0}}>
                         {years.map((year, idx) => {
                             const results = byYear.get(year) ?? []
                             const participated = results.length > 0
                             const cancelled = isCancelledYear(year)
 
                             const icon = cancelled ? (
-                                <SickIcon color="warning" fontSize="small" />
+                                <SickIcon color="warning" fontSize="small"/>
                             ) : participated ? (
-                                <CheckCircleIcon sx={{ color: 'success.main' }} fontSize="small" />
+                                <CheckCircleIcon sx={{color: 'success.main'}} fontSize="small"/>
                             ) : (
-                                <CancelIcon sx={{ color: 'error.main' }} fontSize="small" />
+                                <CancelIcon sx={{color: 'error.main'}} fontSize="small"/>
                             )
 
                             return (
@@ -172,14 +153,14 @@ export default function HistoryPage() {
                                     <ListItem
                                         disableGutters
                                         sx={{
-                                            px: { xs: 1, sm: 2 },
-                                            py: { xs: 0.75, sm: 1.1 },
+                                            px: {xs: 1, sm: 2},
+                                            py: {xs: 0.75, sm: 1.1},
                                             display: 'flex',
                                             alignItems: 'flex-start',
-                                            gap: { xs: 1, sm: 1.5 },
+                                            gap: {xs: 1, sm: 1.5},
                                         }}
                                     >
-                                        <ListItemIcon sx={{ minWidth: { xs: 28, sm: 40 }, mt: 0.15 }}>
+                                        <ListItemIcon sx={{minWidth: {xs: 28, sm: 40}, mt: 0.15}}>
                                             {icon}
                                         </ListItemIcon>
 
@@ -188,15 +169,15 @@ export default function HistoryPage() {
                                                 flex: 1,
                                                 minWidth: 0,
                                                 display: 'flex',
-                                                flexDirection: { xs: 'column', sm: 'row' },
+                                                flexDirection: {xs: 'column', sm: 'row'},
                                                 alignItems: 'flex-start',
-                                                justifyContent: { xs: 'flex-start', sm: 'space-between' },
-                                                gap: { xs: 0.25, sm: 2 },
+                                                justifyContent: {xs: 'flex-start', sm: 'space-between'},
+                                                gap: {xs: 0.25, sm: 2},
                                             }}
                                         >
                                             <Typography
                                                 fontWeight={700}
-                                                sx={{ fontSize: { xs: 15, sm: 16 }, lineHeight: { xs: 1.2, sm: 1.9 } }}
+                                                sx={{fontSize: {xs: 15, sm: 16}, lineHeight: {xs: 1.2, sm: 1.9}}}
                                             >
                                                 {year}
                                             </Typography>
@@ -205,9 +186,9 @@ export default function HistoryPage() {
                                                 <Typography
                                                     color="text.secondary"
                                                     sx={{
-                                                        fontSize: { xs: 13, sm: 14 },
-                                                        lineHeight: { xs: 1.2, sm: 1.9 },
-                                                        textAlign: { xs: 'left', sm: 'right' },
+                                                        fontSize: {xs: 13, sm: 14},
+                                                        lineHeight: {xs: 1.2, sm: 1.9},
+                                                        textAlign: {xs: 'left', sm: 'right'},
                                                     }}
                                                 >
                                                     Jäi ära koroonaviiruse tõttu
@@ -216,9 +197,9 @@ export default function HistoryPage() {
                                                 <Typography
                                                     color="text.secondary"
                                                     sx={{
-                                                        fontSize: { xs: 13, sm: 14 },
-                                                        lineHeight: { xs: 1.2, sm: 1.9 },
-                                                        textAlign: { xs: 'left', sm: 'right' },
+                                                        fontSize: {xs: 13, sm: 14},
+                                                        lineHeight: {xs: 1.2, sm: 1.9},
+                                                        textAlign: {xs: 'left', sm: 'right'},
                                                     }}
                                                 >
                                                     Ei osalenud
@@ -228,10 +209,10 @@ export default function HistoryPage() {
                                                     sx={{
                                                         display: 'flex',
                                                         flexWrap: 'wrap',
-                                                        justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-                                                        columnGap: { xs: 1, sm: 1.5 },
-                                                        rowGap: { xs: 0.35, sm: 0.5 },
-                                                        maxWidth: { xs: '100%', sm: '70%' },
+                                                        justifyContent: {xs: 'flex-start', sm: 'flex-end'},
+                                                        columnGap: {xs: 1, sm: 1.5},
+                                                        rowGap: {xs: 0.35, sm: 0.5},
+                                                        maxWidth: {xs: '100%', sm: '70%'},
                                                     }}
                                                 >
                                                     {results.map((r, i) => (
@@ -239,8 +220,8 @@ export default function HistoryPage() {
                                                             key={`${year}-${i}-${r.place}-${r.score}`}
                                                             sx={{
                                                                 whiteSpace: 'nowrap',
-                                                                fontSize: { xs: 13, sm: 14 },
-                                                                lineHeight: { xs: 1.2, sm: 1.9 },
+                                                                fontSize: {xs: 13, sm: 14},
+                                                                lineHeight: {xs: 1.2, sm: 1.9},
                                                             }}
                                                         >
                                                             Koht: {r.place} ({fmtScore(r.score)})
@@ -251,7 +232,7 @@ export default function HistoryPage() {
                                         </Box>
                                     </ListItem>
 
-                                    {idx < years.length - 1 && <Divider component="li" />}
+                                    {idx < years.length - 1 && <Divider component="li"/>}
                                 </Box>
                             )
                         })}
@@ -260,12 +241,7 @@ export default function HistoryPage() {
 
                 {/* Leaderboard SECOND */}
                 <Box width="100%" maxWidth={720} textAlign="left">
-                    <Typography
-                        variant="h4"
-                        textAlign="center"
-                        fontWeight="bold"
-                        sx={{ fontSize: { xs: 22, sm: 28 }, marginBottom: 2, marginTop: 3 }}
-                    >
+                    <Typography variant="h4" textAlign="center" fontWeight="bold" sx={{ fontSize: { xs: 22, sm: 28 }, marginBottom: 2, marginTop: 3 }}>
                         Enim osalemisi
                     </Typography>
 
@@ -275,7 +251,7 @@ export default function HistoryPage() {
                         </Typography>
                     ) : (
                         <Box>
-                            {leaderboard.amounts.map((amount) => {
+                            {leaderboard.buckets.map(({ amount, players }) => {
                                 const isMyBucket = myParticipationYears > 0 && amount === myParticipationYears
 
                                 return (
@@ -295,31 +271,20 @@ export default function HistoryPage() {
                                         }}
                                     >
                                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 1,
-                                                    minWidth: 0,
-                                                }}
-                                            >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                                                 {isMyBucket && <StarIcon fontSize="small" sx={{ color: 'warning.main' }} />}
 
                                                 <Typography sx={{ fontWeight: 700, fontSize: { xs: 13, sm: 14 } }}>
                                                     {amount} {timesLabel(amount)}
-                                                    <Typography
-                                                        component="span"
-                                                        sx={{ ml: 1, fontSize: { xs: 12, sm: 13 }, color: 'text.secondary' }}
-                                                    >
-                                                        ({leaderboard.groups[amount].length})
+                                                    <Typography component="span" sx={{ ml: 1, fontSize: { xs: 12, sm: 13 }, color: 'text.secondary' }}>
+                                                        ({players.length})
                                                     </Typography>
                                                 </Typography>
-
                                             </Box>
                                         </AccordionSummary>
 
                                         <AccordionDetails>
-                                            <NamesCommaList list={leaderboard.groups[amount]} meMetrixId={me?.metrixUserId} />
+                                            <NamesCommaList list={players} meMetrixId={me?.metrixUserId} />
                                         </AccordionDetails>
                                     </Accordion>
                                 )

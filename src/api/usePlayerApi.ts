@@ -13,10 +13,12 @@ export type UserParticipation = {
     score: number
 }
 
-export type ParticipationLeader = {
-    metrixUserId: number
-    name: string
-    participationYears: number
+export type ParticipationLeaderboard = {
+    maxAmount: number
+    buckets: Array<{
+        amount: number
+        players: Array<{ metrixUserId: number; name: string }>
+    }>
 }
 
 
@@ -42,13 +44,12 @@ const getPlayerParticipations = async (): Promise<UserParticipation[]> => {
     return result.data
 }
 
-async function getParticipationLeaders(): Promise<ParticipationLeader[]> {
-    const res = await authedFetch(`${API_BASE}/player/participations/leaders`)
-    if (!res.ok) return []
-    const json = await res.json() as { data: ParticipationLeader[] }
-    return json.data ?? []
+async function getParticipationLeaders(): Promise<ParticipationLeaderboard | null> {
+    const res = await authedFetch(`${API_BASE}/player/participations/leaders?v=2`)
+    if (!res.ok) return null
+    const json = (await res.json()) as { data: ParticipationLeaderboard }
+    return json.data ?? null
 }
-
 
 
 export default function usePlayerApi() {
