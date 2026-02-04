@@ -7,26 +7,52 @@ if (!API_BASE) {
     throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
 }
 
-// Generic fetcher
-const fetchConfigValue = async (key: string): Promise<string> => {
-    const res = await authedFetch(`${API_BASE}/config/${key}`)
-    if (!res.ok) throw new Error(`Failed to fetch config '${key}'`)
-
-    const data = (await res.json()) as { value: string }
-    return data.value
+type CompetitionInfo = {
+    id: number
+    name: string | null
+    ctp_enabled: boolean
+    checkin_enabled: boolean
 }
 
-const isCtpEnabled = async (): Promise<boolean> => {
-    const value = await fetchConfigValue('ctp_enabled')
-    return value === 'true'
+const fetchCompetitionInfo = async (competitionId: number): Promise<CompetitionInfo> => {
+    const res = await authedFetch(`${API_BASE}/competition/${competitionId}`)
+    if (!res.ok) {
+        throw new Error(`Failed to fetch competition info`)
+    }
+    
+    const data = (await res.json()) as { success: boolean; data: CompetitionInfo }
+    return data.data
 }
 
-const isCheckinEnabled = async (): Promise<boolean> => {
-    const value = await fetchConfigValue('checkin_enabled')
-    return value === 'true'
+const resolveCompetitionId = async (competitionId: number | null | undefined): Promise<number | null> => {
+    let activeCompetitionId = competitionId ?? null
+    
+    if (!activeCompetitionId) {
+        const res = await authedFetch(`${API_BASE}/me`)
+        if (res.ok) {
+            const data = (await res.json()) as { success: boolean; data: { activeCompetitionId: number | null } }
+            activeCompetitionId = data.data?.activeCompetitionId ?? null
+        }
+    }
+    
+    return activeCompetitionId
 }
 
 export default function useConfigApi() {
+    const isCtpEnabled = async (competitionId?: number | null): Promise<boolean> => {
+        const id = await resolveCompetitionId(competitionId)
+        if (!id) return false
+        const competition = await fetchCompetitionInfo(id)
+        return competition.ctp_enabled
+    }
+    
+    const isCheckinEnabled = async (competitionId?: number | null): Promise<boolean> => {
+        const id = await resolveCompetitionId(competitionId)
+        if (!id) return false
+        const competition = await fetchCompetitionInfo(id)
+        return competition.checkin_enabled
+    }
+    
     return {
         isCtpEnabled,
         isCheckinEnabled,

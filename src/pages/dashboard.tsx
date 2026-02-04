@@ -5,7 +5,7 @@ import 'swiper/css'
 import 'swiper/css/autoplay'
 import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useCtpApi, {Hole, HoleWithCtp} from '@/src/api/useCtpApi'
 import {useRouter} from "next/router";
 
 
@@ -43,7 +43,7 @@ const scoreCategories = [
 
 export default function TopHolesDashboard() {
     const {getTopRankedHoles, getHoles} = useCtpApi()
-    const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult>>({})
+    const [holeInfo, setHoleInfo] = useState<Record<number, HoleWithCtp>>({})
     const [topHoles, setTopHoles] = useState<number[]>([])
     const [playerCount, setPlayerCount] = useState<number>(0)
     const [topPlayersByDivision, setTopPlayersByDivision] = useState<Record<string, PlayerResult[]>>({})
@@ -139,7 +139,7 @@ export default function TopHolesDashboard() {
             const topHolesData = await getTopRankedHoles()
             const holesData = await getHoles()
 
-            const holeMap: Record<number, HoleResult> = {}
+            const holeMap: Record<number, HoleWithCtp> = {}
             holesData.forEach(h => {
                 holeMap[h.hole.number] = h
             })
@@ -343,7 +343,7 @@ export default function TopHolesDashboard() {
         return () => clearTimeout(timeout)
     }, [activeSlideIndex, topPlayersByDivision])
 
-    const renderScoreBar = (hole: HoleResult['hole']) => {
+    const renderScoreBar = (hole: Hole) => {
         const categoryValues = scoreCategories.map(({key, label, color}) => ({
             key,
             label,

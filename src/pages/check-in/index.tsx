@@ -16,11 +16,13 @@ import Layout from "@/src/components/Layout"
 import {useCheckinApi} from "@/src/api/useCheckinApi"
 import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
+import {useAuth} from "@/src/contexts/AuthContext"
 
 export default function CheckInPage() {
     const { checkIn, getMyCheckin, unregisterMe } = useCheckinApi()
     const { showToast } = useToast()
     const { isCheckinEnabled } = useConfigApi()
+    const { user } = useAuth()
 
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [checkedIn, setCheckedIn] = useState(false)
@@ -32,13 +34,19 @@ export default function CheckInPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user?.activeCompetitionId) return
+            
             try {
-                const enabled = await isCheckinEnabled()
+                const enabled = await isCheckinEnabled(user.activeCompetitionId)
                 setCheckinEnabled(enabled)
 
-                // ✅ new: fetch current user's check-in status
-                const me = await getMyCheckin()
-                setCheckedIn(me.checkedIn)
+                // Only fetch check-in status if check-in is enabled
+                if (enabled) {
+                    const me = await getMyCheckin()
+                    setCheckedIn(me.checkedIn)
+                } else {
+                    setCheckedIn(false)
+                }
             } catch (err) {
                 console.error("Failed to fetch config or my check-in status", err)
             } finally {
@@ -46,8 +54,11 @@ export default function CheckInPage() {
             }
         }
 
-        fetchData()
-    }, [isCheckinEnabled, getMyCheckin])
+        if (user?.activeCompetitionId !== undefined) {
+            fetchData()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.activeCompetitionId])
 
     const handleCheckIn = async () => {
         try {
@@ -58,6 +69,8 @@ export default function CheckInPage() {
             if (err?.message === "already_checked_in") {
                 setCheckedIn(true)
                 showToast("Mängija on juba loosimängu registreeritud!", "error")
+            } else if (err?.code === "not_competition_participant") {
+                showToast("Sa ei osale võistlusel!", "error")
             } else {
                 showToast("Registreerimisel tekkis viga!", "error")
             }
@@ -85,8 +98,8 @@ export default function CheckInPage() {
 
     return (
         <Layout>
-            <Box display="flex"  flexDirection="column" alignItems="center">
-            <Typography variant="h4" fontWeight="bold">
+            <Box display="flex"  flexDirection="column" alignItems="center" justifyContent="center">
+            <Typography variant="h4" fontWeight="bold" textAlign="center">
                     Loosimängu registreerimine
                 </Typography>
 
@@ -107,15 +120,16 @@ export default function CheckInPage() {
                             Oled loosimisse registreeritud!
                         </Typography>
 
-                        <Button
-                            style={{marginTop: "1rem"}}
-                            variant="outlined"
-                            color="error"
-                            onClick={handleUnregister}
-                            disabled={unregisterLoading}
-                        >
-                            {unregisterLoading ? <CircularProgress size={20} /> : "Tühista registreering"}
-                        </Button>
+                        <Box display="flex" justifyContent="center" sx={{mt:2}}>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleUnregister}
+                                disabled={unregisterLoading}
+                            >
+                                {unregisterLoading ? <CircularProgress size={20} /> : "Tühista registreering"}
+                            </Button>
+                        </Box>
                     </Box>
                 ) : (
                     <Box mt={6}>
@@ -133,9 +147,11 @@ export default function CheckInPage() {
                             Auhinna saamiseks peab mängija olema loosimise hetkel kohal!
                         </Alert>
 
-                        <Button variant="contained" color="primary" onClick={handleSubmit} sx={{mt:4}}>
-                            Registreeri
-                        </Button>
+                        <Box display="flex" justifyContent="center" sx={{mt:4}}>
+                            <Button variant="contained" color="primary" onClick={handleSubmit}>
+                                Registreeri
+                            </Button>
+                        </Box>
                     </Box>
                 )}
             </Box>

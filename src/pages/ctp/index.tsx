@@ -2,21 +2,26 @@ import {useEffect, useState} from 'react'
 import {Box, CircularProgress, Link as MuiLink, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import Link from 'next/link'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useCtpApi, {HoleWithCtp} from '@/src/api/useCtpApi'
 import EditIcon from '@mui/icons-material/Edit';
+import {useAuth} from '@/src/contexts/AuthContext'
 
 export default function CtpListPage() {
-    const [ctpHoles, setCtpHoles] = useState<HoleResult[]>([])
+    const [ctpHoles, setCtpHoles] = useState<HoleWithCtp[]>([])
     const [loading, setLoading] = useState(true)
+    const { user } = useAuth()
 
     const { getCtpHoles } = useCtpApi()
 
     useEffect(() => {
-        getCtpHoles()
-            .then((data) => setCtpHoles(data))
-            .catch((err) => console.error('Failed to fetch CTP holes:', err))
-            .finally(() => setLoading(false))
-    }, [getCtpHoles])
+        if (user?.activeCompetitionId !== undefined) {
+            getCtpHoles()
+                .then((data) => setCtpHoles(data))
+                .catch((err) => console.error('Failed to fetch CTP holes:', err))
+                .finally(() => setLoading(false))
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.activeCompetitionId])
 
     return (
         <Layout>

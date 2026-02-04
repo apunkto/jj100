@@ -42,14 +42,16 @@ type ApiSuccess<T> = { success: true; data: T };
 type ApiFailure = { success: false; error: unknown };
 type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
-type PlayersPayload = {
-    competitionId: number;
-    cachedAt: string;
-    players: MetrixPlayerListItem[];
-};
+export type MetrixIdentity = { userId: number; name: string }
+
+type PreLoginPayload = {
+    inDb: boolean
+    identities?: MetrixIdentity[]
+}
 
 type CheckEmailPayload = {
     metrixUserId: number | null
+    identities: MetrixIdentity[]
 }
 
 type StatsPayload = MetrixPlayerStats;
@@ -71,7 +73,40 @@ const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
     return result.data;
 };
 
-const checkMetrixEmail = async (email: string): Promise<number | null> => {
+const preLogin = async (email: string): Promise<PreLoginPayload> => {
+    const res = await fetch(`${API_BASE}/auth/pre-login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email}),
+    })
+
+    if (!res.ok) throw new Error('Failed to check email')
+
+    const result = (await res.json()) as ApiResponse<PreLoginPayload>
+    if (!result.success) throw new Error('Backend returned error checking email')
+
+    return result.data
+}
+
+const registerFromMetrix = async (email: string, metrixUserId: number): Promise<void> => {
+    const res = await fetch(`${API_BASE}/auth/register-from-metrix`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, metrixUserId}),
+    })
+
+    if (!res.ok) {
+        const errorData = (await res.json().catch(() => ({})) as { error?: string })
+        throw new Error(errorData.error || 'Failed to register from Metrix')
+    }
+
+    const result = (await res.json()) as ApiResponse<unknown>
+    if (!result.success) {
+        throw new Error(typeof result.error === 'string' ? result.error : 'Failed to register from Metrix')
+    }
+}
+
+const checkMetrixEmail = async (email: string): Promise<CheckEmailPayload> => {
     const res = await fetch(`${API_BASE}/metrix/check-email`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -83,7 +118,7 @@ const checkMetrixEmail = async (email: string): Promise<number | null> => {
     const result = (await res.json()) as ApiResponse<CheckEmailPayload>
     if (!result.success) throw new Error('Backend returned error checking email')
 
-    return result.data.metrixUserId
+    return result.data
 }
 
 const getUserCurrentHoleNumber = async (): Promise<number | null> => {
@@ -102,6 +137,8 @@ const getUserCurrentHoleNumber = async (): Promise<number | null> => {
 export default function useMetrixApi() {
     return {
         getMetrixPlayerStats,
+        preLogin,
+        registerFromMetrix,
         checkMetrixEmail,
         getUserCurrentHoleNumber
     };

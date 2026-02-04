@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from "react"
 import {Box, Button, CircularProgress, Dialog, TextField, Typography} from "@mui/material"
 import Layout from "@/src/components/Layout"
-import useCtpApi, {HoleResult} from "@/src/api/useCtpApi"
+import useCtpApi, {CtpEntry, Hole} from "@/src/api/useCtpApi"
 import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
@@ -28,67 +28,95 @@ export async function getStaticProps({ params }: { params: { hole: string } }) {
 }
 
 export default function CtpHolePage({ hole }: { hole: string }) {
-    const { getHole, submitCtp } = useCtpApi()
+    const { getHole, getCtpByHoleNumber, submitCtp } = useCtpApi()
     const { isCtpEnabled } = useConfigApi()
     const { showToast } = useToast()
     const { user, loading: authLoading } = useAuth()
 
-    const [holeData, setHoleData] = useState<HoleResult | null>(null)
+    const [holeInfo, setHoleInfo] = useState<Hole | null>(null)
+    const [ctp, setCtp] = useState<CtpEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [distance, setDistance] = useState<number | "">("")
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [ctpEnabled, setCtpEnabled] = useState(true)
 
-    const bestThrow = holeData?.ctp?.[0] ?? null
+    const bestThrow = ctp[0] ?? null
     const isValidDistance = distance !== "" && Number(distance) > 0
     const isBetterThrow = !bestThrow || (isValidDistance && Number(distance) < Number(bestThrow.distance_cm))
     const showError = Boolean(bestThrow && isValidDistance && Number(distance) >= Number(bestThrow.distance_cm))
 
-    const noCtpGame = holeData?.hole && !holeData.hole.is_ctp
+    const noCtpGame = holeInfo && !holeInfo.is_ctp
 
     const hasSubmitted = useMemo(() => {
         if (!user?.playerId) return false
-        return Boolean(holeData?.ctp?.some((r: any) => r.player_id === user.playerId))
-    }, [user?.playerId, holeData?.ctp])
+        return Boolean(ctp.some((r) => r.player_id === user.playerId))
+    }, [user?.playerId, ctp])
 
     const myResult = useMemo(() => {
         if (!user?.playerId) return null
-        return holeData?.ctp?.find((r: any) => r.player_id === user.playerId) ?? null
-    }, [user?.playerId, holeData?.ctp])
+        return ctp.find((r) => r.player_id === user.playerId) ?? null
+    }, [user?.playerId, ctp])
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user?.activeCompetitionId) return
+            
+            const holeNum = parseInt(hole as string, 10)
             try {
-                const result = await getHole(parseInt(hole as string, 10))
-                setHoleData(result)
-
-                const enabled = await isCtpEnabled()
+                // First check if CTP is enabled, then fetch data accordingly
+                const enabled = await isCtpEnabled(user.activeCompetitionId)
                 setCtpEnabled(enabled)
+                
+                // Always fetch hole info
+                const holeData = await getHole(holeNum, user.activeCompetitionId)
+                
+                if (holeData) {
+                    setHoleInfo(holeData)
+                    // Only fetch CTP data if CTP is enabled
+                    if (enabled) {
+                        const ctpResult = await getCtpByHoleNumber(holeNum, user.activeCompetitionId)
+                        setCtp(ctpResult)
+                    } else {
+                        setCtp([])
+                    }
+                } else {
+                    setHoleInfo(null)
+                    setCtp([])
+                }
             } catch (err) {
                 console.error("Failed to fetch hole or config:", err)
-                setHoleData(null)
+                setHoleInfo(null)
+                setCtp([])
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchData()
-    }, [hole, getHole, isCtpEnabled])
+        if (user?.activeCompetitionId !== undefined) {
+            fetchData()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hole, user?.activeCompetitionId])
 
     const handleSubmit = () => {
         setConfirmOpen(true)
     }
 
     const handleConfirmSubmit = async () => {
-        if (!holeData?.hole || !isValidDistance || !isBetterThrow) return
+        if (!holeInfo || !isValidDistance || !isBetterThrow) return
+        if (!user?.activeCompetitionId) return
+        
         try {
-            await submitCtp(holeData.hole.id, Number(distance))
-            const newHole = await getHole(holeData.hole.number)
-            setHoleData(newHole)
+            await submitCtp(holeInfo.id, Number(distance))
+            const ctpResult = await getCtpByHoleNumber(holeInfo.number, user.activeCompetitionId)
+            setCtp(ctpResult)
             setDistance("")
             showToast("CTP tulemus sisestatud!", "success")
         } catch (err: any) {
-            showToast(err?.message ?? "CTP sisestamine ebaõnnestus!", "error")
+            const msg = err?.code === "not_competition_participant"
+                ? "Sa ei osale võistlusel!"
+                : (err?.message ?? "CTP sisestamine ebaõnnestus!")
+            showToast(msg, "error")
         } finally {
             setConfirmOpen(false)
         }
@@ -117,7 +145,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
 
                 {loading ? (
                     <CircularProgress />
-                ) : !holeData?.hole ? (
+                ) : !holeInfo ? (
                     <Typography>Korvi {hole} ei leitud</Typography>
                 ) : noCtpGame ? (
                     <Typography variant="h5" gutterBottom>
@@ -196,13 +224,13 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                             </Box>
                         )}
 
-                        {holeData.ctp.length > 0 && (
+                        {ctp.length > 0 && (
                             <Box mt={4} textAlign="left">
                                 <Typography variant="h6" gutterBottom>
                                     CTP Ajalugu
                                 </Typography>
 
-                                {holeData.ctp.map((entry: any, idx: number) => (
+                                {ctp.map((entry, idx) => (
                                     <Box
                                         key={entry.id}
                                         display="flex"

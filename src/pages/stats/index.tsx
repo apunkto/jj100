@@ -53,7 +53,7 @@ export default function CtpStatsPage() {
                 Mängija statistika
                 </Typography>
 
-                <Box mt={2}>
+                <Box mt={2} width={"100%"}>
                     {loadingStats ? (
                         <Box mt={4} display="flex" justifyContent="center">
                             <CircularProgress />

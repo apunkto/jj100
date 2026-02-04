@@ -29,6 +29,15 @@ export const useCheckinApi = () => {
             throw new Error('already_checked_in')
         }
 
+        if (res.status === 403) {
+            const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
+            if (body?.code === 'not_competition_participant') {
+                const err: any = new Error(body?.error ?? 'Sa ei osale võistlusel!')
+                err.code = 'not_competition_participant'
+                throw err
+            }
+        }
+
         if (!res.ok) {
             throw new Error('checkin_failed')
         }

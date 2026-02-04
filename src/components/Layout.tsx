@@ -5,16 +5,19 @@ import {
     Container,
     Divider,
     Drawer,
+    FormControl,
     IconButton,
     List,
     ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
+    MenuItem,
+    Select,
     Toolbar,
     Typography,
 } from '@mui/material'
-import {ReactNode, useEffect, useState} from 'react'
+import {ReactNode, useCallback, useEffect, useState} from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -28,6 +31,24 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
 import {useRouter} from 'next/router'
 import {supabase} from '@/src/lib/supabaseClient'
+import {useAuth} from '@/src/contexts/AuthContext'
+import usePlayerApi, {CompetitionOption} from '@/src/api/usePlayerApi'
+
+/** Decode common HTML entities in text (e.g. &rarr; → →) so they display correctly. */
+function decodeHtmlEntities(text: string | null | undefined): string {
+    if (text == null || text === '') return text ?? ''
+    return text
+        .replace(/&rarr;/g, '→')
+        .replace(/&larr;/g, '←')
+        .replace(/&nbsp;/g, '\u00A0')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;|&apos;/g, "'")
+        .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+}
 
 export default function Layout({
                                    children,
@@ -37,24 +58,22 @@ export default function Layout({
     minimal?: boolean
 }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
-    const [isAuthed, setIsAuthed] = useState(false)
+    const [competitions, setCompetitions] = useState<CompetitionOption[]>([])
+    const { session, user, refreshMe } = useAuth()
+    const { getPlayerCompetitions, setActiveCompetition } = usePlayerApi()
+    const isAuthed = !!session
 
     const router = useRouter()
     const currentPath = router.pathname
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
-            setIsAuthed(!!data.session)
-        })
-
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-            setIsAuthed(!!session)
-        })
-
-        return () => {
-            sub.subscription.unsubscribe()
+        if (user) {
+            getPlayerCompetitions().then(setCompetitions)
+        } else {
+            setCompetitions([])
         }
-    }, [])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user])
 
     const handleLogout = async () => {
         try {
@@ -66,7 +85,18 @@ export default function Layout({
         }
     }
 
-    const menuItems = [
+    const handleCompetitionChange = useCallback(
+        async (selectedId: number) => {
+            const updated = await setActiveCompetition(selectedId)
+            if (updated) {
+                await refreshMe()
+                router.reload()
+            }
+        },
+        [setActiveCompetition, refreshMe, router]
+    )
+
+    const allMenuItems = [
         { href: '/info', label: 'Info', icon: <InfoIcon /> },
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
@@ -75,6 +105,16 @@ export default function Layout({
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
         { href: '/history', label: 'Ajalugu', icon: <HistoryIcon /> },
     ]
+
+    // Filter menu items based on activeCompetitionId
+    const menuItems = allMenuItems.filter((item) => {
+        // Always show Info and History
+        if (item.href === '/info' || item.href === '/history') {
+            return true
+        }
+        // Only show other items if user has activeCompetitionId
+        return !!user?.activeCompetitionId
+    })
 
     return (
         <Box display="flex" flexDirection="column" minHeight="100vh" maxWidth={900} alignItems="center" mx="auto">
@@ -136,6 +176,65 @@ export default function Layout({
                         onClick={() => setDrawerOpen(false)}
                         onKeyDown={() => setDrawerOpen(false)}
                     >
+                        {isAuthed && competitions.length > 0 && (
+                            <Box sx={{ mb: 2 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                                    Võistlus
+                                </Typography>
+                                {competitions.length > 1 ? (
+                                    <FormControl fullWidth size="small">
+                                        <Select
+                                            value={user?.activeCompetitionId ?? ''}
+                                            displayEmpty
+                                            onChange={(e) => {
+                                                const id = Number(e.target.value)
+                                                if (Number.isFinite(id)) handleCompetitionChange(id)
+                                            }}
+                                            renderValue={(value) => {
+                                                const c = competitions.find((x) => x.id === value)
+                                                return (
+                                                    <Typography
+                                                        variant="body2"
+                                                        sx={{
+                                                            whiteSpace: 'normal',
+                                                            wordBreak: 'break-word',
+                                                            py: 0.5,
+                                                        }}
+                                                    >
+                                                        {decodeHtmlEntities(c?.name ?? null) || `Competition ${value ?? ''}`}
+                                                    </Typography>
+                                                )
+                                            }}
+                                            sx={{
+                                                '& .MuiSelect-select': {
+                                                    whiteSpace: 'normal',
+                                                    wordBreak: 'break-word',
+                                                    py: 1,
+                                                },
+                                            }}
+                                        >
+                                            {competitions.map((c) => (
+                                                <MenuItem key={c.id} value={c.id} sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                                    {decodeHtmlEntities(c.name) || `Competition ${c.id}`}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                ) : (
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            fontWeight: 500,
+                                            color: 'text.primary',
+                                            whiteSpace: 'normal',
+                                            wordBreak: 'break-word',
+                                        }}
+                                    >
+                                        {decodeHtmlEntities(competitions[0]?.name) || `Competition ${competitions[0]?.id ?? ''}`}
+                                    </Typography>
+                                )}
+                            </Box>
+                        )}
                         <List>
                             {menuItems.map(({ href, label, icon }) => {
                                 const isActive = currentPath === href

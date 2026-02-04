@@ -17,9 +17,14 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
     const length = hole?.length;
     const rules = hole?.rules || "Erireeglid puuduvad";
 
-    const imageNumber = useMemo(() => {
-        return (((number - 1) % 3) + 1) as 1 | 2 | 3
-    }, [number])
+    const cardImageSrc = useMemo(() => {
+        const img = hole?.card_img
+        if (img && img !== 'no_image') {
+            const base = img.includes('.') ? img : `${img}.webp`
+            return `/cards/${base}`
+        }
+        return '/cards/no_image.webp'
+    }, [hole?.card_img])
 
     return (
         <Box
@@ -208,7 +213,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                         }}
                     >
                         <Image
-                            src={`/cards/${imageNumber}.webp?v=5`}
+                            src={cardImageSrc}
                             alt={`Rada ${number}`}
                             fill
                             sizes="(max-width: 600px) 80vw, 400px"

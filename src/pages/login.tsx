@@ -1,9 +1,24 @@
 import {useEffect, useMemo, useState} from "react"
 import {useRouter} from "next/router"
-import {Alert, Box, Button, CircularProgress, Paper, Stack, TextField, Typography,} from "@mui/material"
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    List,
+    ListItemButton,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from "@mui/material"
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 import {supabase} from "@/src/lib/supabaseClient"
 import Layout from "@/src/components/Layout"
+import type {MetrixIdentity} from "@/src/api/useMetrixApi"
 import useMetrixApi from "@/src/api/useMetrixApi"
 
 type Stage = "email" | "pin"
@@ -24,11 +39,13 @@ export default function LoginPage() {
     const [info, setInfo] = useState<string | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [cooldown, setCooldown] = useState(0)
+    const [identityPickerOpen, setIdentityPickerOpen] = useState(false)
+    const [identityPickerList, setIdentityPickerList] = useState<MetrixIdentity[]>([])
 
     const normalizedEmail = email.trim().toLowerCase()
     const canSend = normalizedEmail.length > 3 && normalizedEmail.includes("@")
     const canVerify = pin.length === 6
-    const { checkMetrixEmail } = useMetrixApi()
+    const { preLogin, registerFromMetrix } = useMetrixApi()
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
@@ -41,6 +58,19 @@ export default function LoginPage() {
         const t = setInterval(() => setCooldown((c) => c - 1), 1000)
         return () => clearInterval(t)
     }, [cooldown])
+
+    const sendOtpAndGoToPin = async () => {
+        const { error } = await supabase.auth.signInWithOtp({
+            email: normalizedEmail,
+            options: { shouldCreateUser: true },
+        })
+        if (error) {
+            setErrorMsg(error.message)
+            return
+        }
+        setStage("pin")
+        setInfo("Saatsime PIN-koodi sinu e-mailile.")
+    }
 
     const sendPin = async () => {
         setErrorMsg(null)
@@ -57,25 +87,47 @@ export default function LoginPage() {
         setCooldown(8)
 
         try {
-            const metrixUserId = await checkMetrixEmail(normalizedEmail)
+            const result = await preLogin(normalizedEmail)
 
-            if (!metrixUserId) {
+            if (result.inDb) {
+                // User exists in DB, send OTP directly
+                await sendOtpAndGoToPin()
+                return
+            }
+
+            // Not in DB: check Metrix identities
+            const identities = result.identities || []
+
+            if (identities.length === 0) {
                 setErrorMsg("Selle e-mailiga kasutajat DiscGolfMetrixis ei leitud.")
                 return
             }
 
-            const { error } = await supabase.auth.signInWithOtp({
-                email: normalizedEmail,
-                options: { shouldCreateUser: true },
-            })
-
-            if (error) {
-                setErrorMsg(error.message)
+            if (identities.length === 1) {
+                // Single identity: register and send OTP
+                await registerFromMetrix(normalizedEmail, identities[0].userId)
+                await sendOtpAndGoToPin()
                 return
             }
 
-            setStage("pin")
-            setInfo("Saatsime PIN-koodi sinu e-mailile.")
+            // More than one: show picker; registration and OTP sent after user selects
+            setIdentityPickerList(identities)
+            setIdentityPickerOpen(true)
+        } catch (e: any) {
+            setErrorMsg(e?.message ?? "Midagi läks valesti.")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const onChooseIdentity = async (identity: MetrixIdentity) => {
+        setIdentityPickerOpen(false)
+        setLoading(true)
+        setCooldown(8)
+        try {
+            // Register the chosen identity, then send OTP
+            await registerFromMetrix(normalizedEmail, identity.userId)
+            await sendOtpAndGoToPin()
         } catch (e: any) {
             setErrorMsg(e?.message ?? "Midagi läks valesti.")
         } finally {
@@ -236,6 +288,31 @@ export default function LoginPage() {
                         )}
                     </Stack>
                 </Paper>
+
+                <Dialog open={identityPickerOpen} onClose={() => setIdentityPickerOpen(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle>Vali konto</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Selle e-maili all on DiscGolfMetrixis mitu profiili. Vali, millist soovid kasutada.
+                        </Typography>
+                        <List>
+                            {identityPickerList.map((identity) => (
+                                <ListItemButton
+                                    key={identity.userId}
+                                    onClick={() => onChooseIdentity(identity)}
+                                    sx={{ borderRadius: 1 }}
+                                >
+                                    <Stack direction="row" alignItems="center" spacing={2}>
+                                        <Typography fontWeight={600}>{identity.name}</Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            ID: {identity.userId}
+                                        </Typography>
+                                    </Stack>
+                                </ListItemButton>
+                            ))}
+                        </List>
+                    </DialogContent>
+                </Dialog>
             </Box>
         </Layout>
     )

@@ -5,7 +5,7 @@ import 'swiper/css'
 import 'swiper/css/autoplay'
 import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useCtpApi, {Hole, HoleWithCtp} from '@/src/api/useCtpApi'
 
 // Metrix types
 type HoleResultAPI = {
@@ -40,7 +40,7 @@ const scoreCategories = [
 
 export default function TopHolesDashboard() {
     const {getTopRankedHoles} = useCtpApi()
-    const [holeInfo, setHoleInfo] = useState<Record<number, HoleResult>>({})
+    const [holeInfo, setHoleInfo] = useState<Record<number, HoleWithCtp>>({})
     const [topHoles, setTopHoles] = useState<number[]>([])
     const [playerCount, setPlayerCount] = useState<number>(0)
     const [topPlayersByDivision, setTopPlayersByDivision] = useState<Record<string, PlayerResult[]>>({})
@@ -107,7 +107,7 @@ export default function TopHolesDashboard() {
     const fetchTopHoles = useCallback(async () => {
         try {
             const topHolesData = await getTopRankedHoles()
-            const holeMap: Record<number, HoleResult> = {}
+            const holeMap: Record<number, HoleWithCtp> = {}
             topHolesData.forEach(h => {
                 holeMap[h.hole.number] = h
             })
@@ -160,7 +160,7 @@ export default function TopHolesDashboard() {
         }
     }, [getTopRankedHoles])
 
-    const renderScoreBar = (hole: HoleResult['hole']) => {
+    const renderScoreBar = (hole: Hole) => {
         const total = scoreCategories.reduce(
             (sum, cat) => sum + Number(hole[cat.key as keyof typeof hole] || 0),
             0

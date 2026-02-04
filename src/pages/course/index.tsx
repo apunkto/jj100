@@ -7,23 +7,27 @@ import Layout from '@/src/components/Layout'
 import {Box, Button, IconButton, TextField, Typography} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
-import useCtpApi, {HoleResult} from '@/src/api/useCtpApi'
+import useCtpApi, {Hole} from '@/src/api/useCtpApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
+import {useAuth} from '@/src/contexts/AuthContext'
 import {debounce} from 'lodash'
 import HoleCard from "@/src/components/HoleCard";
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import GpsFixedIcon from '@mui/icons-material/GpsFixed'
 
 type HoleCacheEntry = {
-    data: HoleResult
+    data: Hole
     fetchedAt: number
 }
 
+const DEFAULT_TOTAL_CARDS = 100
+
 export default function CoursePage() {
-    const totalCards = 100
+    const [totalCards, setTotalCards] = useState<number>(DEFAULT_TOTAL_CARDS)
     const cards = Array.from({length: totalCards}, (_, i) => i + 1)
 
-    const {getHole} = useCtpApi()
+    const { user, loading: authLoading } = useAuth()
+    const {getHole, getHoleCount} = useCtpApi()
     const {getUserCurrentHoleNumber} = useMetrixApi()
 
     const prevRef = useRef<HTMLButtonElement | null>(null)
@@ -37,14 +41,21 @@ export default function CoursePage() {
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
 
+    // Clear in-memory hole cache when user switches competition so we don't show wrong competition's data
+    useEffect(() => {
+        setHoleInfo({})
+    }, [user?.activeCompetitionId])
+
     const loadHole = async (holeNumber: number, forceRefresh = false) => {
+        if (user?.activeCompetitionId == null) return
+
         const cacheEntry = holeInfo[holeNumber]
         const now = Date.now()
         const maxAge = 5 * 60 * 1000
 
         if (!forceRefresh && cacheEntry && now - cacheEntry.fetchedAt < maxAge) return
 
-        const data = await getHole(holeNumber)
+        const data = await getHole(holeNumber, user.activeCompetitionId)
         if (!data) return
 
         setHoleInfo((prev) => ({
@@ -54,8 +65,6 @@ export default function CoursePage() {
                 fetchedAt: now,
             },
         }))
-
-
     }
 
     // wire swiper nav buttons after instance exists
@@ -89,22 +98,29 @@ export default function CoursePage() {
         return () => obs.disconnect();
     }, []);
 
-    // fetch user's current hole once; set initialHole (fallback to 1)
+    // fetch hole count and user's current hole only when we have a competition (no requests without competitionId)
     useEffect(() => {
+        if (authLoading) return
+        if (user?.activeCompetitionId == null) {
+            setTotalCards(DEFAULT_TOTAL_CARDS)
+            setInitialHole(1)
+            return
+        }
         const init = async () => {
             try {
-                const ch = await getUserCurrentHoleNumber()
-                const hole = ch && ch >= 1 && ch <= totalCards ? ch : 1
+                const [count, ch] = await Promise.all([getHoleCount(user.activeCompetitionId), getUserCurrentHoleNumber()])
+                const total = count ?? DEFAULT_TOTAL_CARDS
+                if (count != null) setTotalCards(total)
+                const hole = ch != null && ch >= 1 && ch <= total ? ch : 1
                 setInitialHole(hole)
-                console.log('Initial hole set to', hole)
             } catch (e) {
-                console.warn('Failed to load current hole, defaulting to 1:', e)
+                console.warn('Failed to load course init, using defaults:', e)
                 setInitialHole(1)
             }
         }
-        console.log('Fetching user current hole number...')
         init()
-    }, [])
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when auth ready or competition changes
+    }, [authLoading, user?.activeCompetitionId])
 
     // after swiper is ready AND initialHole is known, jump once (no animation)
     useEffect(() => {
@@ -117,9 +133,9 @@ export default function CoursePage() {
         setInitialSlideToDone(true)
     }, [swiperInstance, initialHole, initialSlideToDone])
 
-    // preload current, prev, next — but only after initial slide has been applied
+    // preload current, prev, next — only when we have competitionId (loadHole no-op without it)
     useEffect(() => {
-        if (!initialSlideToDone) return
+        if (authLoading || user?.activeCompetitionId == null || !initialSlideToDone) return
 
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
             loadHole(currentHoleNumber)
@@ -127,10 +143,11 @@ export default function CoursePage() {
             if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentHoleNumber, initialSlideToDone])
+    }, [authLoading, user?.activeCompetitionId, currentHoleNumber, initialSlideToDone])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
+            if (user?.activeCompetitionId == null) return
             if (document.visibilityState === 'visible') {
                 loadHole(currentHoleNumber, true)
                 if (currentHoleNumber > 1) loadHole(currentHoleNumber - 1, true)
@@ -143,7 +160,7 @@ export default function CoursePage() {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentHoleNumber])
+    }, [currentHoleNumber, user?.activeCompetitionId])
 
     const debouncedSlideTo = useCallback(
         debounce((holeNumber: number) => {
@@ -164,7 +181,7 @@ export default function CoursePage() {
     }
 
     const renderScoreBar = () => {
-        const holeData = holeInfo[currentHoleNumber]?.data.hole
+        const holeData = holeInfo[currentHoleNumber]?.data
         if (!holeData) return null
 
         const categories = [
@@ -234,16 +251,7 @@ export default function CoursePage() {
         )
     }
 
-    const formatRelativeTime = (timestamp: number): string => {
-        const seconds = Math.floor((Date.now() - timestamp) / 1000)
-        if (seconds < 60) return `${seconds} sek tagasi`
-        const minutes = Math.floor(seconds / 60)
-        if (minutes < 60) return `${minutes} min tagasi`
-        const hours = Math.floor(minutes / 60)
-        return `${hours} h tagasi`
-    }
-
-    const currentHole = holeInfo[currentHoleNumber]?.data?.hole
+    const currentHole = holeInfo[currentHoleNumber]?.data
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
 
@@ -321,7 +329,7 @@ export default function CoursePage() {
                                     <HoleCard
                                         maxWidth={500}
                                         number={number}
-                                        hole={holeInfo[number]?.data?.hole}
+                                        hole={holeInfo[number]?.data}
                                         isPriority={number === currentHoleNumber}
                                     />
                                 ) : (
@@ -350,14 +358,14 @@ export default function CoursePage() {
                     <IconButton color="primary" ref={prevRef}>
                         <ArrowBackIosNewIcon/>
                     </IconButton>
-                    {holeInfo[currentHoleNumber]?.data.hole.coordinates && (
+                    {holeInfo[currentHoleNumber]?.data.coordinates && (
                         <Box>
                             <Button
                                 variant="outlined"
                                 color="primary"
                                 size="small"
                                 onClick={() => {
-                                    const coords = holeInfo[currentHoleNumber]!.data.hole.coordinates
+                                    const coords = holeInfo[currentHoleNumber]!.data.coordinates
                                     window.open(
                                         `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`,
                                         '_blank'
@@ -373,7 +381,7 @@ export default function CoursePage() {
                     </IconButton>
                 </Box>
 
-                {holeInfo[currentHoleNumber]?.data.hole.is_ctp && (
+                {holeInfo[currentHoleNumber]?.data.is_ctp && (
                     <Box  textAlign="center">
                         <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
                             <GpsFixedIcon color="primary" fontSize="small" />
@@ -390,7 +398,7 @@ export default function CoursePage() {
                     </Box>
                 )}
 
-                {holeInfo[currentHoleNumber]?.data.hole.is_food && (
+                {holeInfo[currentHoleNumber]?.data.is_food && (
                     <Box  textAlign="center">
                         <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
                             <RestaurantIcon color="primary" fontSize="small" />
@@ -401,10 +409,10 @@ export default function CoursePage() {
 
                 <Box mt={2} display="flex" justifyContent="space-between" gap={2} alignItems="start">
                     <Typography fontSize={12}>
-                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.hole.rank}</strong>. rada (
-                        {holeInfo[currentHoleNumber]?.data.hole.average_diff !== undefined
+                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.rank}</strong>. rada (
+                        {holeInfo[currentHoleNumber]?.data.average_diff !== undefined
                             ? (() => {
-                                const diff = holeInfo[currentHoleNumber].data.hole.average_diff
+                                const diff = holeInfo[currentHoleNumber].data.average_diff
                                 const rounded = Number(diff.toFixed(1))
                                 if (rounded === 0) return '0'
                                 return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`
@@ -414,9 +422,9 @@ export default function CoursePage() {
                     </Typography>
 
                     <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
-                        {holeInfo[currentHoleNumber]?.data.hole.ob_percent !== undefined
+                        {holeInfo[currentHoleNumber]?.data.ob_percent !== undefined
                             ? (() => {
-                                const rounded = Number(holeInfo[currentHoleNumber]?.data.hole.ob_percent.toFixed(0))
+                                const rounded = Number(holeInfo[currentHoleNumber]?.data.ob_percent.toFixed(0))
                                 if (rounded === 0) return '0'
                                 return rounded
                             })()
