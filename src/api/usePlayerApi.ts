@@ -7,6 +7,7 @@ export type Player = {
     metrixUserId: number
     name: string
     activeCompetitionId: number | null
+    isAdmin: boolean
 }
 
 export type CompetitionOption = {

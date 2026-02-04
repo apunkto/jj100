@@ -1,12 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
-import {Box, Button, Typography, Stack, TextField} from '@mui/material'
-import Grid from '@mui/material/Grid'
-import Confetti from 'react-dom-confetti'
-import { CheckedInPlayer, useCheckinApi } from '@/src/api/useCheckinApi'
-import Image from "next/image";
+import {useEffect} from 'react'
+import {useRouter} from 'next/router'
 
 export default function FinalGameDrawPage() {
+    const router = useRouter()
+    
+    useEffect(() => {
+        router.replace('/admin/final-game')
+    }, [router])
+    
+    return null
     const { getCheckins, drawWinner, deleteCheckin, confirmFinalGameCheckin } = useCheckinApi()
+    const {user, loading, refreshMe} = useAuth()
+    const {setActiveCompetition} = usePlayerApi()
+    const router = useRouter()
+    const competitionIdParam = router.query.competitionId
 
     const [players, setPlayers] = useState<CheckedInPlayer[]>([])
     const [currentName, setCurrentName] = useState('')
@@ -14,15 +21,8 @@ export default function FinalGameDrawPage() {
     const [shuffling, setShuffling] = useState(false)
     const [confettiActive, setConfettiActive] = useState(false)
 
-    const [authorized, setAuthorized] = useState(false)
-    const [passwordInput, setPasswordInput] = useState('')
-
     const winnerRef = useRef<HTMLDivElement>(null)
-    const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'jj101'
-
-    useEffect(() => {
-        fetchPlayers()
-    }, [])
+    const isAdmin = user?.isAdmin ?? false
 
     const fetchPlayers = async () => {
         try {
@@ -35,9 +35,47 @@ export default function FinalGameDrawPage() {
         }
     }
 
+    useEffect(() => {
+        // Wait for auth to finish loading
+        if (loading) return
+        
+        // Wait for user data to be loaded (user might be null initially even after loading is false)
+        if (!user) return
+        
+        // If user is loaded but not admin, redirect
+        if (!isAdmin) {
+            router.replace('/')
+            return
+        }
+
+        // If competitionId query param is provided, set it as active competition (optional override)
+        if (competitionIdParam && typeof competitionIdParam === 'string') {
+            const compId = parseInt(competitionIdParam, 10)
+            if (!isNaN(compId) && user.activeCompetitionId !== compId) {
+                setActiveCompetition(compId).then(() => {
+                    refreshMe().then(() => {
+                        fetchPlayers()
+                    })
+                }).catch((err) => {
+                    console.error('Failed to set active competition:', err)
+                    fetchPlayers()
+                })
+                return
+            }
+        }
+
+        // Check if user has active competition
+        if (!user.activeCompetitionId) {
+            return
+        }
+        
+        // User is admin, fetch players
+        fetchPlayers()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, user, isAdmin, router, competitionIdParam])
 
     const startDraw = async () => {
-        if (!authorized) return
+        if (!isAdmin) return
         if (availablePlayers().length === 0 || finalGamePlayers().length >= 10) return
 
         setShuffling(true)
@@ -76,7 +114,7 @@ export default function FinalGameDrawPage() {
     const sortedFinalGamePlayers = () => finalGamePlayers().sort((a, b) => (a.final_game_order || 0) - (b.final_game_order || 0))
 
     const handleConfirmPresent = async () => {
-        if (!authorized || !winner) return
+        if (!isAdmin || !winner) return
         try {
             await confirmFinalGameCheckin(winner.id)
             const updatedPlayers = await fetchPlayers() // ✅ wait for updated list
@@ -94,7 +132,7 @@ export default function FinalGameDrawPage() {
     }
 
     const handleNotPresent = async () => {
-        if (!authorized || !winner) return
+        if (!isAdmin || !winner) return
         try {
             await deleteCheckin(winner.id)
             await fetchPlayers()
@@ -106,42 +144,35 @@ export default function FinalGameDrawPage() {
         }
     }
 
-    const handlePasswordSubmit = () => {
-        if (passwordInput === ADMIN_PASSWORD) {
-            setAuthorized(true)
-        } else {
-            alert('Vale salasõna!')
-        }
+    // Show loading while auth is loading or user data is not yet available
+    if (loading || !user) {
+        return (
+            <Layout>
+                <Box textAlign="center" mt={6}>
+                    <Typography variant="h4">Laadimine...</Typography>
+                </Box>
+            </Layout>
+        )
+    }
+
+    // If user is loaded but not admin, show access denied
+    if (!isAdmin) {
+        return (
+            <Layout>
+                <Box textAlign="center" mt={6}>
+                    <Typography variant="h4">Puudub juurdepääs</Typography>
+                    <Typography variant="body1" mt={2}>
+                        Ainult administraatoritel on juurdepääs sellele lehele.
+                    </Typography>
+                </Box>
+            </Layout>
+        )
     }
 
     return (
-        <Box textAlign="center" mt={4} position="relative">
-            {!authorized ? (
-                <>
-                    <Typography variant="h3" fontWeight="bold" mb={4}>
-                        Sisesta salasõna
-                    </Typography>
-                    <Stack direction="column" spacing={4} alignItems="center">
-                        <TextField
-                            type="password"
-                            label="Salasõna"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            sx={{
-                                width: 600,
-                                fontSize: '2rem',
-                                input: { fontSize: '2rem' },
-                                label: { fontSize: '2rem' },
-                            }}
-                        />
-                        <Button variant="contained" color="primary" onClick={handlePasswordSubmit} sx={{ fontSize: '2rem', px: 6, py: 2 }}>
-                            Kinnita
-                        </Button>
-                    </Stack>
-                </>
-            ) : (
-                <>
-                    <Box display="flex" justifyContent="center" alignItems="center" mt={0}>
+        <Layout>
+            <Box textAlign="center" mt={4} position="relative">
+            <Box display="flex" justifyContent="center" alignItems="center" mt={0}>
                         <Image
                             src="/novatours.jpg"
                             alt="Logo"
@@ -241,8 +272,7 @@ export default function FinalGameDrawPage() {
                         </Box>
                     )}
 
-                </>
-            )}
         </Box>
+        </Layout>
     )
 }

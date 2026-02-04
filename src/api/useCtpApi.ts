@@ -70,15 +70,21 @@ const getCtpByHoleNumber = async (holeNumber: number, competitionId?: number | n
     return await res.json()
 }
 
-const getTopRankedHoles = async (): Promise<HoleWithCtp[]> => {
-    const res = await authedFetch(`${API_BASE}/holes/top-ranked`)
+const getTopRankedHoles = async (competitionId?: number | null): Promise<HoleWithCtp[]> => {
+    const url = competitionId != null
+        ? `${API_BASE}/holes/top-ranked?competitionId=${competitionId}`
+        : `${API_BASE}/holes/top-ranked`
+    const res = await authedFetch(url)
     if (!res.ok) throw new Error('Failed to fetch top ranked holes')
     return await res.json()
 }
 
-const getHoles = async (): Promise<HoleWithCtp[]> => {
-    const res = await authedFetch(`${API_BASE}/holes`)
-    if (!res.ok) throw new Error('Failed to fetch top ranked holes')
+const getHoles = async (competitionId?: number | null): Promise<HoleWithCtp[]> => {
+    const url = competitionId != null
+        ? `${API_BASE}/holes?competitionId=${competitionId}`
+        : `${API_BASE}/holes`
+    const res = await authedFetch(url)
+    if (!res.ok) throw new Error('Failed to fetch holes')
     return await res.json()
 }
 

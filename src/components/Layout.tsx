@@ -29,26 +29,13 @@ import FeedbackIcon from '@mui/icons-material/Feedback'
 import HistoryIcon from '@mui/icons-material/History'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import {useRouter} from 'next/router'
 import {supabase} from '@/src/lib/supabaseClient'
 import {useAuth} from '@/src/contexts/AuthContext'
 import usePlayerApi, {CompetitionOption} from '@/src/api/usePlayerApi'
-
-/** Decode common HTML entities in text (e.g. &rarr; → →) so they display correctly. */
-function decodeHtmlEntities(text: string | null | undefined): string {
-    if (text == null || text === '') return text ?? ''
-    return text
-        .replace(/&rarr;/g, '→')
-        .replace(/&larr;/g, '←')
-        .replace(/&nbsp;/g, '\u00A0')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;|&apos;/g, "'")
-        .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
-        .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCodePoint(parseInt(code, 16)))
-}
+import useAdminApi from '@/src/api/useAdminApi'
+import {decodeHtmlEntities} from '@/src/utils/textUtils'
 
 export default function Layout({
                                    children,
@@ -61,6 +48,7 @@ export default function Layout({
     const [competitions, setCompetitions] = useState<CompetitionOption[]>([])
     const { session, user, refreshMe } = useAuth()
     const { getPlayerCompetitions, setActiveCompetition } = usePlayerApi()
+    const { getAdminCompetitions } = useAdminApi()
     const isAuthed = !!session
 
     const router = useRouter()
@@ -68,7 +56,18 @@ export default function Layout({
 
     useEffect(() => {
         if (user) {
-            getPlayerCompetitions().then(setCompetitions)
+            if (user.isAdmin) {
+                // Admin: fetch all competitions from admin endpoint
+                getAdminCompetitions()
+                    .then(adminComps => {
+                        // Map AdminCompetition to CompetitionOption format
+                        setCompetitions(adminComps.map(c => ({ id: c.id, name: c.name })))
+                    })
+                    .catch(() => setCompetitions([]))
+            } else {
+                // Regular user: fetch their competitions
+                getPlayerCompetitions().then(setCompetitions)
+            }
         } else {
             setCompetitions([])
         }
@@ -117,43 +116,50 @@ export default function Layout({
     })
 
     return (
-        <Box display="flex" flexDirection="column" minHeight="100vh" maxWidth={900} alignItems="center" mx="auto">
-            <AppBar position="static">
-                <Toolbar sx={{ justifyContent: 'space-between' }}>
-                    {/* Menu button (hidden in minimal mode) */}
-                    {minimal ? (
-                        <Box sx={{ width: 40 }} />
-                    ) : (
-                        <IconButton
-                            edge="start"
-                            color="inherit"
-                            aria-label="menu"
-                            onClick={() => setDrawerOpen(true)}
-                            sx={{ mr: 2 }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                    )}
+        <Box display="flex" flexDirection="column" minHeight="100vh">
+            <AppBar position="static" sx={{ width: '100%' }}>
+                <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', px: { xs: 2, sm: 3 } }}>
+                    {/* Left side - Menu button */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 40 }}>
+                        {minimal ? (
+                            <Box sx={{ width: 40 }} />
+                        ) : (
+                            <IconButton
+                                edge="start"
+                                color="inherit"
+                                aria-label="menu"
+                                onClick={() => setDrawerOpen(true)}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                        )}
+                    </Box>
 
-                    <Link href="/" passHref legacyBehavior>
-                        <Typography
-                            variant="h6"
-                            sx={{
-                                fontWeight: 700,
-                                textDecoration: 'none',
-                                color: 'inherit',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Järva-Jaani 100!
-                        </Typography>
-                    </Link>
+                    {/* Center - Title */}
+                    <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                        <Link href="/" passHref legacyBehavior>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Järva-Jaani 100!
+                            </Typography>
+                        </Link>
+                    </Box>
 
-                    <Link href="/" passHref legacyBehavior>
-                        <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
-                            <Image src="/logo.webp" alt="Logo" width={57} height={49} priority />
-                        </Box>
-                    </Link>
+                    {/* Right side - Logo */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 57 }}>
+                        <Link href="/" passHref legacyBehavior>
+                            <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
+                                <Image src="/logo.webp" alt="Logo" width={57} height={49} priority />
+                            </Box>
+                        </Link>
+                    </Box>
                 </Toolbar>
             </AppBar>
 
@@ -166,7 +172,7 @@ export default function Layout({
                     PaperProps={{
                         sx: {
                             backgroundColor: '#f9f9f9',
-                            width: 250,
+                            width: 275,
                         },
                     }}
                 >
@@ -266,6 +272,38 @@ export default function Layout({
                             })}
                         </List>
 
+                        {isAuthed && user?.isAdmin && (
+                            <>
+                                <Divider sx={{ my: 1.5 }} />
+                                <List>
+                                    <Link href="/admin" passHref legacyBehavior>
+                                        <ListItem disablePadding>
+                                            <ListItemButton sx={{ borderRadius: 2 }}>
+                                                <ListItemIcon sx={{ color: 'primary.main' }}>
+                                                    <AdminPanelSettingsIcon />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography
+                                                            sx={{
+                                                                fontWeight: 500,
+                                                                textDecoration: currentPath === '/admin' ? 'underline' : 'none',
+                                                                textDecorationColor: currentPath === '/admin' ? 'primary.main' : 'inherit',
+                                                                textUnderlineOffset: '6px',
+                                                                color: 'text.primary',
+                                                            }}
+                                                        >
+                                                            Admin
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </ListItemButton>
+                                        </ListItem>
+                                    </Link>
+                                </List>
+                            </>
+                        )}
+
                         {isAuthed && (
                             <>
                                 <Divider sx={{ my: 1.5 }} />
@@ -291,32 +329,34 @@ export default function Layout({
                 </Drawer>
             )}
 
-            <Container
-                sx={{
-                    mt: 2,
-                    flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}
-                component="main"
-            >
-                {children}
-            </Container>
+            <Box sx={{ maxWidth: 900, mx: 'auto', width: '100%', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                <Container
+                    sx={{
+                        mt: 2,
+                        flexGrow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}
+                    component="main"
+                >
+                    {children}
+                </Container>
 
-            <Box
-                component="footer"
-                sx={{
-                    py: 1,
-                    px: 2,
-                    mt: '1rem',
-                    backgroundColor: 'secondary.main',
-                    color: 'white',
-                    textAlign: 'center',
-                    width: '100%',
-                }}
-            >
-                <Typography variant="body2" sx={{fontSize: '0.8rem'}}>
-                    Probleem? Helista +372 51994444</Typography>
+                <Box
+                    component="footer"
+                    sx={{
+                        py: 1,
+                        px: 2,
+                        mt: '1rem',
+                        backgroundColor: 'secondary.main',
+                        color: 'white',
+                        textAlign: 'center',
+                        width: '100%',
+                    }}
+                >
+                    <Typography variant="body2" sx={{fontSize: '0.8rem'}}>
+                        Probleem? Helista +372 51994444</Typography>
+                </Box>
             </Box>
         </Box>
     )

@@ -56,6 +56,34 @@ type CheckEmailPayload = {
 
 type StatsPayload = MetrixPlayerStats;
 
+export type DashboardPlayerResult = {
+    UserID: number;
+    Name: string;
+    OrderNumber: number;
+    Diff: number;
+    ClassName: string;
+    Sum: number;
+    DNF?: boolean | null;
+    PlayerResults?: { Diff: number; Result: string; PEN?: string }[];
+};
+
+export type TopPlayersByDivisionPayload = {
+    topPlayersByDivision: Record<string, DashboardPlayerResult[]>;
+};
+
+export type CompetitionStatsPayload = {
+    playerCount: number;
+    mostHolesLeft: number;
+    finishedPlayersCount: number;
+    totalThrows: number;
+    averageDiff: number;
+    lakeOBCount: number;
+    lakePlayersCount: number;
+    totalHoles: number;
+    longestStreaks: { count: number; player: string; startHole: number; endHole: number }[];
+    longestAces: { player: string; holeNumber: number; length: number }[];
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!API_BASE) {
@@ -121,6 +149,26 @@ const checkMetrixEmail = async (email: string): Promise<CheckEmailPayload> => {
     return result.data
 }
 
+const getTopPlayersByDivision = async (competitionId: number): Promise<TopPlayersByDivisionPayload> => {
+    const res = await authedFetch(`${API_BASE}/metrix/competition/${competitionId}/top-players-by-division`);
+    if (!res.ok) throw new Error('Failed to fetch top players by division');
+
+    const result = (await res.json()) as ApiResponse<TopPlayersByDivisionPayload>;
+    if (!result.success) throw new Error('Backend returned error fetching top players by division');
+
+    return result.data;
+};
+
+const getCompetitionStats = async (competitionId: number): Promise<CompetitionStatsPayload> => {
+    const res = await authedFetch(`${API_BASE}/metrix/competition/${competitionId}/stats`);
+    if (!res.ok) throw new Error('Failed to fetch competition stats');
+
+    const result = (await res.json()) as ApiResponse<CompetitionStatsPayload>;
+    if (!result.success) throw new Error('Backend returned error fetching competition stats');
+
+    return result.data;
+};
+
 const getUserCurrentHoleNumber = async (): Promise<number | null> => {
     //TODO: switch to api call when competition is created
     return 1;
@@ -137,6 +185,8 @@ const getUserCurrentHoleNumber = async (): Promise<number | null> => {
 export default function useMetrixApi() {
     return {
         getMetrixPlayerStats,
+        getTopPlayersByDivision,
+        getCompetitionStats,
         preLogin,
         registerFromMetrix,
         checkMetrixEmail,
