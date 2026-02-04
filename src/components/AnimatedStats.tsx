@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Box, Typography } from '@mui/material'
+import {useEffect, useState} from 'react'
+import {Box, Typography} from '@mui/material'
 
 export default function StatBox({
                                     label,
@@ -30,7 +30,7 @@ export default function StatBox({
         }, 300) // match transition duration
 
         return () => clearTimeout(timeout)
-    }, [animationKey])
+    }, [animationKey, value, sub])
 
     return (
         <Box sx={{ textAlign: 'center' }}>

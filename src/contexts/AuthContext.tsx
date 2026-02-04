@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useMemo, useRef, useState} from "react"
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react"
 import type {Session} from "@supabase/supabase-js"
 import {supabase} from "@/src/lib/supabaseClient"
 import usePlayerApi, {Player} from "@/src/api/usePlayerApi"
@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const inFlightRef = useRef(false)
     const lastTokenRef = useRef<string | null>(null)
 
-    const refreshMe = async () => {
+    const refreshMe = useCallback(async () => {
         const token = session?.access_token ?? null
 
         // if logged out, clear
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             inFlightRef.current = false
         }
-    }
+    }, [session?.access_token, user, getLoggedInUser])
 
     useEffect(() => {
         let mounted = true
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const value = useMemo<AuthState>(
         () => ({ loading, session, user, refreshMe }),
-        [loading, session, user]
+        [loading, session, user, refreshMe]
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {Swiper, SwiperSlide} from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
@@ -162,13 +162,14 @@ export default function CoursePage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentHoleNumber, user?.activeCompetitionId])
 
-    const debouncedSlideTo = useCallback(
-        debounce((holeNumber: number) => {
-            if (swiperInstance && holeNumber >= 1 && holeNumber <= totalCards) {
-                swiperInstance.slideTo(holeNumber - 1)
-            }
-        }, 400),
-        [swiperInstance]
+    const debouncedSlideTo = useMemo(
+        () =>
+            debounce((holeNumber: number) => {
+                if (swiperInstance && holeNumber >= 1 && holeNumber <= totalCards) {
+                    swiperInstance.slideTo(holeNumber - 1)
+                }
+            }, 400),
+        [swiperInstance, totalCards]
     )
 
     useEffect(() => () => debouncedSlideTo.cancel(), [debouncedSlideTo])
