@@ -8,6 +8,7 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
+    IconButton,
     List,
     ListItemButton,
     Paper,
@@ -15,6 +16,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
+import CloseIcon from "@mui/icons-material/Close"
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 import {supabase} from "@/src/lib/supabaseClient"
 import Layout from "@/src/components/Layout"
@@ -290,7 +292,12 @@ export default function LoginPage() {
                 </Paper>
 
                 <Dialog open={identityPickerOpen} onClose={() => setIdentityPickerOpen(false)} maxWidth="sm" fullWidth>
-                    <DialogTitle>Vali konto</DialogTitle>
+                    <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        Vali konto
+                        <IconButton aria-label="close" onClick={() => setIdentityPickerOpen(false)} sx={{ ml: 1 }}>
+                            <CloseIcon />
+                        </IconButton>
+                    </DialogTitle>
                     <DialogContent>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                             Selle e-maili all on DiscGolfMetrixis mitu profiili. Vali, millist soovid kasutada.

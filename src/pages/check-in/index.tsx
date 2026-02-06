@@ -10,8 +10,10 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    IconButton,
     Typography,
 } from "@mui/material"
+import CloseIcon from "@mui/icons-material/Close"
 import Layout from "@/src/components/Layout"
 import {useCheckinApi} from "@/src/api/useCheckinApi"
 import {useToast} from "@/src/contexts/ToastContext"
@@ -157,7 +159,12 @@ export default function CheckInPage() {
             </Box>
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-                <DialogTitle>Registreeru loosimängu?</DialogTitle>
+                <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    Registreeru loosimängu?
+                    <IconButton aria-label="close" onClick={() => setConfirmOpen(false)} sx={{ ml: 1 }}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
                 <DialogContent>
                     <Typography>
                         Kas oled kindel, et soovid end loosimängu registreerida?

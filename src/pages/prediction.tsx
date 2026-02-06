@@ -367,8 +367,11 @@ export default function PredictionPage() {
                         maxWidth="md"
                         fullWidth
                     >
-                        <DialogTitle>
+                        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             {selectedPlayerDialog.playerName} - Ennustused
+                            <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
+                                <CloseIcon />
+                            </IconButton>
                         </DialogTitle>
                         <DialogContent>
                             {loadingPlayerPrediction ? (
@@ -426,8 +429,11 @@ export default function PredictionPage() {
                         maxWidth="md"
                         fullWidth
                     >
-                        <DialogTitle>
+                        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             {selectedPlayerDialog.playerName} - Ennustused
+                            <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
+                                <CloseIcon />
+                            </IconButton>
                         </DialogTitle>
                         <DialogContent>
                             {loadingPlayerPrediction ? (
@@ -795,8 +801,11 @@ export default function PredictionPage() {
                     maxWidth="md"
                     fullWidth
                 >
-                    <DialogTitle>
+                    <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         {selectedPlayerDialog.playerName} - Ennustused
+                        <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
+                            <CloseIcon />
+                        </IconButton>
                     </DialogTitle>
                     <DialogContent>
                         {loadingPlayerPrediction ? (
