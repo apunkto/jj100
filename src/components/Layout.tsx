@@ -17,7 +17,7 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material'
-import {ReactNode, useCallback, useEffect, useState} from 'react'
+import React, {ReactNode, useCallback, useEffect, useState} from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -97,10 +97,10 @@ export default function Layout({
     )
 
     const allMenuItems = [
-        { href: '/info', label: 'Info', icon: <InfoIcon /> },
+        { href: '/info', label: 'Üldinfo', icon: <InfoIcon /> },
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
-        { href: '/stats', label: 'Statistika', icon: <LineChartIcon /> },
+        { href: '/stats', label: 'Minu statistika', icon: <LineChartIcon /> },
         { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
         { href: '/prediction', label: 'Ennustusmäng', icon: <QuizIcon /> },
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
@@ -246,30 +246,34 @@ export default function Layout({
                         <List>
                             {menuItems.map(({ href, label, icon }) => {
                                 const isActive = currentPath === href
+                                const showDividerBefore = href === '/check-in'
 
                                 return (
-                                    <Link href={href} passHref legacyBehavior key={href}>
-                                        <ListItem disablePadding>
-                                            <ListItemButton sx={{ borderRadius: 2 }}>
-                                                <ListItemIcon sx={{ color: 'primary.main' }}>{icon}</ListItemIcon>
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography
-                                                            sx={{
-                                                                fontWeight: 500,
-                                                                textDecoration: isActive ? 'underline' : 'none',
-                                                                textDecorationColor: isActive ? 'primary.main' : 'inherit',
-                                                                textUnderlineOffset: '6px',
-                                                                color: 'text.primary',
-                                                            }}
-                                                        >
-                                                            {label}
-                                                        </Typography>
-                                                    }
-                                                />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    </Link>
+                                    <React.Fragment key={href}>
+                                        {showDividerBefore && <Divider sx={{ my: 1.5 }} />}
+                                        <Link href={href} passHref legacyBehavior>
+                                            <ListItem disablePadding>
+                                                <ListItemButton sx={{ borderRadius: 2 }}>
+                                                    <ListItemIcon sx={{ color: 'primary.main' }}>{icon}</ListItemIcon>
+                                                    <ListItemText
+                                                        primary={
+                                                            <Typography
+                                                                sx={{
+                                                                    fontWeight: 500,
+                                                                    textDecoration: isActive ? 'underline' : 'none',
+                                                                    textDecorationColor: isActive ? 'primary.main' : 'inherit',
+                                                                    textUnderlineOffset: '6px',
+                                                                    color: 'text.primary',
+                                                                }}
+                                                            >
+                                                                {label}
+                                                            </Typography>
+                                                        }
+                                                    />
+                                                </ListItemButton>
+                                            </ListItem>
+                                        </Link>
+                                    </React.Fragment>
                                 )
                             })}
                         </List>

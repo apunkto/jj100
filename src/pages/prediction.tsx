@@ -12,6 +12,8 @@ import {
     FormControlLabel,
     IconButton,
     Switch,
+    Tab,
+    Tabs,
     TextField,
     Typography,
 } from '@mui/material'
@@ -49,6 +51,7 @@ export default function PredictionPage() {
     const [selectedPlayerPrediction, setSelectedPlayerPrediction] = useState<Prediction | null>(null)
     const [loadingPlayerPrediction, setLoadingPlayerPrediction] = useState(false)
     const [previousYearDialog, setPreviousYearDialog] = useState(false)
+    const [resultsTab, setResultsTab] = useState(0)
 
     // Form state
     const [formData, setFormData] = useState<PredictionData>({
@@ -94,24 +97,14 @@ export default function PredictionPage() {
                 const enabled = await isPredictionEnabled(user.activeCompetitionId)
                 setPredictionEnabled(enabled)
 
-                // Always fetch leaderboard, regardless of prediction_enabled status
-                try {
-                    const leaderboardData = await getLeaderboard(user.activeCompetitionId)
-                    setLeaderboard(leaderboardData)
-                } catch (leaderboardErr) {
-                    console.error('Failed to fetch leaderboard:', leaderboardErr)
-                    // Don't show error toast for leaderboard, just log it
-                }
-
-                // Always try to fetch user's prediction (for viewing), even when disabled
-                // Only creating/editing is restricted when disabled
+                // Fetch user's prediction first to determine participation
+                let participating = true
                 try {
                     const userPrediction = await getPrediction(user.activeCompetitionId)
                     setIsParticipating(true)
                     if (userPrediction) {
                         setPrediction(userPrediction)
                         if (enabled) {
-                            // Only set form data if prediction is enabled (for editing)
                             setFormData({
                                 best_overall_score: userPrediction.best_overall_score,
                                 best_female_score: userPrediction.best_female_score,
@@ -123,16 +116,24 @@ export default function PredictionPage() {
                         }
                     }
                 } catch (predErr: any) {
-                    // Check if error is due to not participating
                     if (predErr?.message?.includes('not_competition_participant') || predErr?.code === 'not_competition_participant') {
+                        participating = false
                         setIsParticipating(false)
                     } else if (predErr?.message?.includes('not enabled')) {
-                        // Prediction is disabled - this is expected, don't treat as error
                         setIsParticipating(true)
                     } else {
-                        // Other error, assume participating but prediction fetch failed
                         setIsParticipating(true)
                         console.error('Failed to fetch prediction:', predErr)
+                    }
+                }
+
+                // Fetch leaderboard only if participating or admin (leaderboard API fails for non-participants)
+                if (participating || user?.isAdmin) {
+                    try {
+                        const leaderboardData = await getLeaderboard(user.activeCompetitionId)
+                        setLeaderboard(leaderboardData)
+                    } catch (leaderboardErr) {
+                        console.error('Failed to fetch leaderboard:', leaderboardErr)
                     }
                 }
             } catch (err) {
@@ -162,26 +163,26 @@ export default function PredictionPage() {
         // Validate required score fields
         if (formData.best_overall_score === null || formData.best_overall_score === undefined) {
             errors.best_overall_score = 'See väli on kohustuslik'
-        } else if (typeof formData.best_overall_score !== 'number' || !Number.isFinite(formData.best_overall_score)) {
+        } else if (!Number.isFinite(formData.best_overall_score)) {
             errors.best_overall_score = 'Palun sisesta korrektne numbriline väärtus'
         }
 
         if (formData.best_female_score === null || formData.best_female_score === undefined) {
             errors.best_female_score = 'See väli on kohustuslik'
-        } else if (typeof formData.best_female_score !== 'number' || !Number.isFinite(formData.best_female_score)) {
+        } else if (!Number.isFinite(formData.best_female_score)) {
             errors.best_female_score = 'Palun sisesta korrektne numbriline väärtus'
         }
 
         if (formData.player_own_score === null || formData.player_own_score === undefined) {
             errors.player_own_score = 'See väli on kohustuslik'
-        } else if (typeof formData.player_own_score !== 'number' || !Number.isFinite(formData.player_own_score)) {
+        } else if (!Number.isFinite(formData.player_own_score)) {
             errors.player_own_score = 'Palun sisesta korrektne numbriline väärtus'
         }
 
         // Validate required numeric fields
         if (formData.hole_in_ones_count === null || formData.hole_in_ones_count === undefined) {
             errors.hole_in_ones_count = 'See väli on kohustuslik'
-        } else if (typeof formData.hole_in_ones_count !== 'number' || !Number.isFinite(formData.hole_in_ones_count) || isNaN(formData.hole_in_ones_count)) {
+        } else if (!Number.isFinite(formData.hole_in_ones_count) || isNaN(formData.hole_in_ones_count)) {
             errors.hole_in_ones_count = 'Palun sisesta korrektne numbriline väärtus'
         } else if (formData.hole_in_ones_count < 0) {
             errors.hole_in_ones_count = 'Väärtus peab olema positiivne arv'
@@ -189,7 +190,7 @@ export default function PredictionPage() {
 
         if (formData.water_discs_count === null || formData.water_discs_count === undefined) {
             errors.water_discs_count = 'See väli on kohustuslik'
-        } else if (typeof formData.water_discs_count !== 'number' || !Number.isFinite(formData.water_discs_count) || isNaN(formData.water_discs_count)) {
+        } else if (!Number.isFinite(formData.water_discs_count) || isNaN(formData.water_discs_count)) {
             errors.water_discs_count = 'Palun sisesta korrektne numbriline väärtus'
         } else if (formData.water_discs_count < 0) {
             errors.water_discs_count = 'Väärtus peab olema positiivne arv'
@@ -340,127 +341,70 @@ export default function PredictionPage() {
         )
     }
 
-    // Check if user is not participating
-    if (predictionEnabled && isParticipating === false) {
-        return (
-            <Layout>
-                <Box mt={4} px={2}>
-                    <Box textAlign="center" mb={3} maxWidth={800} mx="auto">
-                        <Typography variant="h4" fontWeight="bold" mb={2}>
-                            Ennustusmäng
-                        </Typography>
-                        <Typography variant="body1" color="error" sx={{mb: 3}}>
-                            Sa ei osale sellel võistlusel
-                        </Typography>
-                    </Box>
+    const showForm = predictionEnabled && isParticipating !== false && (!prediction || isEditing)
 
-                    {/* Leaderboard */}
-                    <PredictionLeaderboard
-                        leaderboard={leaderboard}
-                        onPlayerClick={handlePlayerNameClick}
-                    />
-
-                    {/* Player Prediction Dialog */}
-                    <Dialog
-                        open={selectedPlayerDialog.open}
-                        onClose={handleClosePlayerDialog}
-                        maxWidth="md"
-                        fullWidth
-                    >
-                        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            {selectedPlayerDialog.playerName} - Ennustused
-                            <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
-                                <CloseIcon />
-                            </IconButton>
-                        </DialogTitle>
-                        <DialogContent>
-                            {loadingPlayerPrediction ? (
-                                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <PredictionCards predictionData={selectedPlayerPrediction} />
-                            )}
-                        </DialogContent>
-                    </Dialog>
-                </Box>
-            </Layout>
-        )
-    }
-
-        if (!predictionEnabled) {
-        return (
-            <Layout>
-                <Box mt={4} px={2}>
-                    <Box textAlign="center" mb={3} maxWidth={800} mx="auto">
-                        <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-                            <LockIcon sx={{fontSize: 24, color: 'grey.500', mr: 1}} />
-                            <Typography variant="h4" fontWeight="bold">
-                                Ennustusmäng
-                            </Typography>
-                        </Box>
-                        <Typography variant="body1" color="text.secondary">
-                            Ennustamine suletud!
-                        </Typography>
-                    </Box>
-
-                    {/* Leaderboard */}
-                    <PredictionLeaderboard
-                        leaderboard={leaderboard}
-                        onPlayerClick={handlePlayerNameClick}
-                    />
-
-                    {/* User's predictions (if they have any) */}
-                    {prediction && (
-                        <Card sx={{mt: 3, width: '100%', boxShadow: 2}}>
-                            <CardContent sx={{p: {xs: 2, sm: 3}, width: '100%'}}>
-                                <Typography variant="h6" fontWeight="bold" mb={2}>
-                                    Sinu ennustused
-                                </Typography>
-                                <PredictionCards predictionData={prediction} />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Player Prediction Dialog */}
-                    <Dialog
-                        open={selectedPlayerDialog.open}
-                        onClose={handleClosePlayerDialog}
-                        maxWidth="md"
-                        fullWidth
-                    >
-                        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            {selectedPlayerDialog.playerName} - Ennustused
-                            <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
-                                <CloseIcon />
-                            </IconButton>
-                        </DialogTitle>
-                        <DialogContent>
-                            {loadingPlayerPrediction ? (
-                                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <PredictionCards predictionData={selectedPlayerPrediction} />
-                            )}
-                        </DialogContent>
-                    </Dialog>
-                    </Box>
-                </Layout>
-            )
-    }
-
-    const showForm = predictionEnabled && (!prediction || isEditing)
+    const isNonParticipant = predictionEnabled && isParticipating === false
+    const isPredictionDisabled = !predictionEnabled
 
     return (
         <Layout>
-            <Box mt={2} px={{xs: 2, sm: 3, md: 4}} maxWidth={showForm ? 800 : '100%'} mx={showForm ? 'auto' : 0}>
+            <Box
+                mt={isNonParticipant || isPredictionDisabled ? 4 : 2}
+                px={{xs: 2, sm: 3, md: 4}}
+                maxWidth={showForm ? 800 : '100%'}
+                mx={showForm ? 'auto' : 0}
+            >
                 <Typography variant="h4" fontWeight="bold" textAlign="center" mb={3}>
                     Ennustusmäng
                 </Typography>
-                {showForm ? (
-                    <Card sx={{mb: 3, boxShadow: 2}}>
-                        <CardContent sx={{p: 3}}>
+
+                {isNonParticipant ? (
+                    user?.isAdmin ? (
+                        <PredictionLeaderboard
+                            leaderboard={leaderboard}
+                            onPlayerClick={handlePlayerNameClick}
+                        />
+                    ) : (
+                        <Typography variant="body1" color="error">
+                            Sa ei osale sellel võistlusel
+                        </Typography>
+                    )
+                ) : isPredictionDisabled ? (
+                    <>
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={3}>
+                            <LockIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                            <Typography variant="body2" color="text.secondary">
+                                Ennustamine on lõppenud!
+                            </Typography>
+                        </Box>
+                        {prediction ? (
+                            <>
+                                <Tabs value={resultsTab} onChange={(_, v) => setResultsTab(v)} sx={{ mb: 2 }}>
+                                    <Tab label="Edetabel" />
+                                    <Tab label="Sinu ennustused" />
+                                </Tabs>
+                                {resultsTab === 0 && (
+                                    <PredictionLeaderboard
+                                        leaderboard={leaderboard}
+                                        onPlayerClick={handlePlayerNameClick}
+                                        containerSx={{ mb: 3 }}
+                                    />
+                                )}
+                                {resultsTab === 1 && (
+                                    <Box sx={{ width: '100%' }}>
+                                        <PredictionCards predictionData={prediction} />
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
+                            <PredictionLeaderboard
+                                leaderboard={leaderboard}
+                                onPlayerClick={handlePlayerNameClick}
+                            />
+                        )}
+                    </>
+                ) : showForm ? (
+                        <Box sx={{ mb: 3 }}>
                             <Box display="flex" alignItems="center" justifyContent="flex-end" mb={3}>
                                 <Box
                                     component="button"
@@ -604,7 +548,7 @@ export default function PredictionPage() {
                                         required
                                         error={!!fieldErrors.hole_in_ones_count}
                                         helperText={fieldErrors.hole_in_ones_count || ''}
-                                        inputProps={{ min: 0 }}
+                                        slotProps={{ htmlInput: { min: 0 } }}
                                     />
                                 </Box>
 
@@ -640,7 +584,7 @@ export default function PredictionPage() {
                                         required
                                         error={!!fieldErrors.water_discs_count}
                                         helperText={fieldErrors.water_discs_count || ''}
-                                        inputProps={{ min: 0 }}
+                                        slotProps={{ htmlInput: { min: 0 } }}
                                     />
                                 </Box>
 
@@ -660,39 +604,17 @@ export default function PredictionPage() {
                                     </Button>
                                 </Box>
                             </Box>
-                        </CardContent>
-                    </Card>
+                    </Box>
                 ) : (
-                    <>
-                        {/* Leaderboard */}
-                        <PredictionLeaderboard
-                            leaderboard={leaderboard}
-                            onPlayerClick={handlePlayerNameClick}
-                            cardSx={{mb: 3, boxShadow: 2}}
-                            cardContentSx={{p: {xs: 2, sm: 3}}}
-                        />
-
-                        {/* User's predictions */}
-                        {prediction && (
-                            <Card sx={{ width: '100%', boxShadow: 2}}>
-                                <CardContent sx={{p: {xs: 2, sm: 3}, width: '100%'}}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                        <Typography variant="h6" fontWeight="bold">
-                                            Sinu ennustused
-                                        </Typography>
-                                        {predictionEnabled && (
-                                            <IconButton onClick={handleEdit} color="primary" aria-label="Muuda ennustust" size="small">
-                                                <EditIcon />
-                                            </IconButton>
-                                        )}
-                                    </Box>
-
-                                    <PredictionCards predictionData={prediction} />
-                                </CardContent>
-                            </Card>
-                        )}
-                    </>
-                )}
+                        <Box sx={{ width: '100%' }}>
+                            <Box display="flex" justifyContent="flex-end" mb={2}>
+                                <IconButton onClick={handleEdit} color="primary" aria-label="Muuda ennustust" size="small">
+                                    <EditIcon />
+                                </IconButton>
+                            </Box>
+                            <PredictionCards predictionData={prediction} />
+                        </Box>
+                    )}
 
                 {/* Previous Year Results Dialog */}
                 <Dialog
@@ -802,7 +724,7 @@ export default function PredictionPage() {
                     fullWidth
                 >
                     <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        {selectedPlayerDialog.playerName} - Ennustused
+                        {selectedPlayerDialog.playerName}
                         <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
                             <CloseIcon />
                         </IconButton>

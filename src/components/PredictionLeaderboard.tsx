@@ -1,29 +1,17 @@
 import React from 'react'
-import {
-    Card,
-    CardContent,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography,
-} from '@mui/material'
+import {Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,} from '@mui/material'
 import type {PredictionLeaderboardResponse} from '@/src/api/usePredictionApi'
 
 interface PredictionLeaderboardProps {
     leaderboard: PredictionLeaderboardResponse | null
     onPlayerClick?: (playerId: number, playerName: string) => void
-    cardSx?: object
-    cardContentSx?: object
+    containerSx?: object
 }
 
 export function PredictionLeaderboard({
     leaderboard,
     onPlayerClick,
-    cardSx,
-    cardContentSx,
+    containerSx,
 }: PredictionLeaderboardProps) {
     if (!leaderboard || leaderboard.top_10.length === 0) {
         return null
@@ -36,11 +24,7 @@ export function PredictionLeaderboard({
     }
 
     return (
-        <Card sx={{width: '100%', ...cardSx}}>
-            <CardContent sx={cardContentSx}>
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                    Edetabel
-                </Typography>
+        <Box sx={{ width: '100%', ...containerSx }}>
                 <TableContainer sx={{width: '100%'}}>
                     <Table sx={{width: '100%'}}>
                         <TableHead>
@@ -129,7 +113,6 @@ export function PredictionLeaderboard({
                         </TableBody>
                     </Table>
                 </TableContainer>
-            </CardContent>
-        </Card>
+        </Box>
     )
 }

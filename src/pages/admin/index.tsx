@@ -249,7 +249,7 @@ export default function AdminDashboard() {
                                         disabled={updating}
                                     />
                                 }
-                                label="Luba ennustusmäng"
+                                label="Luba ennustamine"
                             />
 
                             <FormControlLabel

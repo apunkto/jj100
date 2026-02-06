@@ -177,13 +177,16 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                 {category.label}
                             </Typography>
 
-                            <Box 
-                                display="flex" 
-                                gap={1.5} 
-                                mb={category.score.maxPoints > 0 ? 1.5 : 0}
-                                alignItems="flex-start"
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: { xs: '1fr 1fr 1fr', sm: '1fr 1fr' },
+                                    gridTemplateRows: { xs: 'auto', sm: 'auto auto' },
+                                    gap: 1.5,
+                                    alignItems: 'flex-start',
+                                }}
                             >
-                                <Box sx={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                                         Ennustus
                                     </Typography>
@@ -206,7 +209,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                     </Box>
                                 </Box>
 
-                                <Box sx={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                                         Tegelik
                                     </Typography>
@@ -234,21 +237,25 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                         )}
                                     </Box>
                                 </Box>
-                            </Box>
 
-                            {category.score.maxPoints > 0 && (() => {
-                                const pct = category.score.points / category.score.maxPoints
-                                const pointsColor = pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
-                                return (
-                                    <Box
-                                        sx={{
-                                            pt: 1.5,
-                                            borderTop: '1px solid',
-                                            borderColor: 'divider',
-                                        }}
-                                    >
-                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                            <Typography variant="caption" color="text.secondary">
+                                {category.score.maxPoints > 0 && (() => {
+                                    const pct = category.score.points / category.score.maxPoints
+                                    const pointsColor = pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
+                                    return (
+                                        <Box
+                                            sx={{
+                                                gridColumn: { xs: 3, sm: '1 / -1' },
+                                                gridRow: { sm: 2 },
+                                                pt: { sm: 1.5 },
+                                                borderTop: { xs: 'none', sm: '1px solid' },
+                                                borderColor: 'divider',
+                                                display: 'flex',
+                                                flexDirection: { xs: 'column', sm: 'row' },
+                                                alignItems: { xs: 'center', sm: 'center' },
+                                                justifyContent: { sm: 'space-between' },
+                                            }}
+                                        >
+                                            <Typography variant="caption" color="text.secondary" sx={{ mb: { xs: 0.5, sm: 0 } }}>
                                                 Punktid
                                             </Typography>
                                             <Typography
@@ -259,9 +266,9 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                                 {category.score.points} / {category.score.maxPoints}
                                             </Typography>
                                         </Box>
-                                    </Box>
-                                )
-                            })()}
+                                    )
+                                })()}
+                            </Box>
                         </CardContent>
                     </Card>
                 </Box>
