@@ -32,6 +32,7 @@ export type Prediction = {
 
 export type PredictionLeaderboardEntry = {
     player_name: string
+    player_id?: number
     score: number
     rank: number
 }
@@ -57,6 +58,10 @@ const getPrediction = async (competitionId: number): Promise<Prediction | null> 
             return null
         }
         const error = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
+        // If prediction is not enabled, return null instead of throwing (user can still view leaderboard)
+        if (res.status === 403 && error.error?.includes('not enabled')) {
+            return null
+        }
         const err: any = new Error(error.error || 'Failed to fetch prediction')
         if (error.code) {
             err.code = error.code
@@ -112,11 +117,28 @@ const getLeaderboard = async (competitionId: number): Promise<PredictionLeaderbo
     return json.data
 }
 
+const getPlayerPrediction = async (competitionId: number, playerId: number): Promise<{prediction: Prediction | null; player_name: string}> => {
+    const res = await authedFetch(`${API_BASE}/prediction/${competitionId}/player/${playerId}`)
+    if (!res.ok) {
+        if (res.status === 404) {
+            return {prediction: null, player_name: 'Tundmatu mängija'}
+        }
+        // For 403 or other errors, still return null prediction instead of throwing
+        // This allows the dialog to open and show "no prediction" message
+        const error = (await res.json().catch(() => ({}))) as { error?: string }
+        console.warn('Failed to fetch player prediction:', error.error || 'Unknown error')
+        return {prediction: null, player_name: 'Tundmatu mängija'}
+    }
+    const json = (await res.json()) as { success: boolean; data: {prediction: Prediction | null; player_name: string} }
+    return json.data
+}
+
 export default function usePredictionApi() {
     return {
         getPrediction,
         createPrediction,
         updatePrediction,
         getLeaderboard,
+        getPlayerPrediction,
     }
 }

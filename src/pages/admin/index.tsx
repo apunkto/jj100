@@ -14,7 +14,7 @@ import {formatDate} from '@/src/utils/dateUtils'
 export default function AdminDashboard() {
     const {user, loading: authLoading} = useAuth()
     const router = useRouter()
-    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled} = useAdminApi()
+    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled, updateDidRainEnabled} = useAdminApi()
     const {showToast} = useToast()
 
     const [competition, setCompetition] = useState<AdminCompetition | null>(null)
@@ -106,6 +106,22 @@ export default function AdminDashboard() {
         } catch (err) {
             console.error('Failed to update prediction setting:', err)
             showToast('Ennustusmängu seadistuse uuendamine ebaõnnestus', 'error')
+        } finally {
+            setUpdating(false)
+        }
+    }
+
+    const handleDidRainToggle = async (enabled: boolean) => {
+        if (!competition || updating || !user?.activeCompetitionId) return
+
+        try {
+            setUpdating(true)
+            await updateDidRainEnabled(user.activeCompetitionId, enabled)
+            setCompetition({...competition, did_rain: enabled})
+            showToast(`Vihm ${enabled ? 'märgitud' : 'eemaldatud'}`, 'success')
+        } catch (err) {
+            console.error('Failed to update did rain setting:', err)
+            showToast('Vihma seadistuse uuendamine ebaõnnestus', 'error')
         } finally {
             setUpdating(false)
         }
@@ -234,6 +250,17 @@ export default function AdminDashboard() {
                                     />
                                 }
                                 label="Luba ennustusmäng"
+                            />
+
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={competition.did_rain}
+                                        onChange={(e) => handleDidRainToggle(e.target.checked)}
+                                        disabled={updating}
+                                    />
+                                }
+                                label="Sadas vihma"
                             />
                         </Box>
                     </CardContent>

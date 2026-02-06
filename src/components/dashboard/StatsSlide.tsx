@@ -118,7 +118,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
         {
             label: '🌊 Järve viskas',
             value: lakeOBCount,
-            sub: `mängijat (${lakePlayersCount > 0 ? Math.round((lakeOBCount / lakePlayersCount) * 100) : 0}% 🤦‍♂️)`,
+            sub: `mängijat (${playerCount > 0 ? Math.round((lakeOBCount / playerCount) * 100) : 0}% 🤦‍♂️)`,
             bg: '#b3d4fc',
         },
         ...(longestStreaks.length > 0

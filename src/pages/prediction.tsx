@@ -6,21 +6,22 @@ import {
     CardContent,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogContent,
+    DialogTitle,
     FormControlLabel,
     IconButton,
     Switch,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
     TextField,
     Typography,
 } from '@mui/material'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LockIcon from '@mui/icons-material/Lock'
 import EditIcon from '@mui/icons-material/Edit'
+import CloseIcon from '@mui/icons-material/Close'
 import {ScoreInput} from '../components/ScoreInput'
+import {PredictionCards} from '../components/PredictionCards'
+import {PredictionLeaderboard} from '../components/PredictionLeaderboard'
 import Layout from '@/src/components/Layout'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useToast} from '@/src/contexts/ToastContext'
@@ -31,7 +32,7 @@ export default function PredictionPage() {
     const {user, loading: authLoading} = useAuth()
     const {showToast} = useToast()
     const {isPredictionEnabled} = useConfigApi()
-    const {getPrediction, createPrediction, updatePrediction, getLeaderboard} = usePredictionApi()
+    const {getPrediction, createPrediction, updatePrediction, getLeaderboard, getPlayerPrediction} = usePredictionApi()
 
     const [predictionEnabled, setPredictionEnabled] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -40,6 +41,14 @@ export default function PredictionPage() {
     const [leaderboard, setLeaderboard] = useState<PredictionLeaderboardResponse | null>(null)
     const [isEditing, setIsEditing] = useState(false)
     const [isParticipating, setIsParticipating] = useState<boolean | null>(null)
+    const [selectedPlayerDialog, setSelectedPlayerDialog] = useState<{open: boolean; playerId: number | null; playerName: string}>({
+        open: false,
+        playerId: null,
+        playerName: '',
+    })
+    const [selectedPlayerPrediction, setSelectedPlayerPrediction] = useState<Prediction | null>(null)
+    const [loadingPlayerPrediction, setLoadingPlayerPrediction] = useState(false)
+    const [previousYearDialog, setPreviousYearDialog] = useState(false)
 
     // Form state
     const [formData, setFormData] = useState<PredictionData>({
@@ -94,14 +103,15 @@ export default function PredictionPage() {
                     // Don't show error toast for leaderboard, just log it
                 }
 
-                if (enabled) {
-                    // Fetch user's prediction only if prediction is enabled
-                    // This will also verify participation
-                    try {
-                        const userPrediction = await getPrediction(user.activeCompetitionId)
-                        setIsParticipating(true)
-                        if (userPrediction) {
-                            setPrediction(userPrediction)
+                // Always try to fetch user's prediction (for viewing), even when disabled
+                // Only creating/editing is restricted when disabled
+                try {
+                    const userPrediction = await getPrediction(user.activeCompetitionId)
+                    setIsParticipating(true)
+                    if (userPrediction) {
+                        setPrediction(userPrediction)
+                        if (enabled) {
+                            // Only set form data if prediction is enabled (for editing)
                             setFormData({
                                 best_overall_score: userPrediction.best_overall_score,
                                 best_female_score: userPrediction.best_female_score,
@@ -111,20 +121,19 @@ export default function PredictionPage() {
                                 water_discs_count: userPrediction.water_discs_count,
                             })
                         }
-                    } catch (predErr: any) {
-                        // Check if error is due to not participating
-                        if (predErr?.message?.includes('not_competition_participant') || predErr?.code === 'not_competition_participant') {
-                            setIsParticipating(false)
-                        } else {
-                            // Other error, assume participating but prediction fetch failed
-                            setIsParticipating(true)
-                            console.error('Failed to fetch prediction:', predErr)
-                        }
                     }
-                } else {
-                    // If prediction is not enabled, we can't check participation via prediction endpoint
-                    // Assume participating for now (leaderboard will still work)
-                    setIsParticipating(true)
+                } catch (predErr: any) {
+                    // Check if error is due to not participating
+                    if (predErr?.message?.includes('not_competition_participant') || predErr?.code === 'not_competition_participant') {
+                        setIsParticipating(false)
+                    } else if (predErr?.message?.includes('not enabled')) {
+                        // Prediction is disabled - this is expected, don't treat as error
+                        setIsParticipating(true)
+                    } else {
+                        // Other error, assume participating but prediction fetch failed
+                        setIsParticipating(true)
+                        console.error('Failed to fetch prediction:', predErr)
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch prediction data:', err)
@@ -234,6 +243,9 @@ export default function PredictionPage() {
     }
 
     const handleEdit = () => {
+        if (!predictionEnabled) {
+            return // Don't allow editing when prediction is disabled
+        }
         setIsEditing(true)
     }
 
@@ -268,6 +280,37 @@ export default function PredictionPage() {
         })
         setIsEditing(false)
     }
+
+    const handlePlayerNameClick = async (playerId: number | undefined, playerName: string) => {
+        if (!playerId || !user?.activeCompetitionId) {
+            console.warn('handlePlayerNameClick: missing playerId or activeCompetitionId', {playerId, activeCompetitionId: user?.activeCompetitionId})
+            return
+        }
+
+        // Open dialog immediately - this happens synchronously before any async operations
+        setSelectedPlayerDialog({open: true, playerId, playerName})
+        setLoadingPlayerPrediction(true)
+        setSelectedPlayerPrediction(null)
+
+        // Fetch prediction data asynchronously
+        // The API client now returns null instead of throwing, so this should always succeed
+        try {
+            const result = await getPlayerPrediction(user.activeCompetitionId, playerId)
+            setSelectedPlayerPrediction(result.prediction)
+        } catch (err: any) {
+            // This catch should rarely be hit now since API returns null instead of throwing
+            console.error('Failed to fetch player prediction:', err)
+            setSelectedPlayerPrediction(null)
+        } finally {
+            setLoadingPlayerPrediction(false)
+        }
+    }
+
+    const handleClosePlayerDialog = () => {
+        setSelectedPlayerDialog({open: false, playerId: null, playerName: ''})
+        setSelectedPlayerPrediction(null)
+    }
+
 
     if (authLoading || loading) {
         return (
@@ -312,90 +355,35 @@ export default function PredictionPage() {
                     </Box>
 
                     {/* Leaderboard */}
-                    {leaderboard && leaderboard.top_10.length > 0 && (
-                        <Card sx={{ width: '100%' }}>
-                            <CardContent>
-                                <Typography variant="h6" fontWeight="bold" mb={2}>
-                                    Edetabel
-                                </Typography>
-                                <TableContainer sx={{ width: '100%' }}>
-                                    <Table sx={{ width: '100%' }}>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Koht</TableCell>
-                                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Mängija</TableCell>
-                                                <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>Punktid</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {leaderboard.top_10.map((entry, index) => {
-                                                const isUser = leaderboard.user_rank && entry.rank === leaderboard.user_rank.rank
-                                                return (
-                                                    <TableRow 
-                                                        key={entry.rank} 
-                                                        sx={{
-                                                            fontWeight: isUser ? 'bold' : 'normal',
-                                                            backgroundColor: index % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                            '&:hover': {
-                                                                backgroundColor: 'action.selected',
-                                                            },
-                                                        }}
-                                                    >
-                                                        <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.rank}
-                                                        </TableCell>
-                                                        <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.player_name}
-                                                        </TableCell>
-                                                        <TableCell align="right" sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.score}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                                })}
-                                                {/* Show separator dots if user rank is 12 or more */}
-                                                {leaderboard.user_rank &&
-                                                    !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) &&
-                                                    leaderboard.user_rank.rank >= 12 && (
-                                                        <TableRow>
-                                                            <TableCell colSpan={3} align="center" sx={{py: 1}}>
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    • • •
-                                                                </Typography>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                {/* Show user's rank separately if not in top 10 */}
-                                                {leaderboard.user_rank &&
-                                                    !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) && (
-                                                        <TableRow sx={{
-                                                            fontWeight: 'bold',
-                                                            backgroundColor: leaderboard.top_10.length % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                            '&:hover': {
-                                                                backgroundColor: 'action.selected',
-                                                            },
-                                                        }}>
-                                                            <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.rank}
-                                                            </TableCell>
-                                                            <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.player_name}
-                                                            </TableCell>
-                                                            <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.score}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </Box>
-                </Layout>
-            )
-        }
+                    <PredictionLeaderboard
+                        leaderboard={leaderboard}
+                        onPlayerClick={handlePlayerNameClick}
+                    />
+
+                    {/* Player Prediction Dialog */}
+                    <Dialog
+                        open={selectedPlayerDialog.open}
+                        onClose={handleClosePlayerDialog}
+                        maxWidth="md"
+                        fullWidth
+                    >
+                        <DialogTitle>
+                            {selectedPlayerDialog.playerName} - Ennustused
+                        </DialogTitle>
+                        <DialogContent>
+                            {loadingPlayerPrediction ? (
+                                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                <PredictionCards predictionData={selectedPlayerPrediction} />
+                            )}
+                        </DialogContent>
+                    </Dialog>
+                </Box>
+            </Layout>
+        )
+    }
 
         if (!predictionEnabled) {
         return (
@@ -414,92 +402,49 @@ export default function PredictionPage() {
                     </Box>
 
                     {/* Leaderboard */}
-                    {leaderboard && leaderboard.top_10.length > 0 && (
-                        <Card sx={{ width: '100%' }}>
-                            <CardContent>
+                    <PredictionLeaderboard
+                        leaderboard={leaderboard}
+                        onPlayerClick={handlePlayerNameClick}
+                    />
+
+                    {/* User's predictions (if they have any) */}
+                    {prediction && (
+                        <Card sx={{mt: 3, width: '100%', boxShadow: 2}}>
+                            <CardContent sx={{p: {xs: 2, sm: 3}, width: '100%'}}>
                                 <Typography variant="h6" fontWeight="bold" mb={2}>
-                                    Edetabel
+                                    Sinu ennustused
                                 </Typography>
-                                <TableContainer sx={{ width: '100%' }}>
-                                    <Table sx={{ width: '100%' }}>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Koht</TableCell>
-                                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Mängija</TableCell>
-                                                <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>Punktid</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {leaderboard.top_10.map((entry, index) => {
-                                                const isUser = leaderboard.user_rank && entry.rank === leaderboard.user_rank.rank
-                                                return (
-                                                    <TableRow 
-                                                        key={entry.rank} 
-                                                        sx={{
-                                                            fontWeight: isUser ? 'bold' : 'normal',
-                                                            backgroundColor: index % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                            '&:hover': {
-                                                                backgroundColor: 'action.selected',
-                                                            },
-                                                        }}
-                                                    >
-                                                        <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.rank}
-                                                        </TableCell>
-                                                        <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.player_name}
-                                                        </TableCell>
-                                                        <TableCell align="right" sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                            {entry.score}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                                })}
-                                            {/* Show separator dots if user rank is 12 or more */}
-                                            {leaderboard.user_rank &&
-                                                !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) &&
-                                                leaderboard.user_rank.rank >= 12 && (
-                                                    <TableRow>
-                                                        <TableCell colSpan={3} align="center" sx={{py: 1}}>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                • • •
-                                                            </Typography>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            {/* Show user's rank separately if not in top 10 */}
-                                            {leaderboard.user_rank &&
-                                                !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) && (
-                                                    <TableRow sx={{
-                                                        fontWeight: 'bold',
-                                                        backgroundColor: leaderboard.top_10.length % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                        '&:hover': {
-                                                            backgroundColor: 'action.selected',
-                                                        },
-                                                    }}>
-                                                        <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                            {leaderboard.user_rank.rank}
-                                                        </TableCell>
-                                                        <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                            {leaderboard.user_rank.player_name}
-                                                        </TableCell>
-                                                        <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>
-                                                            {leaderboard.user_rank.score}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
+                                <PredictionCards predictionData={prediction} />
                             </CardContent>
                         </Card>
                     )}
-                </Box>
-            </Layout>
-        )
+
+                    {/* Player Prediction Dialog */}
+                    <Dialog
+                        open={selectedPlayerDialog.open}
+                        onClose={handleClosePlayerDialog}
+                        maxWidth="md"
+                        fullWidth
+                    >
+                        <DialogTitle>
+                            {selectedPlayerDialog.playerName} - Ennustused
+                        </DialogTitle>
+                        <DialogContent>
+                            {loadingPlayerPrediction ? (
+                                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                <PredictionCards predictionData={selectedPlayerPrediction} />
+                            )}
+                        </DialogContent>
+                    </Dialog>
+                    </Box>
+                </Layout>
+            )
     }
 
-    const showForm = !prediction || isEditing
+    const showForm = predictionEnabled && (!prediction || isEditing)
 
     return (
         <Layout>
@@ -510,9 +455,26 @@ export default function PredictionPage() {
                 {showForm ? (
                     <Card sx={{mb: 3, boxShadow: 2}}>
                         <CardContent sx={{p: 3}}>
-                            <Typography variant="h6" fontWeight="bold" mb={3}>
-                                Sinu ennustus
-                            </Typography>
+                            <Box display="flex" alignItems="center" justifyContent="flex-end" mb={3}>
+                                <Box
+                                    component="button"
+                                    onClick={() => setPreviousYearDialog(true)}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5,
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        '&:hover': { color: 'primary.dark' },
+                                    }}
+                                >
+                                    <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+                                    <Typography variant="body2" fontWeight={600}>Vaata eelmist aastat</Typography>
+                                </Box>
+                            </Box>
 
                             <Box display="flex" flexDirection="column" gap={3}>
                                 <ScoreInput
@@ -697,86 +659,12 @@ export default function PredictionPage() {
                 ) : (
                     <>
                         {/* Leaderboard */}
-                        {leaderboard && leaderboard.top_10.length > 0 && (
-                            <Card sx={{mb: 3, width: '100%', boxShadow: 2}}>
-                                <CardContent sx={{p: {xs: 2, sm: 3}}}>
-                                    <Typography variant="h6" fontWeight="bold" mb={3}>
-                                        Edetabel
-                                    </Typography>
-                                    <TableContainer>
-                                        <Table>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Koht</TableCell>
-                                                    <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Mängija</TableCell>
-                                                    <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>Punktid</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {leaderboard.top_10.map((entry, index) => {
-                                                    const isUser = leaderboard.user_rank && entry.rank === leaderboard.user_rank.rank
-                                                    return (
-                                                        <TableRow 
-                                                            key={entry.rank} 
-                                                            sx={{
-                                                                fontWeight: isUser ? 'bold' : 'normal',
-                                                                backgroundColor: index % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'action.selected',
-                                                                },
-                                                            }}
-                                                        >
-                                                            <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                                {entry.rank}
-                                                            </TableCell>
-                                                            <TableCell sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                                {entry.player_name}
-                                                            </TableCell>
-                                                            <TableCell align="right" sx={{fontWeight: isUser ? 'bold' : 'normal', py: 1.5}}>
-                                                                {entry.score}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
-                                                })}
-                                                {/* Show separator dots if user rank is 12 or more */}
-                                                {leaderboard.user_rank &&
-                                                    !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) &&
-                                                    leaderboard.user_rank.rank >= 12 && (
-                                                        <TableRow>
-                                                            <TableCell colSpan={3} align="center" sx={{py: 1}}>
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    • • •
-                                                                </Typography>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                {/* Show user's rank separately if not in top 10 */}
-                                                {leaderboard.user_rank &&
-                                                    !leaderboard.top_10.some((entry) => entry.rank === leaderboard.user_rank!.rank) && (
-                                                        <TableRow sx={{
-                                                            fontWeight: 'bold',
-                                                            backgroundColor: leaderboard.top_10.length % 2 === 0 ? 'background.paper' : 'action.hover',
-                                                            '&:hover': {
-                                                                backgroundColor: 'action.selected',
-                                                            },
-                                                        }}>
-                                                            <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.rank}
-                                                            </TableCell>
-                                                            <TableCell sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.player_name}
-                                                            </TableCell>
-                                                            <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>
-                                                                {leaderboard.user_rank.score}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                </CardContent>
-                            </Card>
-                        )}
+                        <PredictionLeaderboard
+                            leaderboard={leaderboard}
+                            onPlayerClick={handlePlayerNameClick}
+                            cardSx={{mb: 3, boxShadow: 2}}
+                            cardContentSx={{p: {xs: 2, sm: 3}}}
+                        />
 
                         {/* User's predictions */}
                         {prediction && (
@@ -786,185 +674,140 @@ export default function PredictionPage() {
                                         <Typography variant="h6" fontWeight="bold">
                                             Sinu ennustused
                                         </Typography>
-                                        <IconButton onClick={handleEdit} color="primary" aria-label="Muuda ennustust" size="small">
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Box>
-
-                                    <Box display="flex" flexDirection="column" gap={2}>
-                                        {prediction.best_overall_score !== null && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Parim üldtulemus
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${prediction.best_overall_score > 0 ? `+${prediction.best_overall_score}` : prediction.best_overall_score}`}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                            color: 'primary.main',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.best_overall_score !== null && prediction.actual_results?.best_overall_score !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.best_overall_score > 0 ? `+${prediction.actual_results.best_overall_score}` : prediction.actual_results.best_overall_score}`}
-                                                            sx={{
-                                                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                                                                color: 'secondary.main',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {prediction.best_female_score !== null && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Parim naismängija tulemus
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${prediction.best_female_score > 0 ? `+${prediction.best_female_score}` : prediction.best_female_score}`}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                            color: 'primary.main',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.best_female_score !== null && prediction.actual_results?.best_female_score !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.best_female_score > 0 ? `+${prediction.actual_results.best_female_score}` : prediction.actual_results.best_female_score}`}
-                                                            sx={{
-                                                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                                                                color: 'secondary.main',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {(prediction.will_rain !== null || prediction.actual_results?.will_rain !== null || prediction.actual_results?.will_rain !== undefined) && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Sajab võistluse ajal
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${(prediction.will_rain ?? false) ? 'Jah' : 'Ei'}`}
-                                                        sx={{
-                                                            backgroundColor: (prediction.will_rain ?? false) ? 'rgba(46, 125, 50, 0.1)' : 'rgba(158, 158, 158, 0.1)',
-                                                            color: (prediction.will_rain ?? false) ? 'success.main' : 'text.secondary',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.will_rain !== null && prediction.actual_results?.will_rain !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.will_rain ? 'Jah' : 'Ei'}`}
-                                                            sx={{
-                                                                backgroundColor: prediction.actual_results.will_rain ? 'rgba(46, 125, 50, 0.1)' : 'rgba(158, 158, 158, 0.1)',
-                                                                color: prediction.actual_results.will_rain ? 'success.main' : 'text.secondary',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {prediction.player_own_score !== null && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Sinu enda tulemus
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${prediction.player_own_score > 0 ? `+${prediction.player_own_score}` : prediction.player_own_score}`}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                            color: 'primary.main',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.player_own_score !== null && prediction.actual_results?.player_own_score !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.player_own_score > 0 ? `+${prediction.actual_results.player_own_score}` : prediction.actual_results.player_own_score}`}
-                                                            sx={{
-                                                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                                                                color: 'secondary.main',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {prediction.hole_in_ones_count !== null && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Hole-in-one&apos;ide arv
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${prediction.hole_in_ones_count}`}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                            color: 'primary.main',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.hole_in_ones_count !== null && prediction.actual_results?.hole_in_ones_count !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.hole_in_ones_count}`}
-                                                            sx={{
-                                                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                                                                color: 'secondary.main',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {prediction.water_discs_count !== null && (
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium" mb={1}>
-                                                    Vette visatud ketaste arv
-                                                </Typography>
-                                                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-                                                    <Chip
-                                                        label={`Minu: ${prediction.water_discs_count}`}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                            color: 'primary.main',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    />
-                                                    {prediction.actual_results?.water_discs_count !== null && prediction.actual_results?.water_discs_count !== undefined && (
-                                                        <Chip
-                                                            label={`Tegelik: ${prediction.actual_results.water_discs_count}`}
-                                                            sx={{
-                                                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                                                                color: 'secondary.main',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
+                                        {predictionEnabled && (
+                                            <IconButton onClick={handleEdit} color="primary" aria-label="Muuda ennustust" size="small">
+                                                <EditIcon />
+                                            </IconButton>
                                         )}
                                     </Box>
+
+                                    <PredictionCards predictionData={prediction} />
                                 </CardContent>
                             </Card>
                         )}
                     </>
                 )}
+
+                {/* Previous Year Results Dialog */}
+                <Dialog
+                    open={previousYearDialog}
+                    onClose={() => setPreviousYearDialog(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        2025 tulemused
+                        <IconButton
+                            aria-label="close"
+                            onClick={() => setPreviousYearDialog(false)}
+                            sx={{ ml: 1 }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
+                            {[
+                                { label: 'Osalejate arv', day1: '394', day2: '396' },
+                                { label: 'Parim üldtulemus', day1: '-39', day2: '-51' },
+                                { label: 'Parim naismängija tulemus', day1: '+3', day2: '+1' },
+                                { label: "Hole-in-one'ide arv", day1: '19', day2: '25' },
+                                { label: 'Vette viskajate arv', day1: '254', day2: '253' },
+                            ].map(({ label, day1, day2 }) => (
+                                <Card key={label} variant="outlined" sx={{ width: '100%' }}>
+                                    <CardContent sx={{ pb: '16px !important' }}>
+                                        <Typography variant="subtitle2" fontWeight="bold" mb={1.5} color="text.secondary">
+                                            {label}
+                                        </Typography>
+                                        <Box display="flex" gap={1.5} alignItems="center">
+                                            <Chip
+                                                label={day1}
+                                                variant="outlined"
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                    color: 'primary.main',
+                                                    fontWeight: 'bold',
+                                                    borderColor: 'primary.light',
+                                                }}
+                                            />
+                                            <Chip
+                                                label={day2}
+                                                variant="outlined"
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: 'rgba(156, 39, 176, 0.08)',
+                                                    color: 'secondary.main',
+                                                    fontWeight: 'bold',
+                                                    borderColor: 'secondary.light',
+                                                }}
+                                            />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </Box>
+                        <Box
+                            sx={{
+                                mt: 2,
+                                pt: 2,
+                                borderTop: '1px solid',
+                                borderColor: 'divider',
+                                display: 'flex',
+                                gap: 2,
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography variant="caption" color="text.secondary">
+                                Legend:
+                            </Typography>
+                            <Chip
+                                label="Esimene päev"
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                    color: 'primary.main',
+                                    fontWeight: 'bold',
+                                    borderColor: 'primary.light',
+                                }}
+                            />
+                            <Chip
+                                label="Teine päev"
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                    backgroundColor: 'rgba(156, 39, 176, 0.08)',
+                                    color: 'secondary.main',
+                                    fontWeight: 'bold',
+                                    borderColor: 'secondary.light',
+                                }}
+                            />
+                        </Box>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Player Prediction Dialog */}
+                <Dialog
+                    open={selectedPlayerDialog.open}
+                    onClose={handleClosePlayerDialog}
+                    maxWidth="md"
+                    fullWidth
+                >
+                    <DialogTitle>
+                        {selectedPlayerDialog.playerName} - Ennustused
+                    </DialogTitle>
+                    <DialogContent>
+                        {loadingPlayerPrediction ? (
+                            <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <PredictionCards predictionData={selectedPlayerPrediction} />
+                        )}
+                    </DialogContent>
+                </Dialog>
             </Box>
         </Layout>
     )
