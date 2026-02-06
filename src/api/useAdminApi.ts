@@ -13,6 +13,7 @@ export type AdminCompetition = {
     status: 'waiting' | 'started' | 'finished'
     ctp_enabled: boolean
     checkin_enabled: boolean
+    prediction_enabled: boolean
 }
 
 const getAdminCompetitions = async (): Promise<AdminCompetition[]> => {
@@ -53,11 +54,24 @@ const updateCheckinEnabled = async (competitionId: number, enabled: boolean): Pr
     }
 }
 
+const updatePredictionEnabled = async (competitionId: number, enabled: boolean): Promise<void> => {
+    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/prediction`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ enabled }),
+    })
+    if (!res.ok) {
+        const error = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(error.error || 'Failed to update prediction setting')
+    }
+}
+
 export default function useAdminApi() {
     return {
         getAdminCompetitions,
         getAdminCompetition,
         updateCtpEnabled,
         updateCheckinEnabled,
+        updatePredictionEnabled,
     }
 }

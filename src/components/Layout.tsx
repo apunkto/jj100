@@ -27,6 +27,7 @@ import MapIcon from '@mui/icons-material/Map'
 import InfoIcon from '@mui/icons-material/Info'
 import FeedbackIcon from '@mui/icons-material/Feedback'
 import HistoryIcon from '@mui/icons-material/History'
+import QuizIcon from '@mui/icons-material/Quiz'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
@@ -100,7 +101,8 @@ export default function Layout({
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
         { href: '/stats', label: 'Statistika', icon: <LineChartIcon /> },
-        { href: '/check-in', label: 'Loosimängud', icon: <CardGiftcardIcon /> },
+        { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
+        { href: '/prediction', label: 'Ennustusmäng', icon: <QuizIcon /> },
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
         { href: '/history', label: 'Ajalugu', icon: <HistoryIcon /> },
     ]

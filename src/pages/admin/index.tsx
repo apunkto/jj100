@@ -14,7 +14,7 @@ import {formatDate} from '@/src/utils/dateUtils'
 export default function AdminDashboard() {
     const {user, loading: authLoading} = useAuth()
     const router = useRouter()
-    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled} = useAdminApi()
+    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled} = useAdminApi()
     const {showToast} = useToast()
 
     const [competition, setCompetition] = useState<AdminCompetition | null>(null)
@@ -90,6 +90,22 @@ export default function AdminDashboard() {
         } catch (err) {
             console.error('Failed to update checkin setting:', err)
             showToast('Registreerimise seadistuse uuendamine ebaõnnestus', 'error')
+        } finally {
+            setUpdating(false)
+        }
+    }
+
+    const handlePredictionToggle = async (enabled: boolean) => {
+        if (!competition || updating || !user?.activeCompetitionId) return
+
+        try {
+            setUpdating(true)
+            await updatePredictionEnabled(user.activeCompetitionId, enabled)
+            setCompetition({...competition, prediction_enabled: enabled})
+            showToast(`Ennustusmäng ${enabled ? 'lubatud' : 'keelatud'}`, 'success')
+        } catch (err) {
+            console.error('Failed to update prediction setting:', err)
+            showToast('Ennustusmängu seadistuse uuendamine ebaõnnestus', 'error')
         } finally {
             setUpdating(false)
         }
@@ -207,6 +223,17 @@ export default function AdminDashboard() {
                                     />
                                 }
                                 label="Luba loosimängud"
+                            />
+
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={competition.prediction_enabled}
+                                        onChange={(e) => handlePredictionToggle(e.target.checked)}
+                                        disabled={updating}
+                                    />
+                                }
+                                label="Luba ennustusmäng"
                             />
                         </Box>
                     </CardContent>

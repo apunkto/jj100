@@ -12,6 +12,7 @@ type CompetitionInfo = {
     name: string | null
     ctp_enabled: boolean
     checkin_enabled: boolean
+    prediction_enabled: boolean
 }
 
 const fetchCompetitionInfo = async (competitionId: number): Promise<CompetitionInfo> => {
@@ -53,8 +54,16 @@ export default function useConfigApi() {
         return competition.checkin_enabled
     }
     
+    const isPredictionEnabled = async (competitionId?: number | null): Promise<boolean> => {
+        const id = await resolveCompetitionId(competitionId)
+        if (!id) return false
+        const competition = await fetchCompetitionInfo(id)
+        return competition.prediction_enabled
+    }
+    
     return {
         isCtpEnabled,
         isCheckinEnabled,
+        isPredictionEnabled,
     }
 }
