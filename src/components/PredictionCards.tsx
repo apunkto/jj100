@@ -236,28 +236,32 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                 </Box>
                             </Box>
 
-                            {category.score.maxPoints > 0 && (
-                                <Box
-                                    sx={{
-                                        pt: 1.5,
-                                        borderTop: '1px solid',
-                                        borderColor: 'divider',
-                                    }}
-                                >
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="caption" color="text.secondary">
-                                            Punktid
-                                        </Typography>
-                                        <Typography
-                                            variant="body2"
-                                            fontWeight="bold"
-                                            color={category.score.points === category.score.maxPoints ? 'success.main' : 'text.primary'}
-                                        >
-                                            {category.score.points} / {category.score.maxPoints}
-                                        </Typography>
+                            {category.score.maxPoints > 0 && (() => {
+                                const pct = category.score.points / category.score.maxPoints
+                                const pointsColor = pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
+                                return (
+                                    <Box
+                                        sx={{
+                                            pt: 1.5,
+                                            borderTop: '1px solid',
+                                            borderColor: 'divider',
+                                        }}
+                                    >
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="caption" color="text.secondary">
+                                                Punktid
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                fontWeight="bold"
+                                                color={pointsColor}
+                                            >
+                                                {category.score.points} / {category.score.maxPoints}
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                </Box>
-                            )}
+                                )
+                            })()}
                         </CardContent>
                     </Card>
                 </Box>
