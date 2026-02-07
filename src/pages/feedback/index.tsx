@@ -38,8 +38,8 @@ export default function FeedbackPage() {
 
     return (
         <Layout>
-            <Box display="flex"  flexDirection="column" alignItems="center">
-            <Typography
+            <Box display="flex" flexDirection="column" alignItems="center" px={2} py={3} boxSizing="border-box">
+                <Typography
                     variant="h4"
                     fontWeight="bold"
                 >

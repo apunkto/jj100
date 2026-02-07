@@ -22,6 +22,26 @@ type HoleCacheEntry = {
 
 const DEFAULT_TOTAL_CARDS = 100
 
+// Score categories for bar and hole result circle (order: eagle → birdie → par → bogey → double → triple+)
+const SCORE_CATEGORIES = [
+    { key: 'eagles', color: '#f8c600', label: 'Eagle' },
+    { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie' },
+    { key: 'pars', color: '#ECECECFF', label: 'Par' },
+    { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey' },
+    { key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double' },
+    { key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+' },
+]
+
+function getHoleResultColor(result: number, par: number): string {
+    const diff = result - par
+    if (diff <= -2) return SCORE_CATEGORIES[0].color
+    if (diff === -1) return SCORE_CATEGORIES[1].color
+    if (diff === 0) return SCORE_CATEGORIES[2].color
+    if (diff === 1) return SCORE_CATEGORIES[3].color
+    if (diff === 2) return SCORE_CATEGORIES[4].color
+    return SCORE_CATEGORIES[5].color
+}
+
 export default function CoursePage() {
     const [totalCards, setTotalCards] = useState<number>(DEFAULT_TOTAL_CARDS)
     const cards = Array.from({length: totalCards}, (_, i) => i + 1)
@@ -185,27 +205,16 @@ export default function CoursePage() {
         const holeData = holeInfo[currentHoleNumber]?.data
         if (!holeData) return null
 
-        const categories = [
-            {key: 'eagles', color: '#f8c600', label: 'Eagle'},
-            {key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie'},
-            {key: 'pars', color: '#ECECECFF', label: 'Par'},
-            {key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey'},
-            {key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double'},
-            {key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+'},
-        ]
-
-        const total = categories.reduce(
+        const total = SCORE_CATEGORIES.reduce(
             (sum, cat) => sum + Number(holeData[cat.key as keyof typeof holeData] ?? 0),
             0
         )
         if (total === 0) return null
 
-
-
         return (
             <Box mt={1}>
                 <Box display="flex" height={10} borderRadius={2} overflow="hidden" width="100%">
-                    {categories.map(({key, color}) => {
+                    {SCORE_CATEGORIES.map(({key, color}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         const percent = (Number(value) / Number(total)) * 100
                         return (
@@ -224,7 +233,7 @@ export default function CoursePage() {
                 </Box>
 
                 <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                    {categories.map(({key, color, label}) => {
+                    {SCORE_CATEGORIES.map(({key, color, label}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         if (!value) return null
                         return (
@@ -255,13 +264,18 @@ export default function CoursePage() {
     const currentHole = holeInfo[currentHoleNumber]?.data
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
+    const par = currentHole?.par ?? 3
+    const userResult = currentHole?.user_result ?? null
+    const userHasPenalty = !!currentHole?.user_has_penalty
+    const resultNum = userResult != null ? parseInt(userResult, 10) : NaN
+    const holeResultColor = !isNaN(resultNum) ? getHoleResultColor(resultNum, par) : null
 
     return (
         <Layout>
             <Box mt={0}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="h4" fontWeight="bold">
+                        <Typography variant="h4" fontWeight="bold" component="span">
                             Korv {currentHoleNumber}
                         </Typography>
 
@@ -359,8 +373,34 @@ export default function CoursePage() {
                     <IconButton color="primary" ref={prevRef}>
                         <ArrowBackIosNewIcon/>
                     </IconButton>
-                    {holeInfo[currentHoleNumber]?.data.coordinates && (
-                        <Box>
+                    <Box display="flex" alignItems="center" justifyContent="center" flex={1}>
+                        {userResult != null ? (
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Minu tulemus:
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        backgroundColor: holeResultColor ?? 'action.hover',
+                                        fontSize: '0.95rem',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        lineHeight: 1,
+                                        ...(userHasPenalty && {
+                                            border: '2px solid',
+                                            borderColor: 'error.main',
+                                        }),
+                                    }}
+                                >
+                                    {userResult}
+                                </Box>
+                            </Box>
+                        ) : holeInfo[currentHoleNumber]?.data.coordinates ? (
                             <Button
                                 variant="outlined"
                                 color="primary"
@@ -375,8 +415,8 @@ export default function CoursePage() {
                             >
                                 📍 Juhata rajale
                             </Button>
-                        </Box>
-                    )}
+                        ) : null}
+                    </Box>
                     <IconButton color="primary" ref={nextRef}>
                         <ArrowForwardIosIcon/>
                     </IconButton>

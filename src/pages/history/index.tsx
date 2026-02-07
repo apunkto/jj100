@@ -125,9 +125,7 @@ export default function HistoryPage() {
 
     return (
         <Layout>
-            <Box display="flex" flexDirection="column" alignItems="center">
-
-
+            <Box display="flex" flexDirection="column" alignItems="center" px={2} py={3} boxSizing="border-box">
                 <Typography variant="h4" fontWeight="bold">
                     Minu osalemised
                 </Typography>

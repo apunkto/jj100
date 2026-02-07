@@ -194,8 +194,7 @@ const getUserCurrentHoleNumber = async (): Promise<number | null> => {
     const result = (await res.json()) as ApiResponse<{ currentHole: number | null }>;
     if (!result.success) throw new Error('Backend returned error fetching user current hole number');
     return result.data.currentHole;*/
-}
-
+};
 
 export default function useMetrixApi() {
     return {
@@ -206,7 +205,7 @@ export default function useMetrixApi() {
         preLogin,
         registerFromMetrix,
         checkMetrixEmail,
-        getUserCurrentHoleNumber
+        getUserCurrentHoleNumber,
     };
 }
 

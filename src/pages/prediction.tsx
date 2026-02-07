@@ -330,7 +330,7 @@ export default function PredictionPage() {
     if (!user?.activeCompetitionId) {
         return (
             <Layout>
-                <Box px={2} textAlign="center">
+                <Box px={2} py={3} textAlign="center" boxSizing="border-box">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
                         Ennustusmäng
                     </Typography>
@@ -351,8 +351,10 @@ export default function PredictionPage() {
         <Layout>
             <Box
                 px={{xs: 2, sm: 3, md: 4}}
+                py={3}
                 maxWidth={showForm ? 800 : '100%'}
                 mx={showForm ? 'auto' : 0}
+                boxSizing="border-box"
             >
                 <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1}>
                     Ennustusmäng

@@ -100,7 +100,8 @@ export default function CheckInPage() {
 
     return (
         <Layout>
-            <Box display="flex"  flexDirection="column" alignItems="center" justifyContent="center">
+            <Box sx={{ width: '100%', maxWidth: '100%', px: 2, py: 3, boxSizing: 'border-box' }}>
+
             <Typography variant="h4" fontWeight="bold" textAlign="center">
                     Loosimängu registreerimine
                 </Typography>

@@ -43,6 +43,10 @@ export type Hole = {
     is_food: boolean
     /** Hole card image filename (e.g. "1.webp" or "1"). Use /cards/{card_img} or fallback to number-based. */
     card_img?: string | null
+    /** Logged-in user's result (throws) on this hole when available from /hole/:number */
+    user_result?: string | null
+    /** Whether the user had a penalty (OB etc.) on this hole */
+    user_has_penalty?: boolean
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
