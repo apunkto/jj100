@@ -30,6 +30,7 @@ import HistoryIcon from '@mui/icons-material/History'
 import QuizIcon from '@mui/icons-material/Quiz'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import {useRouter} from 'next/router'
 import {supabase} from '@/src/lib/supabaseClient'
@@ -101,6 +102,7 @@ export default function Layout({
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
         { href: '/stats', label: 'Minu statistika', icon: <LineChartIcon /> },
+        { href: '/admin/results', label: 'Tulemused', icon: <EmojiEventsIcon /> },
         { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
         { href: '/prediction', label: 'Ennustusmäng', icon: <QuizIcon /> },
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
@@ -109,8 +111,8 @@ export default function Layout({
 
     // Filter menu items based on activeCompetitionId
     const menuItems = allMenuItems.filter((item) => {
-        // Always show Info and History
-        if (item.href === '/info' || item.href === '/history') {
+        // Always show Info, History, and Results
+        if (item.href === '/info' || item.href === '/history' || item.href === '/admin/results') {
             return true
         }
         // Only show other items if user has activeCompetitionId

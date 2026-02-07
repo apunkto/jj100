@@ -23,7 +23,6 @@ import Image from 'next/image'
 import SettingsIcon from '@mui/icons-material/Settings'
 import CasinoIcon from '@mui/icons-material/Casino'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
@@ -38,7 +37,6 @@ const adminMenuItems = [
     { href: '/admin', label: 'Seaded', icon: <SettingsIcon /> },
     { href: '/admin/draw', label: 'Loosiauhinnad', icon: <CasinoIcon /> },
     { href: '/admin/final-game', label: 'Putimäng', icon: <SportsGolfIcon /> },
-    { href: '/admin/results', label: 'Tulemused', icon: <EmojiEventsIcon /> },
 ]
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

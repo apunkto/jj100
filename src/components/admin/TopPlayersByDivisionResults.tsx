@@ -67,7 +67,7 @@ export function TopPlayersByDivisionResults({
                             sx={{
                                 display: { xs: 'flex', sm: 'none' },
                                 flexDirection: 'column',
-                                gap: 0,
+                                gap: 1,
                             }}
                         >
                             <Box
