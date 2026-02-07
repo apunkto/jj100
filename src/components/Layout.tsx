@@ -102,7 +102,7 @@ export default function Layout({
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
         { href: '/stats', label: 'Minu statistika', icon: <LineChartIcon /> },
-        { href: '/admin/results', label: 'Tulemused', icon: <EmojiEventsIcon /> },
+        { href: '/results', label: 'Top 10', icon: <EmojiEventsIcon /> },
         { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
         { href: '/prediction', label: 'Ennustusmäng', icon: <QuizIcon /> },
         { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
@@ -112,7 +112,7 @@ export default function Layout({
     // Filter menu items based on activeCompetitionId
     const menuItems = allMenuItems.filter((item) => {
         // Always show Info, History, and Results
-        if (item.href === '/info' || item.href === '/history' || item.href === '/admin/results') {
+        if (item.href === '/info' || item.href === '/history' || item.href === '/results') {
             return true
         }
         // Only show other items if user has activeCompetitionId

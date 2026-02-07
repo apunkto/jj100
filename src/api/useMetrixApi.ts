@@ -71,6 +71,11 @@ export type TopPlayersByDivisionPayload = {
     topPlayersByDivision: Record<string, DashboardPlayerResult[]>;
 };
 
+export type MyDivisionResultPayload = {
+    place: number;
+    player: DashboardPlayerResult;
+} | null;
+
 export type CompetitionStatsPayload = {
     playerCount: number;
     mostHolesLeft: number;
@@ -159,6 +164,16 @@ const getTopPlayersByDivision = async (competitionId: number): Promise<TopPlayer
     return result.data;
 };
 
+const getMyDivisionResult = async (competitionId: number): Promise<MyDivisionResultPayload> => {
+    const res = await authedFetch(`${API_BASE}/metrix/competition/${competitionId}/my-division-result`);
+    if (!res.ok) throw new Error('Failed to fetch my division result');
+
+    const result = (await res.json()) as ApiResponse<MyDivisionResultPayload>;
+    if (!result.success) throw new Error('Backend returned error fetching my division result');
+
+    return result.data ?? null;
+};
+
 const getCompetitionStats = async (competitionId: number): Promise<CompetitionStatsPayload> => {
     const res = await authedFetch(`${API_BASE}/metrix/competition/${competitionId}/stats`);
     if (!res.ok) throw new Error('Failed to fetch competition stats');
@@ -186,6 +201,7 @@ export default function useMetrixApi() {
     return {
         getMetrixPlayerStats,
         getTopPlayersByDivision,
+        getMyDivisionResult,
         getCompetitionStats,
         preLogin,
         registerFromMetrix,
