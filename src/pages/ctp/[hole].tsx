@@ -15,7 +15,7 @@ import CloseIcon from "@mui/icons-material/Close"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import Layout from "@/src/components/Layout"
 import Link from "next/link"
-import useCtpApi, {CtpEntry, Hole} from "@/src/api/useCtpApi"
+import useCtpApi, {CtpEntry, Hole, PoolMate} from "@/src/api/useCtpApi"
 import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
@@ -66,7 +66,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export default function CtpHolePage({ hole }: { hole: string }) {
-    const { getHole, getCtpByHoleNumber, submitCtp } = useCtpApi()
+    const { getHole, getCtpByHoleNumber, submitCtp, getPoolMates } = useCtpApi()
     const { isCtpEnabled } = useConfigApi()
     const { showToast } = useToast()
     const { user, loading: authLoading } = useAuth()
@@ -76,7 +76,11 @@ export default function CtpHolePage({ hole }: { hole: string }) {
     const [loading, setLoading] = useState(true)
     const [distance, setDistance] = useState<number | "">("")
     const [confirmOpen, setConfirmOpen] = useState(false)
+    const [confirmForPoolMate, setConfirmForPoolMate] = useState<PoolMate | null>(null)
     const [ctpEnabled, setCtpEnabled] = useState(true)
+    const [poolMates, setPoolMates] = useState<PoolMate[]>([])
+    const [poolMateSelectOpen, setPoolMateSelectOpen] = useState(false)
+    const [selectedPoolMate, setSelectedPoolMate] = useState<PoolMate | null>(null)
 
     const bestThrow = ctp[0] ?? null
     const isValidDistance = distance !== "" && Number(distance) > 0
@@ -86,9 +90,19 @@ export default function CtpHolePage({ hole }: { hole: string }) {
     const noCtpGame = holeInfo && !holeInfo.is_ctp
 
     const hasSubmitted = useMemo(() => {
-        if (!user?.playerId) return false
-        return Boolean(ctp.some((r) => r.player_id === user.playerId))
-    }, [user?.playerId, ctp])
+        if (!user?.metrixUserId) return false
+        return Boolean(ctp.some((r) => r.player?.user_id === String(user.metrixUserId)))
+    }, [user?.metrixUserId, ctp])
+
+    const poolMateAlreadySubmitted = useMemo(() => {
+        return (pm: PoolMate) => ctp.some((r) => r.metrix_player_result_id === pm.id)
+    }, [ctp])
+
+    const poolMatesFiltered = useMemo(() => {
+        if (!user?.metrixUserId) return poolMates
+        const uid = String(user.metrixUserId)
+        return poolMates.filter((pm) => pm.user_id !== uid)
+    }, [poolMates, user?.metrixUserId])
 
     useEffect(() => {
         const fetchData = async () => {
@@ -97,7 +111,11 @@ export default function CtpHolePage({ hole }: { hole: string }) {
             try {
                 const enabled = await isCtpEnabled(user.activeCompetitionId)
                 setCtpEnabled(enabled)
-                const holeData = await getHole(holeNum, user.activeCompetitionId)
+                const [holeData, poolMatesList] = await Promise.all([
+                    getHole(holeNum, user.activeCompetitionId),
+                    getPoolMates(),
+                ])
+                setPoolMates(poolMatesList)
                 if (holeData) {
                     setHoleInfo(holeData)
                     if (enabled) {
@@ -124,26 +142,46 @@ export default function CtpHolePage({ hole }: { hole: string }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hole, user?.activeCompetitionId])
 
-    const handleSubmit = () => setConfirmOpen(true)
+    const handleSubmit = () => {
+        setConfirmForPoolMate(null)
+        setConfirmOpen(true)
+    }
+
+    const handleProxySubmit = () => {
+        if (selectedPoolMate) {
+            setConfirmForPoolMate(selectedPoolMate)
+            setConfirmOpen(true)
+        }
+    }
 
     const handleConfirmSubmit = async () => {
         if (!holeInfo || !isValidDistance || !isBetterThrow || !user?.activeCompetitionId) return
+        const targetId = confirmForPoolMate?.id
         try {
-            await submitCtp(holeInfo.id, Number(distance))
+            await submitCtp(holeInfo.id, Number(distance), targetId)
             const ctpResult = await getCtpByHoleNumber(holeInfo.number, user.activeCompetitionId)
             setCtp(ctpResult)
             setDistance("")
-            showToast("CTP tulemus sisestatud!", "success")
+            setSelectedPoolMate(null)
+            setConfirmForPoolMate(null)
+            showToast(targetId ? "Puulikaaslase CTP tulemus sisestatud!" : "CTP tulemus sisestatud!", "success")
         } catch (err: unknown) {
             const e = err as { code?: string; message?: string }
             const msg =
                 e?.code === "not_competition_participant"
                     ? "Sa ei osale võistlusel!"
-                    : (e?.message ?? "CTP sisestamine ebaõnnestus!")
+                    : e?.code === "not_same_pool"
+                      ? "Saad sisestada CTP ainult sama raja mängijatele"
+                      : (e?.message ?? "CTP sisestamine ebaõnnestus!")
             showToast(msg, "error")
         } finally {
             setConfirmOpen(false)
         }
+    }
+
+    const closeConfirm = () => {
+        setConfirmOpen(false)
+        setConfirmForPoolMate(null)
     }
 
     return (
@@ -236,7 +274,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 <EmojiEventsIcon sx={{ fontSize: 28 }} />
                                             </Box>
                                             <Typography variant="body1" fontWeight={600} noWrap>
-                                                {bestThrow.player.name}
+                                                {bestThrow.player?.name ?? "Mängija"}
                                             </Typography>
                                         </Box>
                                         <Chip
@@ -259,7 +297,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                 <Box display="flex" justifyContent="center" py={4}>
                                     <CircularProgress />
                                 </Box>
-                            ) : !hasSubmitted ? (
+                            ) : !hasSubmitted && !selectedPoolMate ? (
                                 <Box sx={{ mb: 2 }}>
                                     <SectionTitle>Kas viskasid lähemale?</SectionTitle>
                                     <Box sx={{ ...cardSx, py: 2.5 }}>
@@ -317,6 +355,88 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                             </Box>
                         )}
 
+                        {/* Pool-mate CTP: link only when 1–9 other players in pool */}
+                        {ctpEnabled && poolMatesFiltered.length > 0 && poolMatesFiltered.length < 10 && !authLoading && (
+                            <Box sx={{ mb: 2 }}>
+                                {!selectedPoolMate ? (
+                                    <Typography
+                                        component="button"
+                                        type="button"
+                                        onClick={() => setPoolMateSelectOpen(true)}
+                                        sx={{
+                                            background: "none",
+                                            border: "none",
+                                            padding: 0,
+                                            cursor: "pointer",
+                                            color: "primary.main",
+                                            fontSize: "0.875rem",
+                                            fontWeight: 500,
+                                            textDecoration: "none",
+                                            "&:hover": { textDecoration: "underline" },
+                                        }}
+                                    >
+                                        Sisesta puulikaaslase CTP
+                                    </Typography>
+                                ) : (
+                                    <Box sx={{ ...cardSx, py: 2.5 }}>
+                                        <SectionTitle>
+                                            Sisesta{" "}
+                                            <Box
+                                                component="span"
+                                                sx={{ fontWeight: 600, color: "primary.main" }}
+                                            >
+                                                {selectedPoolMate.name ?? "mängija"}
+                                            </Box>{" "}
+                                            CTP
+                                        </SectionTitle>
+                                        <TextField
+                                            label="Kaugus korvist (cm)"
+                                            type="number"
+                                            fullWidth
+                                            size="small"
+                                            value={distance}
+                                            onChange={(e) =>
+                                                setDistance(e.target.value === "" ? "" : Number(e.target.value))
+                                            }
+                                            error={distance !== "" && (!isValidDistance || showError)}
+                                            helperText={
+                                                distance !== ""
+                                                    ? !isValidDistance
+                                                        ? "CTP peab olema suurem kui 0 cm"
+                                                        : showError
+                                                          ? `CTP peab olema väiksem kui ${bestThrow?.distance_cm ?? "..."} cm`
+                                                          : ""
+                                                    : ""
+                                            }
+                                            sx={{ mb: 2 }}
+                                            inputProps={{ min: 1, inputMode: "numeric" }}
+                                        />
+                                        <Box sx={{ display: "flex", gap: 1 }}>
+                                            <Button
+                                                variant="outlined"
+                                                fullWidth
+                                                onClick={() => {
+                                                    setSelectedPoolMate(null)
+                                                    setDistance("")
+                                                }}
+                                            >
+                                                Tühista
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                fullWidth
+                                                onClick={handleProxySubmit}
+                                                disabled={!isValidDistance || showError}
+                                            >
+                                                Kinnita
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
+
                         {/* CTP history */}
                         {ctp.length > 0 && (
                             <Box sx={{ mt: 3.5 }}>
@@ -339,7 +459,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 fontWeight={500}
                                                 sx={{ display: "block", mb: 0.5 }}
                                             >
-                                                {idx + 1}. {entry.player.name}
+                                                {idx + 1}. {entry.player?.name ?? "Mängija"}
                                             </Typography>
                                             <Box
                                                 sx={{
@@ -369,24 +489,74 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                 )}
             </Box>
 
-            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+            <Dialog open={confirmOpen} onClose={closeConfirm}>
                 <DialogTitle
                     sx={{ m: 0, p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}
                 >
                     Kinnita CTP tulemus
-                    <IconButton aria-label="close" onClick={() => setConfirmOpen(false)} sx={{ ml: 1 }}>
+                    <IconButton aria-label="close" onClick={closeConfirm} sx={{ ml: 1 }}>
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ pt: 0 }}>
                     <Typography>
-                        Kas kinnitad, et Sinu ketas on korvist <strong>{distance} cm</strong>?
+                        {confirmForPoolMate ? (
+                            <>
+                                Kas kinnitad, et <strong>{confirmForPoolMate.name ?? "mängija"}</strong> ketas on
+                                korvist <strong>{distance} cm</strong>?
+                            </>
+                        ) : (
+                            <>
+                                Kas kinnitad, et Sinu ketas on korvist <strong>{distance} cm</strong>?
+                            </>
+                        )}
                     </Typography>
                     <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-                        <Button onClick={() => setConfirmOpen(false)}>Katkesta</Button>
+                        <Button onClick={closeConfirm}>Katkesta</Button>
                         <Button onClick={handleConfirmSubmit} variant="contained" color="primary">
                             Kinnitan
                         </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={poolMateSelectOpen} onClose={() => setPoolMateSelectOpen(false)}>
+                <DialogTitle
+                    sx={{ m: 0, p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                >
+                    Vali puulikaaslane
+                    <IconButton aria-label="close" onClick={() => setPoolMateSelectOpen(false)} sx={{ ml: 1 }}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 0 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Sisestades puulikaaslase CTP vastutad õigete andmete eest Sina!
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        {poolMatesFiltered.map((pm) => {
+                            const alreadySubmitted = poolMateAlreadySubmitted(pm)
+                            return (
+                                <Button
+                                    key={pm.id}
+                                    variant="text"
+                                    fullWidth
+                                    disabled={alreadySubmitted}
+                                    onClick={() => {
+                                        setSelectedPoolMate(pm)
+                                        setPoolMateSelectOpen(false)
+                                        setDistance("")
+                                    }}
+                                    sx={{
+                                        justifyContent: "flex-start",
+                                        textTransform: "none",
+                                        opacity: alreadySubmitted ? 0.6 : 1,
+                                    }}
+                                >
+                                    {pm.name ?? "Mängija"} {alreadySubmitted ? "– juba sisestatud" : ""}
+                                </Button>
+                            )
+                        })}
                     </Box>
                 </DialogContent>
             </Dialog>

@@ -121,7 +121,7 @@ export default function CtpListPage() {
                                                         noWrap
                                                         sx={{ minWidth: 0 }}
                                                     >
-                                                        {topThrow.player.name}
+                                                        {topThrow.player?.name ?? "Mängija"}
                                                     </Typography>
                                                     <Chip
                                                         size="small"

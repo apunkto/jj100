@@ -11,14 +11,17 @@ export type HoleEntity = {
 export type CtpEntry = {
     id: number
     hole_id: number
-    player_id: number
+    metrix_player_result_id: number
     distance_cm: number
     created_date: string
     player: {
         id: number
         name: string
+        user_id: string
     }
 }
+
+export type PoolMate = { id: number; name: string | null; user_id: string }
 
 export type HoleWithCtp = {
     hole: Hole
@@ -88,10 +91,20 @@ const getHoleCount = async (competitionId?: number | null): Promise<number | nul
     return typeof json?.count === 'number' ? json.count : null
 }
 
-export const submitCtp = async (holeId: number, distanceCm: number) => {
+export const submitCtp = async (
+    holeId: number,
+    distanceCm: number,
+    targetMetrixPlayerResultId?: number
+) => {
+    const body: { distance_cm: number; target_metrix_player_result_id?: number } = {
+        distance_cm: distanceCm,
+    }
+    if (targetMetrixPlayerResultId != null) {
+        body.target_metrix_player_result_id = targetMetrixPlayerResultId
+    }
     const res = await authedFetch(`${API_BASE}/ctp/${holeId}`, {
         method: "POST",
-        body: JSON.stringify({distance_cm: distanceCm}),
+        body: JSON.stringify(body),
     })
 
     const payload = (await res.json().catch(() => null)) as ApiResponse<unknown> | null
@@ -102,6 +115,12 @@ export const submitCtp = async (holeId: number, distanceCm: number) => {
     }
 
     return payload
+}
+
+const getPoolMates = async (): Promise<PoolMate[]> => {
+    const res = await authedFetch(`${API_BASE}/pool-mates`)
+    if (!res.ok) return []
+    return await res.json()
 }
 
 const getCtpHoles = async (): Promise<HoleWithCtp[]> => {
@@ -119,5 +138,6 @@ export default function useCtpApi() {
         getHoleCount,
         submitCtp,
         getCtpHoles,
+        getPoolMates,
     }
 }
