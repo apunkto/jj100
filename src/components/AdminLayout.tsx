@@ -107,7 +107,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                                     fontWeight: 700,
                                 }}
                             >
-                                Järva-Jaani 100!
+                                JJ100 Admin
                             </Typography>
                         </Link>
                     </Box>
