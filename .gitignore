@@ -41,4 +41,5 @@ next-env.d.ts
 # wrangler files
 .wrangler
 .dev.vars
+env.d.ts
 /.idea/

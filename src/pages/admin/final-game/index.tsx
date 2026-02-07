@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useState} from 'react'
 import {Box, Button, Stack, Typography} from '@mui/material'
 import Confetti from 'react-dom-confetti'
 import {CheckedInPlayer, useCheckinApi} from '@/src/api/useCheckinApi'
@@ -17,11 +17,10 @@ export default function FinalGameDrawPage() {
 
     const [players, setPlayers] = useState<CheckedInPlayer[]>([])
     const [currentName, setCurrentName] = useState('')
-    const [winner, setWinner] = useState<any>(null)
+    const [winner, setWinner] = useState<CheckedInPlayer | null>(null)
     const [shuffling, setShuffling] = useState(false)
     const [confettiActive, setConfettiActive] = useState(false)
 
-    const winnerRef = useRef<HTMLDivElement>(null)
     const isAdmin = user?.isAdmin ?? false
 
     const fetchPlayers = async () => {
@@ -184,7 +183,7 @@ export default function FinalGameDrawPage() {
                     </Box>
 
                     {currentName && (
-                        <Box mt={6} ref={winnerRef} position="relative">
+                        <Box mt={6} position="relative">
                             <Typography variant="h2" fontWeight="bold">
                                 {currentName}
                             </Typography>

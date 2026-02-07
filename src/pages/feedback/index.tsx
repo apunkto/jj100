@@ -3,6 +3,7 @@ import {Alert, Box, Button, Rating, TextField, Typography,} from '@mui/material'
 import {Controller, useForm} from 'react-hook-form'
 import Layout from '@/src/components/Layout'
 import useFeedbackApi from '@/src/api/useFeedbackApi'
+import {useToast} from '@/src/contexts/ToastContext'
 
 type FeedbackForm = {
     score: number
@@ -12,6 +13,7 @@ type FeedbackForm = {
 export default function FeedbackPage() {
     const [submitted, setSubmitted] = useState(false)
     const { submitFeedback } = useFeedbackApi()
+    const { showToast } = useToast()
 
     const {
         control,
@@ -32,7 +34,7 @@ export default function FeedbackPage() {
             reset()
         } catch (err) {
             console.error(err)
-            alert('Midagi läks valesti. Palun proovi uuesti.')
+            showToast('Midagi läks valesti. Palun proovi uuesti.', 'error')
         }
     }
 
@@ -68,6 +70,8 @@ export default function FeedbackPage() {
                                 rules={{ required: true, min: 1 }}
                                 render={({ field }) => (
                                     <Rating
+                                        name="event-rating"
+                                        aria-label="Ürituse hinnang"
                                         value={field.value}
                                         onChange={(_, value) => field.onChange(value)}
                                     />

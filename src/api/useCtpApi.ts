@@ -1,4 +1,6 @@
-import {ApiResponse, authedFetch} from "@/src/api/authedFetch";
+import {ApiResponse, authedFetch} from "@/src/api/authedFetch"
+import {API_BASE} from "@/src/api/config"
+import {AppError} from "@/src/utils/AppError"
 
 export type HoleEntity = {
     id: number
@@ -41,62 +43,46 @@ export type Hole = {
     others?: number
     rules: string
     is_food: boolean
-    /** Hole card image filename (e.g. "1.webp" or "1"). Use /cards/{card_img} or fallback to number-based. */
     card_img?: string | null
-    /** Logged-in user's result (throws) on this hole when available from /hole/:number */
     user_result?: string | null
-    /** Whether the user had a penalty (OB etc.) on this hole */
     user_has_penalty?: boolean
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
+function withCompetitionId(url: string, competitionId?: number | null): string {
+    if (competitionId != null) {
+        const separator = url.includes('?') ? '&' : '?'
+        return `${url}${separator}competitionId=${competitionId}`
+    }
+    return url
 }
 
 const getHole = async (holeNumber: number, competitionId?: number | null): Promise<Hole | null> => {
-    const url = competitionId != null
-        ? `${API_BASE}/hole/${holeNumber}?competitionId=${competitionId}`
-        : `${API_BASE}/hole/${holeNumber}`
-    const res = await authedFetch(url)
+    const res = await authedFetch(withCompetitionId(`${API_BASE}/hole/${holeNumber}`, competitionId))
     if (!res.ok) return null
     const json = (await res.json()) as { hole?: Hole }
     return json?.hole ?? null
 }
 
 const getCtpByHoleNumber = async (holeNumber: number, competitionId?: number | null): Promise<CtpEntry[]> => {
-    const url = competitionId != null
-        ? `${API_BASE}/hole/${holeNumber}/ctp?competitionId=${competitionId}`
-        : `${API_BASE}/hole/${holeNumber}/ctp`
-    const res = await authedFetch(url)
+    const res = await authedFetch(withCompetitionId(`${API_BASE}/hole/${holeNumber}/ctp`, competitionId))
     if (!res.ok) return []
     return await res.json()
 }
 
 const getTopRankedHoles = async (competitionId?: number | null): Promise<HoleWithCtp[]> => {
-    const url = competitionId != null
-        ? `${API_BASE}/holes/top-ranked?competitionId=${competitionId}`
-        : `${API_BASE}/holes/top-ranked`
-    const res = await authedFetch(url)
+    const res = await authedFetch(withCompetitionId(`${API_BASE}/holes/top-ranked`, competitionId))
     if (!res.ok) throw new Error('Failed to fetch top ranked holes')
     return await res.json()
 }
 
 const getHoles = async (competitionId?: number | null): Promise<HoleWithCtp[]> => {
-    const url = competitionId != null
-        ? `${API_BASE}/holes?competitionId=${competitionId}`
-        : `${API_BASE}/holes`
-    const res = await authedFetch(url)
+    const res = await authedFetch(withCompetitionId(`${API_BASE}/holes`, competitionId))
     if (!res.ok) throw new Error('Failed to fetch holes')
     return await res.json()
 }
 
 const getHoleCount = async (competitionId?: number | null): Promise<number | null> => {
-    const url = competitionId != null
-        ? `${API_BASE}/holes/count?competitionId=${competitionId}`
-        : `${API_BASE}/holes/count`
-    const res = await authedFetch(url)
+    const res = await authedFetch(withCompetitionId(`${API_BASE}/holes/count`, competitionId))
     if (!res.ok) return null
     const json = (await res.json()) as { count?: number }
     return typeof json?.count === 'number' ? json.count : null
@@ -105,7 +91,6 @@ const getHoleCount = async (competitionId?: number | null): Promise<number | nul
 export const submitCtp = async (holeId: number, distanceCm: number) => {
     const res = await authedFetch(`${API_BASE}/ctp/${holeId}`, {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({distance_cm: distanceCm}),
     })
 
@@ -113,14 +98,11 @@ export const submitCtp = async (holeId: number, distanceCm: number) => {
 
     if (!res.ok || payload?.success === false) {
         const msg = payload?.error?.message ?? "CTP sisestamine ebaõnnestus!"
-        const err: any = new Error(msg)
-        err.code = payload?.error?.code
-        throw err
+        throw new AppError(msg, payload?.error?.code)
     }
 
     return payload
 }
-
 
 const getCtpHoles = async (): Promise<HoleWithCtp[]> => {
     const res = await authedFetch(`${API_BASE}/holes/ctp`)

@@ -115,8 +115,8 @@ export default function LoginPage() {
             // More than one: show picker; registration and OTP sent after user selects
             setIdentityPickerList(identities)
             setIdentityPickerOpen(true)
-        } catch (e: any) {
-            setErrorMsg(e?.message ?? "Midagi läks valesti.")
+        } catch (e: unknown) {
+            setErrorMsg(e instanceof Error ? e.message : "Midagi läks valesti.")
         } finally {
             setLoading(false)
         }
@@ -130,8 +130,8 @@ export default function LoginPage() {
             // Register the chosen identity, then send OTP
             await registerFromMetrix(normalizedEmail, identity.userId)
             await sendOtpAndGoToPin()
-        } catch (e: any) {
-            setErrorMsg(e?.message ?? "Midagi läks valesti.")
+        } catch (e: unknown) {
+            setErrorMsg(e instanceof Error ? e.message : "Midagi läks valesti.")
         } finally {
             setLoading(false)
         }

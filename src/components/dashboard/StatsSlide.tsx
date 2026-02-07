@@ -122,24 +122,28 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
             bg: '#b3d4fc',
         },
         ...(longestStreaks.length > 0
-            ? [
-                {
+            ? (() => {
+                const idx = currentStreakIndex < longestStreaks.length ? currentStreakIndex : 0
+                const streak = longestStreaks[idx]
+                return [{
                     label: '🐤 Pikim birdie jada',
-                    value: longestStreaks[currentStreakIndex]?.count,
-                    sub: `${longestStreaks[currentStreakIndex]?.player} (${String(longestStreaks[currentStreakIndex]?.startHole).padStart(2, '0')}-${String(longestStreaks[currentStreakIndex]?.endHole).padStart(2, '0')})`,
+                    value: streak.count,
+                    sub: `${streak.player} (${String(streak.startHole).padStart(2, '0')}-${String(streak.endHole).padStart(2, '0')})`,
                     bg: '#a6e4a3',
-                },
-            ]
+                }]
+            })()
             : []),
         ...(longestAces.length > 0
-            ? [
-                {
+            ? (() => {
+                const idx = currentAceIndex < longestAces.length ? currentAceIndex : 0
+                const ace = longestAces[idx]
+                return [{
                     label: '🎯 Pikim HIO',
-                    value: `${longestAces[currentAceIndex]?.length}m`,
-                    sub: `${longestAces[currentAceIndex]?.player} (rada ${String(longestAces[currentAceIndex]?.holeNumber).padStart(2, '0')})`,
+                    value: `${ace.length}m`,
+                    sub: `${ace.player} (rada ${String(ace.holeNumber).padStart(2, '0')})`,
                     bg: '#f4d774',
-                },
-            ]
+                }]
+            })()
             : []),
     ]
 

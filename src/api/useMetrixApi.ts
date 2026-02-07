@@ -1,6 +1,7 @@
 // src/api/metrixApi.ts
 
 import {authedFetch} from "@/src/api/authedFetch";
+import {API_BASE} from "@/src/api/config";
 
 export type MetrixPlayerListItem = {
     userId: number;
@@ -89,13 +90,6 @@ export type CompetitionStatsPayload = {
     longestAces: { player: string; holeNumber: number; length: number }[];
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL');
-}
-
-
 const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
     const res = await authedFetch(`${API_BASE}/metrix/player/stats`);
     if (!res.ok) throw new Error('Failed to fetch metrix player stats');
@@ -129,7 +123,7 @@ const registerFromMetrix = async (email: string, metrixUserId: number): Promise<
     })
 
     if (!res.ok) {
-        const errorData = (await res.json().catch(() => ({})) as { error?: string })
+        const errorData = (await res.json().catch(() => ({}))) as { error?: string }
         throw new Error(errorData.error || 'Failed to register from Metrix')
     }
 

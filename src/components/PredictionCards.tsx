@@ -5,23 +5,25 @@ import CloseIcon from '@mui/icons-material/Close'
 import type {Prediction} from '@/src/api/usePredictionApi'
 
 // Helper functions to calculate points
-function calculateNumericScore(predicted: number | null, actual: number | null, baseScore: number = 100): {points: number; maxPoints: number} {
+function calculateNumericScore(predicted: number | null, actual: number | null, baseScore: number = 100): {points: number; maxPoints: number; pending: boolean} {
     if (predicted === null || predicted === undefined) {
-        return {points: 0, maxPoints: baseScore}
-    }
-    const actualValue = actual ?? 0 // Treat null as 0
-    const points = baseScore - Math.abs(actualValue - predicted)
-    return {points: Math.max(0, points), maxPoints: baseScore}
-}
-
-function calculateBooleanScore(predicted: boolean | null, actual: boolean | null): {points: number; maxPoints: number} {
-    if (predicted === null || predicted === undefined) {
-        return {points: 0, maxPoints: 15}
+        return {points: 0, maxPoints: baseScore, pending: false}
     }
     if (actual === null || actual === undefined) {
-        return {points: 0, maxPoints: 15}
+        return {points: 0, maxPoints: baseScore, pending: true}
     }
-    return {points: predicted === actual ? 15 : 0, maxPoints: 15}
+    const points = baseScore - Math.abs(actual - predicted)
+    return {points: Math.max(0, points), maxPoints: baseScore, pending: false}
+}
+
+function calculateBooleanScore(predicted: boolean | null, actual: boolean | null): {points: number; maxPoints: number; pending: boolean} {
+    if (predicted === null || predicted === undefined) {
+        return {points: 0, maxPoints: 15, pending: false}
+    }
+    if (actual === null || actual === undefined) {
+        return {points: 0, maxPoints: 15, pending: true}
+    }
+    return {points: predicted === actual ? 15 : 0, maxPoints: 15, pending: false}
 }
 
 interface PredictionCardsProps {
@@ -37,83 +39,66 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
         )
     }
 
+    const formatSignedNumber = (val: number | boolean | null): string => {
+        if (val === null || typeof val !== 'number') return '-'
+        return val > 0 ? `+${val}` : String(val)
+    }
+
+    const formatPlainNumber = (val: number | boolean | null): string =>
+        val !== null && typeof val === 'number' ? String(val) : '-'
+
     const categories: Array<{
         label: string
         predicted: number | boolean | null
         actual: number | boolean | null
-        score: {points: number; maxPoints: number}
+        score: {points: number; maxPoints: number; pending: boolean}
         formatValue: (val: number | boolean | null) => string | React.ReactNode
         isNumeric: boolean
     }> = []
 
     // Best overall score
     if (predictionData.best_overall_score !== null) {
-        const score = calculateNumericScore(
-            predictionData.best_overall_score,
-            predictionData.actual_results?.best_overall_score ?? null
-        )
         categories.push({
             label: 'Parim üldtulemus',
             predicted: predictionData.best_overall_score,
             actual: predictionData.actual_results?.best_overall_score ?? null,
-            score,
+            score: calculateNumericScore(predictionData.best_overall_score, predictionData.actual_results?.best_overall_score ?? null),
             isNumeric: true,
-            formatValue: (val) => {
-                if (val === null || typeof val !== 'number') return '-'
-                return val > 0 ? `+${val}` : String(val)
-            },
+            formatValue: formatSignedNumber,
         })
     }
 
     // Best female score
     if (predictionData.best_female_score !== null) {
-        const score = calculateNumericScore(
-            predictionData.best_female_score,
-            predictionData.actual_results?.best_female_score ?? null
-        )
         categories.push({
             label: 'Parim naismängija tulemus',
             predicted: predictionData.best_female_score,
             actual: predictionData.actual_results?.best_female_score ?? null,
-            score,
+            score: calculateNumericScore(predictionData.best_female_score, predictionData.actual_results?.best_female_score ?? null),
             isNumeric: true,
-            formatValue: (val) => {
-                if (val === null || typeof val !== 'number') return '-'
-                return val > 0 ? `+${val}` : String(val)
-            },
+            formatValue: formatSignedNumber,
         })
     }
 
     // Player own score
     if (predictionData.player_own_score !== null) {
-        const score = calculateNumericScore(
-            predictionData.player_own_score,
-            predictionData.actual_results?.player_own_score ?? null
-        )
         categories.push({
             label: 'Mängija enda tulemus',
             predicted: predictionData.player_own_score,
             actual: predictionData.actual_results?.player_own_score ?? null,
-            score,
+            score: calculateNumericScore(predictionData.player_own_score, predictionData.actual_results?.player_own_score ?? null),
             isNumeric: true,
-            formatValue: (val) => {
-                if (val === null || typeof val !== 'number') return '-'
-                return val > 0 ? `+${val}` : String(val)
-            },
+            formatValue: formatSignedNumber,
         })
     }
 
     // Will rain
-    if (predictionData.will_rain !== null || predictionData.actual_results?.will_rain !== null || predictionData.actual_results?.will_rain !== undefined) {
-        const score = calculateBooleanScore(
-            predictionData.will_rain,
-            predictionData.actual_results?.will_rain ?? null
-        )
+    if (predictionData.will_rain != null || predictionData.actual_results?.will_rain != null) {
         categories.push({
             label: 'Sajab võistluse ajal',
             predicted: predictionData.will_rain,
             actual: predictionData.actual_results?.will_rain ?? null,
-            score,
+            score: calculateBooleanScore(predictionData.will_rain, predictionData.actual_results?.will_rain ?? null),
             isNumeric: false,
             formatValue: (val) => {
                 if (val === null || val === undefined || typeof val !== 'boolean') return '-'
@@ -128,35 +113,25 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
 
     // Hole in ones
     if (predictionData.hole_in_ones_count !== null) {
-        const score = calculateNumericScore(
-            predictionData.hole_in_ones_count,
-            predictionData.actual_results?.hole_in_ones_count ?? null,
-            100 // baseScore = 100 for HIO
-        )
         categories.push({
             label: 'Hole-in-one\'ide arv',
             predicted: predictionData.hole_in_ones_count,
             actual: predictionData.actual_results?.hole_in_ones_count ?? null,
-            score,
+            score: calculateNumericScore(predictionData.hole_in_ones_count, predictionData.actual_results?.hole_in_ones_count ?? null, 100),
             isNumeric: true,
-            formatValue: (val) => val !== null && typeof val === 'number' ? String(val) : '-',
+            formatValue: formatPlainNumber,
         })
     }
 
     // Water discs
     if (predictionData.water_discs_count !== null) {
-        const score = calculateNumericScore(
-            predictionData.water_discs_count,
-            predictionData.actual_results?.water_discs_count ?? null,
-            400 // baseScore = 400 for water throwers
-        )
         categories.push({
             label: 'Vette visanud mängijate arv',
             predicted: predictionData.water_discs_count,
             actual: predictionData.actual_results?.water_discs_count ?? null,
-            score,
+            score: calculateNumericScore(predictionData.water_discs_count, predictionData.actual_results?.water_discs_count ?? null, 400),
             isNumeric: true,
-            formatValue: (val) => val !== null && typeof val === 'number' ? String(val) : '-',
+            formatValue: formatPlainNumber,
         })
     }
 
@@ -239,8 +214,9 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                 </Box>
 
                                 {category.score.maxPoints > 0 && (() => {
-                                    const pct = category.score.points / category.score.maxPoints
-                                    const pointsColor = pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
+                                    const { points, maxPoints, pending } = category.score
+                                    const pct = points / maxPoints
+                                    const pointsColor = pending ? 'text.secondary' : pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
                                     return (
                                         <Box
                                             sx={{
@@ -263,7 +239,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                                 fontWeight="bold"
                                                 color={pointsColor}
                                             >
-                                                {category.score.points} / {category.score.maxPoints}
+                                                {pending ? `- / ${maxPoints}` : `${points} / ${maxPoints}`}
                                             </Typography>
                                         </Box>
                                     )

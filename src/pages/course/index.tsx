@@ -10,10 +10,11 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {Hole} from '@/src/api/useCtpApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 import {useAuth} from '@/src/contexts/AuthContext'
-import {debounce} from 'lodash'
+import debounce from 'lodash/debounce'
 import HoleCard from "@/src/components/HoleCard";
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import GpsFixedIcon from '@mui/icons-material/GpsFixed'
+import {useRouter} from 'next/router'
 
 type HoleCacheEntry = {
     data: Hole
@@ -46,6 +47,7 @@ export default function CoursePage() {
     const [totalCards, setTotalCards] = useState<number>(DEFAULT_TOTAL_CARDS)
     const cards = Array.from({length: totalCards}, (_, i) => i + 1)
 
+    const router = useRouter()
     const { user, loading: authLoading } = useAuth()
     const {getHole, getHoleCount} = useCtpApi()
     const {getUserCurrentHoleNumber} = useMetrixApi()
@@ -97,26 +99,6 @@ export default function CoursePage() {
             swiperInstance.navigation.update()
         }
     }, [swiperInstance])
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        // Logs whenever the main thread is blocked for >50ms
-        const obs = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                // entry.duration is how long the main thread was blocked
-                console.log("[LongTask]", entry.duration.toFixed(1), "ms", entry);
-            }
-        });
-
-        try {
-            // "longtask" supported in Chromium; Firefox may not show it
-            obs.observe({entryTypes: ["longtask"] as any});
-        } catch {
-        }
-
-        return () => obs.disconnect();
-    }, []);
 
     // fetch hole count and user's current hole only when we have a competition (no requests without competitionId)
     useEffect(() => {
@@ -318,7 +300,7 @@ export default function CoursePage() {
                                 fontSize: '1rem',
                             },
                         }}
-                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                        slotProps={{ htmlInput: { inputMode: 'numeric', pattern: '[0-9]*' } }}
                     />
                 </Box>
 
@@ -431,7 +413,7 @@ export default function CoursePage() {
                                 variant="contained"
                                 color="primary"
                                 size="small"
-                                onClick={() => (window.location.href = `/ctp/${currentHoleNumber}`)}
+                                onClick={() => router.push(`/ctp/${currentHoleNumber}`)}
                             >
                                 Märgi CTP
                             </Button>

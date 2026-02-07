@@ -53,11 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let mounted = true
 
         ;(async () => {
-            console.log("AuthProvider: checking initial session")
-            const tTok = performance.now();
             const { data } = await supabase.auth.getSession()
-            const tTokEnd = performance.now();
-            console.log("AuthProvider: checking initial session took", (tTokEnd - tTok).toFixed(2), "ms")
             if (!mounted) return
 
             setSession(data.session ?? null)

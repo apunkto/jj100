@@ -20,7 +20,7 @@ import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"
-import {formatEstonianDateTime} from "@/src/components/Util"
+import {formatEstonianDateTime} from "@/src/utils/dateUtils"
 import {useAuth} from "@/src/contexts/AuthContext"
 
 export async function getStaticPaths() {

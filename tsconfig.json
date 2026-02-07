@@ -27,7 +27,8 @@
         "./*"
       ]
     },
-    "target": "ES2017"
+    "target": "ES2020",
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "next-env.d.ts",
@@ -36,6 +37,7 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "env.d.ts"
   ]
 }

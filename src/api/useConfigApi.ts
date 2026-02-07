@@ -1,11 +1,5 @@
-// useConfigApi.ts
-
-import {authedFetch} from "@/src/api/authedFetch";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
-}
+import {authedFetch} from "@/src/api/authedFetch"
+import {API_BASE} from "@/src/api/config"
 
 type CompetitionInfo = {
     id: number
@@ -39,31 +33,19 @@ const resolveCompetitionId = async (competitionId: number | null | undefined): P
     return activeCompetitionId
 }
 
+type CompetitionFeature = keyof Pick<CompetitionInfo, 'ctp_enabled' | 'checkin_enabled' | 'prediction_enabled'>
+
+const isFeatureEnabled = async (feature: CompetitionFeature, competitionId?: number | null): Promise<boolean> => {
+    const id = await resolveCompetitionId(competitionId)
+    if (!id) return false
+    const competition = await fetchCompetitionInfo(id)
+    return competition[feature]
+}
+
 export default function useConfigApi() {
-    const isCtpEnabled = async (competitionId?: number | null): Promise<boolean> => {
-        const id = await resolveCompetitionId(competitionId)
-        if (!id) return false
-        const competition = await fetchCompetitionInfo(id)
-        return competition.ctp_enabled
-    }
-    
-    const isCheckinEnabled = async (competitionId?: number | null): Promise<boolean> => {
-        const id = await resolveCompetitionId(competitionId)
-        if (!id) return false
-        const competition = await fetchCompetitionInfo(id)
-        return competition.checkin_enabled
-    }
-    
-    const isPredictionEnabled = async (competitionId?: number | null): Promise<boolean> => {
-        const id = await resolveCompetitionId(competitionId)
-        if (!id) return false
-        const competition = await fetchCompetitionInfo(id)
-        return competition.prediction_enabled
-    }
-    
     return {
-        isCtpEnabled,
-        isCheckinEnabled,
-        isPredictionEnabled,
+        isCtpEnabled: (competitionId?: number | null) => isFeatureEnabled('ctp_enabled', competitionId),
+        isCheckinEnabled: (competitionId?: number | null) => isFeatureEnabled('checkin_enabled', competitionId),
+        isPredictionEnabled: (competitionId?: number | null) => isFeatureEnabled('prediction_enabled', competitionId),
     }
 }

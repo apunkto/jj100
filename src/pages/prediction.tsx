@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react'
+import {AppError} from '@/src/utils/AppError'
 import {
     Box,
     Button,
@@ -116,11 +117,13 @@ export default function PredictionPage() {
                             })
                         }
                     }
-                } catch (predErr: any) {
-                    if (predErr?.message?.includes('not_competition_participant') || predErr?.code === 'not_competition_participant') {
+                } catch (predErr: unknown) {
+                    const message = predErr instanceof Error ? predErr.message : ''
+                    const code = predErr instanceof AppError ? predErr.code : undefined
+                    if (message.includes('not_competition_participant') || code === 'not_competition_participant') {
                         participating = false
                         setIsParticipating(false)
-                    } else if (predErr?.message?.includes('not enabled')) {
+                    } else if (message.includes('not enabled')) {
                         setIsParticipating(true)
                     } else {
                         setIsParticipating(true)
@@ -231,13 +234,15 @@ export default function PredictionPage() {
             if (updatedPrediction) {
                 setPrediction(updatedPrediction)
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to save prediction:', err)
-            if (err?.message?.includes('not_competition_participant') || err?.code === 'not_competition_participant') {
+            const message = err instanceof Error ? err.message : ''
+            const code = err instanceof AppError ? err.code : undefined
+            if (message.includes('not_competition_participant') || code === 'not_competition_participant') {
                 setIsParticipating(false)
                 showToast('Sa ei osale sellel võistlusel', 'error')
             } else {
-                showToast(err?.message || 'Ennustuse salvestamine ebaõnnestus', 'error')
+                showToast(message || 'Ennustuse salvestamine ebaõnnestus', 'error')
             }
         } finally {
             setSubmitting(false)
@@ -299,7 +304,7 @@ export default function PredictionPage() {
         try {
             const result = await getPlayerPrediction(user.activeCompetitionId, playerId)
             setSelectedPlayerPrediction(result.prediction)
-        } catch (err: any) {
+        } catch (err: unknown) {
             // This catch should rarely be hit now since API returns null instead of throwing
             console.error('Failed to fetch player prediction:', err)
             setSelectedPlayerPrediction(null)

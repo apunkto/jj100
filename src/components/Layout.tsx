@@ -68,7 +68,7 @@ export default function Layout({
                     .catch(() => setCompetitions([]))
             } else {
                 // Regular user: fetch their competitions
-                getPlayerCompetitions().then(setCompetitions)
+                getPlayerCompetitions().then(setCompetitions).catch(() => setCompetitions([]))
             }
         } else {
             setCompetitions([])
@@ -141,14 +141,11 @@ export default function Layout({
 
                     {/* Center - Title */}
                     <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                        <Link href="/" passHref legacyBehavior>
+                        <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                             <Typography
                                 variant="h6"
                                 sx={{
                                     fontWeight: 700,
-                                    textDecoration: 'none',
-                                    color: 'inherit',
-                                    cursor: 'pointer',
                                 }}
                             >
                                 Järva-Jaani 100!
@@ -158,8 +155,8 @@ export default function Layout({
 
                     {/* Right side - Logo */}
                     <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 57 }}>
-                        <Link href="/" passHref legacyBehavior>
-                            <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
+                        <Link href="/">
+                            <Box display="flex" alignItems="center">
                                 <Image src="/logo.webp" alt="Logo" width={57} height={49} priority />
                             </Box>
                         </Link>
@@ -253,7 +250,7 @@ export default function Layout({
                                 return (
                                     <React.Fragment key={href}>
                                         {showDividerBefore && <Divider sx={{ my: 1.5 }} />}
-                                        <Link href={href} passHref legacyBehavior>
+                                        <Link href={href} style={{ textDecoration: 'none' }}>
                                             <ListItem disablePadding>
                                                 <ListItemButton sx={{ borderRadius: 2 }}>
                                                     <ListItemIcon sx={{ color: 'primary.main' }}>{icon}</ListItemIcon>
@@ -284,7 +281,7 @@ export default function Layout({
                             <>
                                 <Divider sx={{ my: 1.5 }} />
                                 <List>
-                                    <Link href="/admin" passHref legacyBehavior>
+                                    <Link href="/admin" style={{ textDecoration: 'none' }}>
                                         <ListItem disablePadding>
                                             <ListItemButton sx={{ borderRadius: 2 }}>
                                                 <ListItemIcon sx={{ color: 'primary.main' }}>

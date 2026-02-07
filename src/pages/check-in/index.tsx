@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react"
+import {AppError} from "@/src/utils/AppError"
 import LockIcon from "@mui/icons-material/Lock"
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined"
 import {
@@ -67,11 +68,13 @@ export default function CheckInPage() {
             await checkIn()
             showToast("Registreeritud!", "success")
             setCheckedIn(true)
-        } catch (err: any) {
-            if (err?.message === "already_checked_in") {
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : ''
+            const code = err instanceof AppError ? err.code : undefined
+            if (message === "already_checked_in") {
                 setCheckedIn(true)
                 showToast("Mängija on juba loosimängu registreeritud!", "error")
-            } else if (err?.code === "not_competition_participant") {
+            } else if (code === "not_competition_participant") {
                 showToast("Sa ei osale võistlusel!", "error")
             } else {
                 showToast("Registreerimisel tekkis viga!", "error")

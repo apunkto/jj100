@@ -1,10 +1,5 @@
-import {authedFetch} from "@/src/api/authedFetch";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
-}
+import {authedFetch} from "@/src/api/authedFetch"
+import {API_BASE} from "@/src/api/config"
 
 export type AdminCompetition = {
     id: number
@@ -31,67 +26,39 @@ const getAdminCompetition = async (competitionId: number): Promise<AdminCompetit
     return competitions.find(c => c.id === competitionId) ?? null
 }
 
-const updateCtpEnabled = async (competitionId: number, enabled: boolean): Promise<void> => {
-    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/ctp`, {
+const patchCompetitionField = async (
+    competitionId: number,
+    field: string,
+    payload: Record<string, unknown>,
+    errorMessage: string
+): Promise<void> => {
+    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/${field}`, {
         method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify(payload),
     })
     if (!res.ok) {
         const error = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(error.error || 'Failed to update CTP setting')
+        throw new Error(error.error || errorMessage)
     }
 }
 
-const updateCheckinEnabled = async (competitionId: number, enabled: boolean): Promise<void> => {
-    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/checkin`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ enabled }),
-    })
-    if (!res.ok) {
-        const error = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(error.error || 'Failed to update checkin setting')
-    }
-}
+const updateCtpEnabled = (competitionId: number, enabled: boolean) =>
+    patchCompetitionField(competitionId, 'ctp', { enabled }, 'Failed to update CTP setting')
 
-const updatePredictionEnabled = async (competitionId: number, enabled: boolean): Promise<void> => {
-    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/prediction`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ enabled }),
-    })
-    if (!res.ok) {
-        const error = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(error.error || 'Failed to update prediction setting')
-    }
-}
+const updateCheckinEnabled = (competitionId: number, enabled: boolean) =>
+    patchCompetitionField(competitionId, 'checkin', { enabled }, 'Failed to update checkin setting')
 
-const updateDidRainEnabled = async (competitionId: number, enabled: boolean): Promise<void> => {
-    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/did-rain`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ enabled }),
-    })
-    if (!res.ok) {
-        const error = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(error.error || 'Failed to update did rain setting')
-    }
-}
+const updatePredictionEnabled = (competitionId: number, enabled: boolean) =>
+    patchCompetitionField(competitionId, 'prediction', { enabled }, 'Failed to update prediction setting')
+
+const updateDidRainEnabled = (competitionId: number, enabled: boolean) =>
+    patchCompetitionField(competitionId, 'did-rain', { enabled }, 'Failed to update did rain setting')
 
 const updateCompetitionStatus = async (
     competitionId: number,
     status: 'waiting' | 'started' | 'finished'
 ): Promise<void> => {
-    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/status`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ status }),
-    })
-    if (!res.ok) {
-        const error = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(error.error || 'Failed to update competition status')
-    }
+    patchCompetitionField(competitionId, 'status', { status }, 'Failed to update competition status')
 }
 
 export default function useAdminApi() {

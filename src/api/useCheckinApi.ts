@@ -1,5 +1,6 @@
-import {authedFetch} from "@/src/api/authedFetch";
-
+import {authedFetch} from "@/src/api/authedFetch"
+import {API_BASE} from "@/src/api/config"
+import {AppError} from "@/src/utils/AppError"
 
 export type CheckedInPlayer = {
     id: number
@@ -11,17 +12,10 @@ export type CheckedInPlayer = {
     final_game: boolean,
     final_game_order: number | null
 }
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
-}
 export const useCheckinApi = () => {
     const checkIn = async () => {
         const res = await authedFetch(`${API_BASE}/lottery/checkin`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({}),
         })
 
@@ -32,9 +26,7 @@ export const useCheckinApi = () => {
         if (res.status === 403) {
             const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
             if (body?.code === 'not_competition_participant') {
-                const err: any = new Error(body?.error ?? 'Sa ei osale võistlusel!')
-                err.code = 'not_competition_participant'
-                throw err
+                throw new AppError(body?.error ?? 'Sa ei osale võistlusel!', 'not_competition_participant')
             }
         }
 
@@ -65,7 +57,8 @@ export const useCheckinApi = () => {
             throw new Error('Failed to draw winner')
         }
 
-        return await res.json() as CheckedInPlayer;
+        const json = (await res.json()) as { data: CheckedInPlayer }
+        return json.data;
     }
 
     const deleteCheckin = async (playerId: number) => {

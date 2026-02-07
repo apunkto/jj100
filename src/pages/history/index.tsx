@@ -18,6 +18,40 @@ import StarIcon from '@mui/icons-material/Star'
 import usePlayerApi, {ParticipationLeaderboard, Player, UserParticipation,} from '@/src/api/usePlayerApi'
 import {useEffect, useMemo, useState} from 'react'
 
+// Comma-separated list with ability to bold "me"
+function NamesCommaList({
+    list,
+    meMetrixId,
+}: {
+    list: Array<{ metrixUserId: number; name: string }>
+    meMetrixId?: number
+}) {
+    return (
+        <Typography
+            sx={{
+                fontSize: {xs: 12, sm: 13},
+                lineHeight: 1.35,
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
+            }}
+        >
+            {list.map((p, idx) => {
+                const isMe = meMetrixId != null && p.metrixUserId === meMetrixId
+                return (
+                    <Box
+                        key={p.metrixUserId}
+                        component="span"
+                        sx={{fontWeight: isMe ? 800 : 400}}
+                    >
+                        {p.name}
+                        {idx < list.length - 1 ? ', ' : ''}
+                    </Box>
+                )
+            })}
+        </Typography>
+    )
+}
+
 export default function HistoryPage() {
     const [participations, setParticipations] = useState<UserParticipation[]>([])
     const [leaderboard, setLeaderboard] = useState<ParticipationLeaderboard | null>(null)
@@ -88,40 +122,6 @@ export default function HistoryPage() {
 
     const isCancelledYear = (year: number) => year === 2020 || year === 2021
     const fmtScore = (score: number) => (score > 0 ? `+${score}` : `${score}`)
-
-    // Comma-separated list with ability to bold "me"
-    const NamesCommaList = ({
-                                list,
-                                meMetrixId,
-                            }: {
-        list: Array<{ metrixUserId: number; name: string }>
-        meMetrixId?: number
-    }) => {
-        return (
-            <Typography
-                sx={{
-                    fontSize: {xs: 12, sm: 13},
-                    lineHeight: 1.35,
-                    wordBreak: 'break-word',
-                    whiteSpace: 'normal',
-                }}
-            >
-                {list.map((p, idx) => {
-                    const isMe = meMetrixId != null && p.metrixUserId === meMetrixId
-                    return (
-                        <Box
-                            key={p.metrixUserId}
-                            component="span"
-                            sx={{fontWeight: isMe ? 800 : 400}}
-                        >
-                            {p.name}
-                            {idx < list.length - 1 ? ', ' : ''}
-                        </Box>
-                    )
-                })}
-            </Typography>
-        )
-    }
 
     return (
         <Layout>

@@ -5,7 +5,7 @@ import type {PredictionLeaderboardResponse} from '@/src/api/usePredictionApi'
 interface PredictionLeaderboardProps {
     leaderboard: PredictionLeaderboardResponse | null
     onPlayerClick?: (playerId: number, playerName: string, rank: number) => void
-    containerSx?: object
+    containerSx?: Record<string, unknown>
 }
 
 export function PredictionLeaderboard({
@@ -41,6 +41,14 @@ export function PredictionLeaderboard({
                                     <TableRow
                                         key={entry.rank}
                                         onClick={() => handlePlayerClick(entry.player_id, entry.player_name, entry.rank)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault()
+                                                handlePlayerClick(entry.player_id, entry.player_name, entry.rank)
+                                            }
+                                        }}
+                                        tabIndex={entry.player_id ? 0 : undefined}
+                                        role={entry.player_id ? 'button' : undefined}
                                         sx={{
                                             fontWeight: isUser ? 'bold' : 'normal',
                                             backgroundColor: index % 2 === 0 ? 'background.paper' : 'action.hover',
@@ -87,6 +95,17 @@ export function PredictionLeaderboard({
                                                 handlePlayerClick(userRank.player_id, userRank.player_name, userRank.rank)
                                             }
                                         }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault()
+                                                const userRank = leaderboard.user_rank
+                                                if (userRank) {
+                                                    handlePlayerClick(userRank.player_id, userRank.player_name, userRank.rank)
+                                                }
+                                            }
+                                        }}
+                                        tabIndex={leaderboard.user_rank?.player_id ? 0 : undefined}
+                                        role={leaderboard.user_rank?.player_id ? 'button' : undefined}
                                         sx={{
                                             fontWeight: 'bold',
                                             backgroundColor: leaderboard.top_10.length % 2 === 0 ? 'background.paper' : 'action.hover',

@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {Box, CircularProgress, Tab, Tabs, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import {useAuth} from '@/src/contexts/AuthContext'
@@ -27,26 +27,29 @@ function ResultsTabs({
     const [myDivisionResult, setMyDivisionResult] = useState<MyDivisionResultPayload>(null)
     const divisionEntries = Object.entries(topPlayersByDivision)
     const myDivisionName = myDivisionResult?.player?.ClassName
-    const divisionMap = new Map(divisionEntries)
-    const ordered: [string, typeof divisionEntries[0][1]][] = []
-    const added = new Set<string>()
-    if (myDivisionName != null && divisionMap.has(myDivisionName)) {
-        ordered.push(divisionEntries.find(([n]) => n === myDivisionName)!)
-        added.add(myDivisionName)
-    }
-    for (const name of PREFERRED_DIVISION_ORDER) {
-        if (divisionMap.has(name) && !added.has(name)) {
-            ordered.push(divisionEntries.find(([n]) => n === name)!)
-            added.add(name)
+
+    const divisionEntriesOrdered = useMemo(() => {
+        const divisionMap = new Map(divisionEntries)
+        const ordered: [string, typeof divisionEntries[0][1]][] = []
+        const added = new Set<string>()
+        if (myDivisionName != null && divisionMap.has(myDivisionName)) {
+            ordered.push(divisionEntries.find(([n]) => n === myDivisionName)!)
+            added.add(myDivisionName)
         }
-    }
-    for (const entry of divisionEntries) {
-        if (!added.has(entry[0])) {
-            ordered.push(entry)
-            added.add(entry[0])
+        for (const name of PREFERRED_DIVISION_ORDER) {
+            if (divisionMap.has(name) && !added.has(name)) {
+                ordered.push(divisionEntries.find(([n]) => n === name)!)
+                added.add(name)
+            }
         }
-    }
-    const divisionEntriesOrdered = ordered
+        for (const entry of divisionEntries) {
+            if (!added.has(entry[0])) {
+                ordered.push(entry)
+                added.add(entry[0])
+            }
+        }
+        return ordered
+    }, [topPlayersByDivision, myDivisionName])
     const [selectedTab, setSelectedTab] = useState(0)
 
     useEffect(() => {

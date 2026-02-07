@@ -12,8 +12,8 @@ const scoreCategories = [
     { key: 'birdies', color: 'rgba(62,195,0,.70)', label: 'Birdie' },
     { key: 'pars', color: '#c6c6c6', label: 'Par' },
     { key: 'bogeys', color: 'rgba(244,43,3,.50)', label: 'Bogey' },
-    { key: 'double_bogeys', color: 'rgba(244,43,3,.60)', label: '2x Bgy' },
-    { key: 'others', color: 'rgba(244,43,3,.80)', label: '3x+ Bgy' },
+    { key: 'double_bogeys', color: 'rgba(244,43,3,.60)', label: 'Double' },
+    { key: 'others', color: 'rgba(244,43,3,.80)', label: 'Triple+' },
 ]
 
 function getOrdinal(n: number): string {
@@ -246,7 +246,7 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
                 spaceBetween={30}
                 slidesPerView={1}
             >
-                {topHoles.map((holeNumber) => {
+                {topHoles.map((holeNumber, holeIdx) => {
                     const holeData = holeInfo[holeNumber]?.hole
                     if (!holeData) return null
                     return (
@@ -264,7 +264,7 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
                                         number={holeNumber}
                                         hole={holeData}
                                         maxWidth={470}
-                                        isPriority={topHoles.indexOf(holeNumber) === 0}
+                                        isPriority={holeIdx === 0}
                                     />
                                 </Box>
 

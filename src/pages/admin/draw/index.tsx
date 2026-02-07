@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useState} from 'react'
 import {Box, Button, Typography} from '@mui/material'
 import Confetti from 'react-dom-confetti'
 import Image from 'next/image'
@@ -21,7 +21,6 @@ export default function DrawPage() {
     const [shuffling, setShuffling] = useState(false)
     const [confettiActive, setConfettiActive] = useState(false)
 
-    const winnerRef = useRef<HTMLDivElement>(null)
     const isAdmin = user?.isAdmin ?? false
 
     const fetchPlayers = async () => {
@@ -148,7 +147,7 @@ export default function DrawPage() {
             </Box>
 
             {currentName && (
-                <Box mt={6} ref={winnerRef} position="relative">
+                <Box mt={6} position="relative">
                     <Typography variant="h2" fontWeight="bold">
                         {shuffling ? currentName : `🎉🎉 ${currentName} 🎉🎉`}
                     </Typography>

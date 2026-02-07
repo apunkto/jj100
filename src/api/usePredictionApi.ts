@@ -1,10 +1,6 @@
 import {authedFetch} from '@/src/api/authedFetch'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
-}
+import {API_BASE} from '@/src/api/config'
+import {AppError} from '@/src/utils/AppError'
 
 export type ActualResults = {
     best_overall_score: number | null
@@ -58,55 +54,38 @@ const getPrediction = async (competitionId: number): Promise<Prediction | null> 
             return null
         }
         const error = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
-        // If prediction is not enabled, return null instead of throwing (user can still view leaderboard)
         if (res.status === 403 && error.error?.includes('not enabled')) {
             return null
         }
-        const err: any = new Error(error.error || 'Failed to fetch prediction')
-        if (error.code) {
-            err.code = error.code
-        }
-        throw err
+        throw new AppError(error.error || 'Failed to fetch prediction', error.code)
     }
     const json = (await res.json()) as { success: boolean; data: Prediction | null }
     return json.data
 }
 
-const createPrediction = async (competitionId: number, data: PredictionData): Promise<Prediction> => {
+const savePrediction = async (
+    method: 'POST' | 'PATCH',
+    competitionId: number,
+    data: PredictionData
+): Promise<Prediction> => {
     const res = await authedFetch(`${API_BASE}/prediction/${competitionId}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        method,
         body: JSON.stringify(data),
     })
     if (!res.ok) {
         const error = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
-        const err: any = new Error(error.error || 'Failed to create prediction')
-        if (error.code) {
-            err.code = error.code
-        }
-        throw err
+        const action = method === 'POST' ? 'create' : 'update'
+        throw new AppError(error.error || `Failed to ${action} prediction`, error.code)
     }
     const json = (await res.json()) as { success: boolean; data: Prediction }
     return json.data
 }
 
-const updatePrediction = async (competitionId: number, data: PredictionData): Promise<Prediction> => {
-    const res = await authedFetch(`${API_BASE}/prediction/${competitionId}`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-        const error = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
-        const err: any = new Error(error.error || 'Failed to update prediction')
-        if (error.code) {
-            err.code = error.code
-        }
-        throw err
-    }
-    const json = (await res.json()) as { success: boolean; data: Prediction }
-    return json.data
-}
+const createPrediction = (competitionId: number, data: PredictionData) =>
+    savePrediction('POST', competitionId, data)
+
+const updatePrediction = (competitionId: number, data: PredictionData) =>
+    savePrediction('PATCH', competitionId, data)
 
 const getLeaderboard = async (competitionId: number): Promise<PredictionLeaderboardResponse> => {
     const res = await authedFetch(`${API_BASE}/prediction/${competitionId}/leaderboard`)
@@ -123,8 +102,6 @@ const getPlayerPrediction = async (competitionId: number, playerId: number): Pro
         if (res.status === 404) {
             return {prediction: null, player_name: 'Tundmatu mängija'}
         }
-        // For 403 or other errors, still return null prediction instead of throwing
-        // This allows the dialog to open and show "no prediction" message
         const error = (await res.json().catch(() => ({}))) as { error?: string }
         console.warn('Failed to fetch player prediction:', error.error || 'Unknown error')
         return {prediction: null, player_name: 'Tundmatu mängija'}

@@ -57,7 +57,7 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
     
     // Show error if touched (forced) or blurred, and field is invalid
     const shouldShowError = touched || hasBlurred
-    const showError = shouldShowError && ((required && isEmpty) || hasInvalidInput) || externalError
+    const showError = (shouldShowError && ((required && isEmpty) || hasInvalidInput)) || externalError
     const errorMessage = hasInvalidInput 
         ? 'Palun sisesta korrektne numbriline väärtus'
         : required && isEmpty && shouldShowError

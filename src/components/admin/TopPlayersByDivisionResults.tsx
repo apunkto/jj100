@@ -1,5 +1,6 @@
 import {Box, Typography} from '@mui/material'
 import type {DashboardPlayerResult} from '@/src/api/useMetrixApi'
+import {getScoreBreakdown} from '@/src/utils/scoreUtils'
 
 const scoreCategories = [
     { key: 'eagles', color: '#f8c600', label: 'Eagle' },
@@ -9,27 +10,6 @@ const scoreCategories = [
     { key: 'double_bogeys', color: 'rgba(244,43,3,.60)', label: 'Double' },
     { key: 'others', color: 'rgba(244,43,3,.80)', label: 'Triple+' },
 ]
-
-function getScoreBreakdown(player: DashboardPlayerResult) {
-    let eagles = 0,
-        birdies = 0,
-        pars = 0,
-        bogeys = 0,
-        double_bogeys = 0,
-        others = 0
-
-    for (const hole of player.PlayerResults || []) {
-        const diff = hole.Diff
-        if (diff <= -2) eagles++
-        else if (diff === -1) birdies++
-        else if (diff === 0) pars++
-        else if (diff === 1) bogeys++
-        else if (diff === 2) double_bogeys++
-        else if (diff >= 3) others++
-    }
-
-    return { eagles, birdies, pars, bogeys, double_bogeys, others }
-}
 
 const MEDAL_ICONS = ['🥇', '🥈', '🥉'] as const
 

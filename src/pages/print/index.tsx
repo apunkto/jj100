@@ -3,7 +3,7 @@ import HoleCard from "@/src/components/HoleCard"
 import useCtpApi, {Hole} from "@/src/api/useCtpApi"
 import {useEffect, useRef, useState} from "react"
 import {Box, Button} from "@mui/material"
-import jsPDF from "jspdf"
+// jsPDF is dynamically imported in exportPdf to reduce bundle size
 
 export default function PrintHolesPage() {
     const { getHoles } = useCtpApi()
@@ -23,25 +23,30 @@ export default function PrintHolesPage() {
     const exportPdf = async () => {
         if (!holes?.length) return
 
-        // ✅ wait until your @font-face Poppins is fully loaded
-        if (typeof document !== "undefined" && (document as any).fonts?.ready) {
-            await (document as any).fonts.ready
+        // Wait until @font-face Poppins is fully loaded
+        if (typeof document !== "undefined" && document.fonts?.ready) {
+            await document.fonts.ready
             try {
                 await Promise.all([
-                    (document as any).fonts.load('400 16px "Poppins"'),
-                    (document as any).fonts.load('500 16px "Poppins"'),
-                    (document as any).fonts.load('600 16px "Poppins"'),
-                    (document as any).fonts.load('700 16px "Poppins"'),
-                    (document as any).fonts.load('800 16px "Poppins"'),
-                    (document as any).fonts.load('900 16px "Poppins"'),
+                    document.fonts.load('400 16px "Poppins"'),
+                    document.fonts.load('500 16px "Poppins"'),
+                    document.fonts.load('600 16px "Poppins"'),
+                    document.fonts.load('700 16px "Poppins"'),
+                    document.fonts.load('800 16px "Poppins"'),
+                    document.fonts.load('900 16px "Poppins"'),
                 ])
             } catch {
                 // ignore
             }
         }
 
-        // ✅ dynamic import to avoid SSR issues
-        const html2canvas = (await import("html2canvas")).default
+        // Dynamic imports to avoid SSR issues and reduce bundle size
+        const [html2canvasModule, jsPDFModule] = await Promise.all([
+            import("html2canvas"),
+            import("jspdf"),
+        ])
+        const html2canvas = html2canvasModule.default
+        const jsPDF = jsPDFModule.default
 
         // A4 portrait in mm
         const pdf = new jsPDF("portrait", "mm", "a4")

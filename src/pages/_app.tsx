@@ -2,12 +2,12 @@ import {CssBaseline, ThemeProvider} from '@mui/material'
 import type {AppProps} from 'next/app'
 import theme from '@/lib/theme'
 import '@/styles/fonts.css'
-import {ToastProvider} from "@/src/contexts/ToastContext";
-import Head from 'next/head' // 👈 ADD THIS
-import '../../styles/globals.css'
-import AuthGate from "@/src/components/AuthGate";
-import {AuthProvider} from "@/src/contexts/AuthContext"; // if pages is inside src/pages/
-
+import {ToastProvider} from "@/src/contexts/ToastContext"
+import Head from 'next/head'
+import '@/styles/globals.css'
+import AuthGate from "@/src/components/AuthGate"
+import {AuthProvider} from "@/src/contexts/AuthContext"
+import {ErrorBoundary} from "@/src/components/ErrorBoundary"
 
 export default function App({Component, pageProps}: AppProps) {
     return (
@@ -27,14 +27,15 @@ export default function App({Component, pageProps}: AppProps) {
             </Head>
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
-                <ToastProvider>
-
-                    <AuthProvider>
-                        <AuthGate publicRoutes={['/login']}>
-                            <Component {...pageProps} />
-                        </AuthGate>
-                    </AuthProvider>
-                </ToastProvider>
+                <ErrorBoundary>
+                    <ToastProvider>
+                        <AuthProvider>
+                            <AuthGate publicRoutes={['/login']}>
+                                <Component {...pageProps} />
+                            </AuthGate>
+                        </AuthProvider>
+                    </ToastProvider>
+                </ErrorBoundary>
             </ThemeProvider>
         </>
     )

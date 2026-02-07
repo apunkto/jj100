@@ -100,14 +100,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     </Box>
 
                     <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                        <Link href="/" passHref legacyBehavior>
+                        <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                             <Typography
                                 variant="h6"
                                 sx={{
                                     fontWeight: 700,
-                                    textDecoration: 'none',
-                                    color: 'inherit',
-                                    cursor: 'pointer',
                                 }}
                             >
                                 Järva-Jaani 100!
@@ -116,8 +113,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 57 }}>
-                        <Link href="/" passHref legacyBehavior>
-                            <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }}>
+                        <Link href="/">
+                            <Box display="flex" alignItems="center">
                                 <Image src="/logo.webp" alt="Logo" width={57} height={49} priority />
                             </Box>
                         </Link>
@@ -213,7 +210,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         {adminMenuItems.map(({ href, label, icon }) => {
                             const isActive = currentPath === href
                             return (
-                                <Link key={href} href={href} passHref legacyBehavior>
+                                <Link key={href} href={href} style={{ textDecoration: 'none' }}>
                                     <ListItem disablePadding>
                                         <ListItemButton sx={{ borderRadius: 2 }}>
                                             <ListItemIcon sx={{ color: 'primary.main' }}>{icon}</ListItemIcon>
@@ -241,7 +238,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
                     <Divider sx={{ my: 1.5 }} />
                     <List>
-                        <Link href="/" passHref legacyBehavior>
+                        <Link href="/" style={{ textDecoration: 'none' }}>
                             <ListItem disablePadding>
                                 <ListItemButton sx={{ borderRadius: 2 }}>
                                     <ListItemIcon sx={{ color: 'primary.main' }}>

@@ -1,5 +1,5 @@
 import {authedFetch} from "@/src/api/authedFetch";
-import {useCallback, useMemo} from "react";
+import {API_BASE} from "@/src/api/config";
 
 export type Player = {
     playerId: number
@@ -27,13 +27,6 @@ export type ParticipationLeaderboard = {
         amount: number
         players: Array<{ metrixUserId: number; name: string }>
     }>
-}
-
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!API_BASE) {
-    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL')
 }
 
 
@@ -69,7 +62,6 @@ const getPlayerCompetitions = async (): Promise<CompetitionOption[]> => {
 const setActiveCompetition = async (activeCompetitionId: number): Promise<Player | null> => {
     const res = await authedFetch(`${API_BASE}/player/active-competition`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ activeCompetitionId }),
     })
     if (!res.ok) return null
@@ -78,17 +70,11 @@ const setActiveCompetition = async (activeCompetitionId: number): Promise<Player
 }
 
 export default function usePlayerApi() {
-    const getLoggedInUserMemo = useCallback(getLoggedInUser, [])
-    const getPlayerParticipationsMemo = useCallback(getPlayerParticipations, [])
-    const getParticipationLeadersMemo = useCallback(getParticipationLeaders, [])
-    const getPlayerCompetitionsMemo = useCallback(getPlayerCompetitions, [])
-    const setActiveCompetitionMemo = useCallback(setActiveCompetition, [])
-    
-    return useMemo(() => ({
-        getLoggedInUser: getLoggedInUserMemo,
-        getPlayerParticipations: getPlayerParticipationsMemo,
-        getParticipationLeaders: getParticipationLeadersMemo,
-        getPlayerCompetitions: getPlayerCompetitionsMemo,
-        setActiveCompetition: setActiveCompetitionMemo,
-    }), [getLoggedInUserMemo, getPlayerParticipationsMemo, getParticipationLeadersMemo, getPlayerCompetitionsMemo, setActiveCompetitionMemo])
+    return {
+        getLoggedInUser,
+        getPlayerParticipations,
+        getParticipationLeaders,
+        getPlayerCompetitions,
+        setActiveCompetition,
+    }
 }

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import type {DashboardPlayerResult} from '@/src/api/useMetrixApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 
@@ -12,24 +12,36 @@ export function useTopPlayersByDivision(competitionId: number) {
     >({})
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const staleRef = useRef(false)
 
     const fetchData = useCallback(async () => {
+        staleRef.current = false
         try {
             setError(null)
             const data = await getTopPlayersByDivision(competitionId)
-            setTopPlayersByDivision(data.topPlayersByDivision)
+            if (!staleRef.current) {
+                setTopPlayersByDivision(data.topPlayersByDivision)
+            }
         } catch (err) {
-            console.error('Failed to load top players:', err)
-            setError(err instanceof Error ? err.message : 'Failed to load')
+            if (!staleRef.current) {
+                console.error('Failed to load top players:', err)
+                setError(err instanceof Error ? err.message : 'Failed to load')
+            }
         } finally {
-            setLoading(false)
+            if (!staleRef.current) {
+                setLoading(false)
+            }
         }
     }, [competitionId, getTopPlayersByDivision])
 
     useEffect(() => {
+        staleRef.current = false
         fetchData()
         const interval = setInterval(fetchData, REFRESH_MS)
-        return () => clearInterval(interval)
+        return () => {
+            staleRef.current = true
+            clearInterval(interval)
+        }
     }, [fetchData])
 
     return { topPlayersByDivision, loading, error }
