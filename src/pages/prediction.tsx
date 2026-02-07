@@ -43,10 +43,11 @@ export default function PredictionPage() {
     const [leaderboard, setLeaderboard] = useState<PredictionLeaderboardResponse | null>(null)
     const [isEditing, setIsEditing] = useState(false)
     const [isParticipating, setIsParticipating] = useState<boolean | null>(null)
-    const [selectedPlayerDialog, setSelectedPlayerDialog] = useState<{open: boolean; playerId: number | null; playerName: string}>({
+    const [selectedPlayerDialog, setSelectedPlayerDialog] = useState<{open: boolean; playerId: number | null; playerName: string; rank: number | null}>({
         open: false,
         playerId: null,
         playerName: '',
+        rank: null,
     })
     const [selectedPlayerPrediction, setSelectedPlayerPrediction] = useState<Prediction | null>(null)
     const [loadingPlayerPrediction, setLoadingPlayerPrediction] = useState(false)
@@ -282,14 +283,14 @@ export default function PredictionPage() {
         setIsEditing(false)
     }
 
-    const handlePlayerNameClick = async (playerId: number | undefined, playerName: string) => {
+    const handlePlayerNameClick = async (playerId: number | undefined, playerName: string, rank: number) => {
         if (!playerId || !user?.activeCompetitionId) {
             console.warn('handlePlayerNameClick: missing playerId or activeCompetitionId', {playerId, activeCompetitionId: user?.activeCompetitionId})
             return
         }
 
         // Open dialog immediately - this happens synchronously before any async operations
-        setSelectedPlayerDialog({open: true, playerId, playerName})
+        setSelectedPlayerDialog({open: true, playerId, playerName, rank})
         setLoadingPlayerPrediction(true)
         setSelectedPlayerPrediction(null)
 
@@ -308,7 +309,7 @@ export default function PredictionPage() {
     }
 
     const handleClosePlayerDialog = () => {
-        setSelectedPlayerDialog({open: false, playerId: null, playerName: ''})
+        setSelectedPlayerDialog({open: false, playerId: null, playerName: '', rank: null})
         setSelectedPlayerPrediction(null)
     }
 
@@ -329,7 +330,7 @@ export default function PredictionPage() {
     if (!user?.activeCompetitionId) {
         return (
             <Layout>
-                <Box mt={2} px={2} textAlign="center">
+                <Box px={2} textAlign="center">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
                         Ennustusmäng
                     </Typography>
@@ -349,12 +350,11 @@ export default function PredictionPage() {
     return (
         <Layout>
             <Box
-                mt={isNonParticipant || isPredictionDisabled ? 4 : 2}
                 px={{xs: 2, sm: 3, md: 4}}
                 maxWidth={showForm ? 800 : '100%'}
                 mx={showForm ? 'auto' : 0}
             >
-                <Typography variant="h4" fontWeight="bold" textAlign="center" mb={3}>
+                <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1}>
                     Ennustusmäng
                 </Typography>
 
@@ -371,7 +371,7 @@ export default function PredictionPage() {
                     )
                 ) : isPredictionDisabled ? (
                     <>
-                        <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={3}>
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={2}>
                             <LockIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             <Typography variant="body2" color="text.secondary">
                                 Ennustamine on lõppenud!
@@ -724,7 +724,7 @@ export default function PredictionPage() {
                     fullWidth
                 >
                     <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        {selectedPlayerDialog.playerName}
+                        {selectedPlayerDialog.rank != null ? `${selectedPlayerDialog.rank}. ${selectedPlayerDialog.playerName}` : selectedPlayerDialog.playerName}
                         <IconButton aria-label="close" onClick={handleClosePlayerDialog} sx={{ ml: 1 }}>
                             <CloseIcon />
                         </IconButton>

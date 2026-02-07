@@ -4,7 +4,7 @@ import type {PredictionLeaderboardResponse} from '@/src/api/usePredictionApi'
 
 interface PredictionLeaderboardProps {
     leaderboard: PredictionLeaderboardResponse | null
-    onPlayerClick?: (playerId: number, playerName: string) => void
+    onPlayerClick?: (playerId: number, playerName: string, rank: number) => void
     containerSx?: object
 }
 
@@ -17,9 +17,9 @@ export function PredictionLeaderboard({
         return null
     }
 
-    const handlePlayerClick = (playerId: number | undefined, playerName: string) => {
+    const handlePlayerClick = (playerId: number | undefined, playerName: string, rank: number) => {
         if (playerId && onPlayerClick) {
-            onPlayerClick(playerId, playerName)
+            onPlayerClick(playerId, playerName, rank)
         }
     }
 
@@ -40,7 +40,7 @@ export function PredictionLeaderboard({
                                 return (
                                     <TableRow
                                         key={entry.rank}
-                                        onClick={() => handlePlayerClick(entry.player_id, entry.player_name)}
+                                        onClick={() => handlePlayerClick(entry.player_id, entry.player_name, entry.rank)}
                                         sx={{
                                             fontWeight: isUser ? 'bold' : 'normal',
                                             backgroundColor: index % 2 === 0 ? 'background.paper' : 'action.hover',
@@ -84,7 +84,7 @@ export function PredictionLeaderboard({
                                         onClick={() => {
                                             const userRank = leaderboard.user_rank
                                             if (userRank) {
-                                                handlePlayerClick(userRank.player_id, userRank.player_name)
+                                                handlePlayerClick(userRank.player_id, userRank.player_name, userRank.rank)
                                             }
                                         }}
                                         sx={{

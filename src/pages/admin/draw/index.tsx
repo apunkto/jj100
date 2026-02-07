@@ -6,7 +6,7 @@ import {CheckedInPlayer, useCheckinApi} from '@/src/api/useCheckinApi'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useRouter} from 'next/router'
 import usePlayerApi from '@/src/api/usePlayerApi'
-import Layout from '@/src/components/Layout'
+import AdminLayout from '@/src/components/AdminLayout'
 
 export default function DrawPage() {
     const {getCheckins, drawWinner} = useCheckinApi()
@@ -111,30 +111,30 @@ export default function DrawPage() {
     // Show loading while auth is loading or user data is not yet available
     if (loading || !user) {
         return (
-            <Layout>
+            <AdminLayout>
                 <Box textAlign="center" mt={6}>
                     <Typography variant="h4">Laadimine...</Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // If user is loaded but not admin, show access denied
     if (!isAdmin) {
         return (
-            <Layout>
-                <Box textAlign="center" mt={6}>
+            <AdminLayout>
+                <Box textAlign="center">
                     <Typography variant="h4">Puudub juurdepääs</Typography>
                     <Typography variant="body1" mt={2}>
                         Ainult administraatoritel on juurdepääs sellele lehele.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     return (
-        <Layout>
+        <AdminLayout>
             <Box textAlign="center" mt={6} position="relative">
             <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Image
@@ -180,6 +180,6 @@ export default function DrawPage() {
                 Loosime!
             </Button>
         </Box>
-        </Layout>
+        </AdminLayout>
     )
 }

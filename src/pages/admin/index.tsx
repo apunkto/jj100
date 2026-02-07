@@ -1,20 +1,16 @@
 import {useEffect, useState} from 'react'
-import {Box, Button, Card, CardContent, CircularProgress, FormControlLabel, Switch, Typography,} from '@mui/material'
+import {Box, CircularProgress, Typography} from '@mui/material'
 import {useRouter} from 'next/router'
-import Layout from '@/src/components/Layout'
+import AdminLayout from '@/src/components/AdminLayout'
+import {CompetitionSettings} from '@/src/components/admin/CompetitionSettings'
 import {useAuth} from '@/src/contexts/AuthContext'
 import useAdminApi, {AdminCompetition} from '@/src/api/useAdminApi'
 import {useToast} from '@/src/contexts/ToastContext'
-import CasinoIcon from '@mui/icons-material/Casino'
-import SportsGolfIcon from '@mui/icons-material/SportsGolf'
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
-import {decodeHtmlEntities} from '@/src/utils/textUtils'
-import {formatDate} from '@/src/utils/dateUtils'
 
-export default function AdminDashboard() {
+export default function AdminSettingsPage() {
     const {user, loading: authLoading} = useAuth()
     const router = useRouter()
-    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled, updateDidRainEnabled} = useAdminApi()
+    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled, updateDidRainEnabled, updateCompetitionStatus} = useAdminApi()
     const {showToast} = useToast()
 
     const [competition, setCompetition] = useState<AdminCompetition | null>(null)
@@ -127,180 +123,106 @@ export default function AdminDashboard() {
         }
     }
 
+    const handleStatusChange = async (status: AdminCompetition['status']) => {
+        if (!competition || updating || !user?.activeCompetitionId) return
+        if (competition.status === status) return
+
+        try {
+            setUpdating(true)
+            await updateCompetitionStatus(user.activeCompetitionId, status)
+            setCompetition({...competition, status})
+            showToast('Võistluse staatus uuendatud', 'success')
+        } catch (err) {
+            console.error('Failed to update competition status:', err)
+            showToast('Staatuse uuendamine ebaõnnestus', 'error')
+        } finally {
+            setUpdating(false)
+        }
+    }
+
     // Show loading while auth is loading or user data is not yet available
     if (authLoading || !user) {
         return (
-            <Layout>
+            <AdminLayout>
                 <Box textAlign="center" mt={6}>
                     <CircularProgress />
                     <Typography variant="h6" mt={2}>Laadimine...</Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // If user is loaded but not admin, show access denied (will redirect)
     if (!isAdmin) {
         return (
-            <Layout>
-                <Box textAlign="center" mt={6}>
+            <AdminLayout>
+                <Box textAlign="center">
                     <Typography variant="h4">Puudub juurdepääs</Typography>
                     <Typography variant="body1" mt={2}>
                         Ainult administraatoritel on juurdepääs sellele lehele.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // Show message if no active competition
     if (!user.activeCompetitionId) {
         return (
-            <Layout>
-                <Box mt={4} px={2} textAlign="center">
+            <AdminLayout>
+                <Box px={2} textAlign="center">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
-                        Administraatori juhtpaneel
+                        Võistluse seaded
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Aktiivset võistlust ei ole valitud. Palun vali võistlus oma profiilis.
+                        Aktiivset võistlust ei ole valitud. Palun vali võistlus menüüst.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // Show loading while fetching competition
     if (loading) {
         return (
-            <Layout>
+            <AdminLayout>
                 <Box textAlign="center" mt={6}>
                     <CircularProgress />
                     <Typography variant="h6" mt={2}>Võistluse andmete laadimine...</Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // Show error if competition not found
     if (!competition) {
         return (
-            <Layout>
-                <Box mt={4} px={2} textAlign="center">
+            <AdminLayout>
+                <Box px={2} textAlign="center">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
-                        Administraatori juhtpaneel
+                        Võistluse seaded
                     </Typography>
                     <Typography variant="body1" color="error">
                         Võistlust ei leitud. Palun kontrolli oma aktiivset võistlust.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
-    // Dashboard View
     return (
-        <Layout>
-            <Box mt={4} px={2}>
-                <Box mb={3} textAlign="center">
-                    <Typography variant="h5" fontWeight="bold">
-                        {decodeHtmlEntities(competition.name) || `Võistlus #${competition.id}`}
-                    </Typography>
-                    {competition.competition_date && (
-                        <Typography variant="body2" color="text.secondary" mt={1}>
-                            {formatDate(competition.competition_date)}
-                        </Typography>
-                    )}
-                </Box>
-
-                <Card sx={{maxWidth: 800, mx: 'auto', mb: 3}}>
-                    <CardContent>
-                        <Typography variant="h6" fontWeight="bold" mb={3}>
-                            Võistluse seaded
-                        </Typography>
-
-                        <Box display="flex" flexDirection="column" gap={3}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={competition.ctp_enabled}
-                                        onChange={(e) => handleCtpToggle(e.target.checked)}
-                                        disabled={updating}
-                                    />
-                                }
-                                label="CTP lubatud"
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={competition.checkin_enabled}
-                                        onChange={(e) => handleCheckinToggle(e.target.checked)}
-                                        disabled={updating}
-                                    />
-                                }
-                                label="Luba loosimängud"
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={competition.prediction_enabled}
-                                        onChange={(e) => handlePredictionToggle(e.target.checked)}
-                                        disabled={updating}
-                                    />
-                                }
-                                label="Luba ennustamine"
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={competition.did_rain}
-                                        onChange={(e) => handleDidRainToggle(e.target.checked)}
-                                        disabled={updating}
-                                    />
-                                }
-                                label="Sadas vihma"
-                            />
-                        </Box>
-                    </CardContent>
-                </Card>
-
-                <Box display="flex" flexDirection="column" gap={2} maxWidth={800} mx="auto">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        startIcon={<CasinoIcon />}
-                        onClick={() => router.push('/admin/draw')}
-                        sx={{py: 1.5}}
-                    >
-                        Loosiauhindade loosimine
-                    </Button>
-
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        startIcon={<SportsGolfIcon />}
-                        onClick={() => router.push('/admin/final-game')}
-                        sx={{py: 1.5}}
-                    >
-                        Putimäng
-                    </Button>
-
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        size="large"
-                        startIcon={<EmojiEventsIcon />}
-                        onClick={() => router.push('/admin/results')}
-                        sx={{py: 1.5}}
-                    >
-                        Tulemused
-                    </Button>
-                </Box>
+        <AdminLayout>
+            <Box px={2}>
+                <CompetitionSettings
+                    competition={competition}
+                    updating={updating}
+                    onStatusChange={handleStatusChange}
+                    onCtpToggle={handleCtpToggle}
+                    onCheckinToggle={handleCheckinToggle}
+                    onPredictionToggle={handlePredictionToggle}
+                    onDidRainToggle={handleDidRainToggle}
+                />
             </Box>
-        </Layout>
+        </AdminLayout>
     )
 }

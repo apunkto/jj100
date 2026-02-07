@@ -241,7 +241,7 @@ export default function HistoryPage() {
 
                 {/* Leaderboard SECOND */}
                 <Box width="100%" maxWidth={720} textAlign="left">
-                    <Typography variant="h4" textAlign="center" fontWeight="bold" sx={{ fontSize: { xs: 22, sm: 28 }, marginBottom: 2, marginTop: 3 }}>
+                    <Typography variant="h4" textAlign="center" fontWeight="bold" sx={{ fontSize: { xs: 22, sm: 28 }, marginBottom: 2 }}>
                         Enim osalemisi
                     </Typography>
 

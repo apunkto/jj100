@@ -6,10 +6,8 @@ import 'swiper/css/autoplay'
 import {Box, Typography} from '@mui/material'
 import {useRouter} from 'next/router'
 import TopHolesSlide from '@/src/components/dashboard/TopHolesSlide'
-import {
-    TopPlayersByDivisionContent,
-    useTopPlayersByDivision,
-} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
+import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
+import {TopPlayersByDivisionContent} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
 import StatsSlide from '@/src/components/dashboard/StatsSlide'
 
 export default function Dashboard() {

@@ -1,12 +1,10 @@
 import {useEffect, useState} from 'react'
 import {Box, CircularProgress, Tab, Tabs, Typography} from '@mui/material'
 import {useRouter} from 'next/router'
-import Layout from '@/src/components/Layout'
+import AdminLayout from '@/src/components/AdminLayout'
 import {useAuth} from '@/src/contexts/AuthContext'
-import {
-    TopPlayersByDivisionContent,
-    useTopPlayersByDivision
-} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
+import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
+import {TopPlayersByDivisionResults} from '@/src/components/admin/TopPlayersByDivisionResults'
 
 function ResultsTabs({ competitionId }: { competitionId: number }) {
     const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
@@ -86,9 +84,9 @@ function ResultsTabs({ competitionId }: { competitionId: number }) {
             </Tabs>
             <Box sx={{ flex: 1, overflow: 'auto' }}>
                 {selectedDivision && (
-                    <TopPlayersByDivisionContent 
-                        division={selectedDivisionName} 
-                        players={selectedDivisionPlayers} 
+                    <TopPlayersByDivisionResults
+                        division={selectedDivisionName}
+                        players={selectedDivisionPlayers}
                     />
                 )}
             </Box>
@@ -113,34 +111,34 @@ export default function AdminResults() {
     // Show loading while auth is loading or user data is not yet available
     if (authLoading || !user) {
         return (
-            <Layout>
+            <AdminLayout>
                 <Box textAlign="center" mt={6}>
                     <CircularProgress />
                     <Typography variant="h6" mt={2}>Laadimine...</Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // If user is loaded but not admin, show access denied (will redirect)
     if (!isAdmin) {
         return (
-            <Layout>
-                <Box textAlign="center" mt={6}>
+            <AdminLayout>
+                <Box textAlign="center">
                     <Typography variant="h4">Puudub juurdepääs</Typography>
                     <Typography variant="body1" mt={2}>
                         Ainult administraatoritel on juurdepääs sellele lehele.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     // Show message if no active competition
     if (!user.activeCompetitionId) {
         return (
-            <Layout>
-                <Box mt={4} px={2} textAlign="center">
+            <AdminLayout>
+                <Box px={2} textAlign="center">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
                         Tulemused
                     </Typography>
@@ -148,12 +146,12 @@ export default function AdminResults() {
                         Aktiivset võistlust ei ole valitud. Palun vali võistlus oma profiilis.
                     </Typography>
                 </Box>
-            </Layout>
+            </AdminLayout>
         )
     }
 
     return (
-        <Layout>
+        <AdminLayout>
             <Box sx={{ 
                 height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' }, 
                 width: '100%',
@@ -162,6 +160,6 @@ export default function AdminResults() {
             }}>
                 <ResultsTabs competitionId={user.activeCompetitionId} />
             </Box>
-        </Layout>
+        </AdminLayout>
     )
 }

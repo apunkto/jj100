@@ -79,6 +79,21 @@ const updateDidRainEnabled = async (competitionId: number, enabled: boolean): Pr
     }
 }
 
+const updateCompetitionStatus = async (
+    competitionId: number,
+    status: 'waiting' | 'started' | 'finished'
+): Promise<void> => {
+    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/status`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status }),
+    })
+    if (!res.ok) {
+        const error = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(error.error || 'Failed to update competition status')
+    }
+}
+
 export default function useAdminApi() {
     return {
         getAdminCompetitions,
@@ -87,5 +102,6 @@ export default function useAdminApi() {
         updateCheckinEnabled,
         updatePredictionEnabled,
         updateDidRainEnabled,
+        updateCompetitionStatus,
     }
 }
