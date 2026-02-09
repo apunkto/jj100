@@ -36,7 +36,9 @@ import {decodeHtmlEntities} from '@/src/utils/textUtils'
 const adminMenuItems = [
     { href: '/admin', label: 'Seaded', icon: <SettingsIcon /> },
     { href: '/admin/draw', label: 'Loosiauhinnad', icon: <CasinoIcon /> },
+    { href: '/admin/draw-dashboard', label: 'Loosi ekraan', icon: <CasinoIcon />, newTab: true },
     { href: '/admin/final-game', label: 'Putimäng', icon: <SportsGolfIcon /> },
+    { href: '/admin/final-game-draw-dashboard', label: 'Putimängu ekraan', icon: <SportsGolfIcon />, newTab: true },
 ]
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -207,10 +209,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     )}
 
                     <List>
-                        {adminMenuItems.map(({ href, label, icon }) => {
+                        {adminMenuItems.map(({ href, label, icon, newTab }) => {
                             const isActive = currentPath === href
                             return (
-                                <Link key={href} href={href} style={{ textDecoration: 'none' }}>
+                                <Link
+                                    key={href}
+                                    href={href}
+                                    style={{ textDecoration: 'none' }}
+                                    {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                                >
                                     <ListItem disablePadding>
                                         <ListItemButton sx={{ borderRadius: 2 }}>
                                             <ListItemIcon sx={{ color: 'primary.main' }}>{icon}</ListItemIcon>

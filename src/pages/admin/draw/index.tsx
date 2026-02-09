@@ -1,7 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Box, Button, Typography} from '@mui/material'
-import Confetti from 'react-dom-confetti'
-import Image from 'next/image'
+import {Box, Button, Paper, Typography} from '@mui/material'
 import {CheckedInPlayer, useCheckinApi} from '@/src/api/useCheckinApi'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useRouter} from 'next/router'
@@ -9,7 +7,7 @@ import usePlayerApi from '@/src/api/usePlayerApi'
 import AdminLayout from '@/src/components/AdminLayout'
 
 export default function DrawPage() {
-    const {getCheckins, drawWinner} = useCheckinApi()
+    const {getCheckins, drawWinner, resetDraw} = useCheckinApi()
     const {user, loading, refreshMe} = useAuth()
     const {setActiveCompetition} = usePlayerApi()
     const router = useRouter()
@@ -18,8 +16,6 @@ export default function DrawPage() {
     const [players, setPlayers] = useState<CheckedInPlayer[]>([])
     const [currentName, setCurrentName] = useState('')
     const [winner, setWinner] = useState<CheckedInPlayer | null>(null)
-    const [shuffling, setShuffling] = useState(false)
-    const [confettiActive, setConfettiActive] = useState(false)
 
     const isAdmin = user?.isAdmin ?? false
 
@@ -75,36 +71,20 @@ export default function DrawPage() {
         if (!isAdmin) return
         if (players.length === 0) return
 
-        setShuffling(true)
         setWinner(null)
-        setConfettiActive(false)
-
-        const shuffleDuration = 4000
-        const intervalSpeed = 100
+        setCurrentName('')
 
         let drawnWinner: CheckedInPlayer
         try {
             drawnWinner = await drawWinner()
         } catch (e) {
             console.error('Failed to draw winner:', e)
-            setShuffling(false)
             return
         }
 
-        const interval = setInterval(() => {
-            const randomPlayer = players[Math.floor(Math.random() * players.length)]
-            setCurrentName(randomPlayer.player.name)
-        }, intervalSpeed)
-
-        setTimeout(() => {
-            clearInterval(interval)
-            setWinner(drawnWinner)
-            setCurrentName(drawnWinner.player.name)
-            setShuffling(false)
-            setConfettiActive(true)
-            setTimeout(() => setConfettiActive(false), 4000)
-            fetchPlayers()
-        }, shuffleDuration)
+        setWinner(drawnWinner)
+        setCurrentName(drawnWinner.player.name)
+        fetchPlayers()
     }
 
     // Show loading while auth is loading or user data is not yet available
@@ -134,51 +114,59 @@ export default function DrawPage() {
 
     return (
         <AdminLayout>
-            <Box textAlign="center" mt={6} position="relative">
-            <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-                <Image
-                    src="/white_logo.webp"
-                    alt="Logo"
-                    width={300}
-                    height={255}
-                    priority
-                    style={{maxWidth: '100%', height: 'auto'}}
-                />
-            </Box>
+            <Box sx={{ maxWidth: 400, mx: 'auto', px: 2, py: 3 }}>
+                <Typography variant="h4" fontWeight="bold" mb={2}>
+                    Loosiauhinnad
+                </Typography>
 
-            {currentName && (
-                <Box mt={6} position="relative">
-                    <Typography variant="h2" fontWeight="bold">
-                        {shuffling ? currentName : `🎉🎉 ${currentName} 🎉🎉`}
+                <Paper variant="outlined" sx={{ p: 2, mb: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Loosis osalejaid
                     </Typography>
-                    <div style={{ position: 'absolute', left: '50%', top: '50%', zIndex: 100 }}>
-                        <Confetti
-                            active={confettiActive}
-                            config={{
-                                angle: 90,
-                                spread: 150,
-                                startVelocity: 50,
-                                elementCount: 200,
-                                decay: 0.9,
-                                duration: 4000,
-                                colors: ['#ea9627', '#71e669', '#cacaca'],
-                            }}
-                        />
-                    </div>
+                    <Typography variant="h4" fontWeight="700">
+                        {players.length}
+                    </Typography>
+                </Paper>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={startDraw}
+                        disabled={players.length === 0}
+                        fullWidth
+                    >
+                        Loosime
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={async () => {
+                            try {
+                                await resetDraw()
+                                setWinner(null)
+                                setCurrentName('')
+                                await fetchPlayers()
+                            } catch (e) {
+                                console.error('Reset failed:', e)
+                            }
+                        }}
+                        fullWidth
+                    >
+                        Lähtesta loos
+                    </Button>
                 </Box>
-            )}
 
-
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={startDraw}
-                sx={{mt: 6, fontSize: '2.5rem', px: 8, py: 3}}
-                disabled={shuffling || players.length === 0}
-            >
-                Loosime!
-            </Button>
-        </Box>
+                {currentName && (
+                    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            Viimane võitja
+                        </Typography>
+                        <Typography variant="body1" fontWeight="600">
+                            {currentName}
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
         </AdminLayout>
     )
 }
