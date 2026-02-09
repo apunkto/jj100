@@ -2,8 +2,6 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
 import CasinoOutlinedIcon from '@mui/icons-material/CasinoOutlined'
-import CheckIcon from '@mui/icons-material/Check'
-import CloseIcon from '@mui/icons-material/Close'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
 import type {FinalGamePuttingResponse, PuttingGamePayload} from '@/src/api/useCheckinApi'
 
@@ -66,9 +64,12 @@ export default function PuttingGameDashboard() {
                 1
             )
         )
+        const allLevels = Array.from({ length: max }, (_, i) => i + 1)
+        // Show only the last 10 rounds if there are more than 10
+        const displayedLevels = allLevels.length > 10 ? allLevels.slice(-10) : allLevels
         return {
             maxLevel: max,
-            levels: Array.from({ length: max }, (_, i) => i + 1),
+            levels: displayedLevels,
         }
     }, [sortedPlayers, puttingGame?.currentLevel])
 
@@ -86,7 +87,7 @@ export default function PuttingGameDashboard() {
             return sortedPlayers.map((p) => (
                 <Typography
                     key={p.id}
-                    sx={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', fontWeight: 600, color: '#1a1a1a' }}
+                    sx={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#1a1a1a' }}
                 >
                     {p.order}. {p.name}
                 </Typography>
@@ -96,28 +97,29 @@ export default function PuttingGameDashboard() {
             <Box
                 sx={{
                     display: 'grid',
-                    gridTemplateColumns: `minmax(0, 1fr) repeat(${levels.length}, 1.5rem)`,
+                    gridTemplateColumns: `minmax(250px, 1fr) repeat(${levels.length}, clamp(2rem, 4vw, 3rem))`,
                     alignItems: 'center',
-                    gap: '0.25rem 0.5rem',
+                    gap: '0.5rem 0.1rem',
                 }}
             >
                 <Box key="h-empty" />
                 {levels.map((lvl) => (
                     <Typography
                         key={`h-${lvl}`}
-                        sx={{ fontSize: '0.7rem', fontWeight: 600, color: 'text.secondary', justifySelf: 'center' }}
+                        sx={{ fontSize: 'clamp(1rem, 2vw, 1.5rem)', fontWeight: 600, color: 'text.secondary', justifySelf: 'center' }}
                     >
-                        {lvl}m
+                        {lvl}
                     </Typography>
                 ))}
                 {sortedPlayers.map((p) => (
                     <Box key={p.id} sx={{ display: 'contents' }}>
                         <Typography
                             sx={{
-                                fontSize: isPuttingFinished ? 'clamp(1.25rem, 2.5vw, 1.75rem)' : 'clamp(1rem, 2vw, 1.2rem)',
+                                fontSize: isPuttingFinished ? 'clamp(1.5rem, 3vw, 2.25rem)' : 'clamp(1.25rem, 2.5vw, 1.75rem)',
                                 fontWeight: p.status === 'active' ? 700 : 500,
                                 color: p.status === 'active' ? '#1a1a1a' : 'text.secondary',
                                 textDecoration: p.status === 'out' ? 'line-through' : 'none',
+                                whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                             }}
@@ -130,11 +132,27 @@ export default function PuttingGameDashboard() {
                                 (p.lastResult === 'out' && lvl < p.lastLevel)
                             const missed = p.lastResult === 'out' && lvl === p.lastLevel
                             return (
-                                <Box key={`${p.id}-${lvl}`} sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Box key={`${p.id}-${lvl}`} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     {cleared ? (
-                                        <CheckIcon sx={{ color: 'success.main', fontSize: '1.25rem' }} />
+                                        <Box
+                                            sx={{
+                                                width: 'clamp(1.5rem, 3vw, 2.5rem)',
+                                                height: 'clamp(1.5rem, 3vw, 2.5rem)',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#4caf50',
+                                                flexShrink: 0,
+                                            }}
+                                        />
                                     ) : missed ? (
-                                        <CloseIcon sx={{ color: 'error.main', fontSize: '1.25rem' }} />
+                                        <Box
+                                            sx={{
+                                                width: 'clamp(1.5rem, 3vw, 2.5rem)',
+                                                height: 'clamp(1.5rem, 3vw, 2.5rem)',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#f44336',
+                                                flexShrink: 0,
+                                            }}
+                                        />
                                     ) : null}
                                 </Box>
                             )
@@ -164,7 +182,7 @@ export default function PuttingGameDashboard() {
             <Box
                 sx={{
                     width: '100%',
-                    maxWidth: 600,
+                    maxWidth: 1000,
                     display: 'flex',
                     flexDirection: 'column',
                     pt: 10,
@@ -217,12 +235,6 @@ export default function PuttingGameDashboard() {
                         gap: 1,
                     }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <CasinoOutlinedIcon sx={{ fontSize: '1.5rem', color: 'primary.main' }} />
-                        <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#1a1a1a' }}>
-                            Putimängus osalevad
-                        </Typography>
-                    </Box>
                     {renderContent()}
                 </Box>
             </Box>

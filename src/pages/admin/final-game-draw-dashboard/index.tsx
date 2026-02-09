@@ -1,8 +1,9 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
-import {Box, Typography} from '@mui/material'
+import {Box, Typography, Link as MuiLink} from '@mui/material'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
 import CasinoOutlinedIcon from '@mui/icons-material/CasinoOutlined'
 import Confetti from 'react-dom-confetti'
+import NextLink from 'next/link'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
 import type {FinalGameDrawResponse} from '@/src/api/useCheckinApi'
@@ -143,7 +144,7 @@ export default function FinalGameDrawDashboard() {
                     flexDirection: 'column',
                     pt: 6,
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'start',
                     gap: 4,
                     flex: 1,
                     minHeight: 0,
@@ -175,7 +176,6 @@ export default function FinalGameDrawDashboard() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 3,
-                        flex: 1,
                     }}
                 >
                     <Box
@@ -257,6 +257,27 @@ export default function FinalGameDrawDashboard() {
                         )}
                     </Box>
                 </Box>
+
+                {/* Link to putting game dashboard - only show when 10 players drawn */}
+                {isComplete && (
+                    <Box sx={{ mt: 2 }}>
+                        <NextLink href="/admin/final-game-putting-dashboard" passHref legacyBehavior>
+                            <MuiLink
+                                sx={{
+                                    fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                                    fontWeight: 600,
+                                    color: 'primary.main',
+                                    textDecoration: 'none',
+                                    '&:hover': {
+                                        textDecoration: 'underline',
+                                    },
+                                }}
+                            >
+                                Putimäng →
+                            </MuiLink>
+                        </NextLink>
+                    </Box>
+                )}
             </Box>
         </Box>
     )
