@@ -344,10 +344,11 @@ export const useCheckinApi = () => {
         let buffer = ''
         const run = async () => {
             try {
-                console.log('[PuttingSSE] Connecting to final-game-putting-sse...')
-                const res = await authedFetch(`${API_BASE}/lottery/final-game-putting-sse`, { signal: ac.signal })
+                const sseUrl = `${API_BASE}/lottery/final-game-putting-sse`
+                console.log('[PuttingSSE] Connecting to', sseUrl.replace(/^https?:\/\//, '').split('/')[0], '/lottery/final-game-putting-sse')
+                const res = await authedFetch(sseUrl, { signal: ac.signal })
                 if (!res.ok || !res.body) {
-                    console.warn('[PuttingSSE] Connection failed or no body:', res.status, res.statusText)
+                    console.warn('[PuttingSSE] Connection failed or no body:', res.status, res.statusText, 'url=', sseUrl.split('/').slice(0, 3).join('/'))
                     onClose()
                     return
                 }
