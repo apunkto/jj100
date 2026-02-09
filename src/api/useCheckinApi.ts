@@ -344,17 +344,23 @@ export const useCheckinApi = () => {
         let buffer = ''
         const run = async () => {
             try {
+                console.log('[PuttingSSE] Connecting to final-game-putting-sse...')
                 const res = await authedFetch(`${API_BASE}/lottery/final-game-putting-sse`, { signal: ac.signal })
                 if (!res.ok || !res.body) {
+                    console.warn('[PuttingSSE] Connection failed or no body:', res.status, res.statusText)
                     onClose()
                     return
                 }
+                console.log('[PuttingSSE] Connected, reading stream')
                 const reader = res.body.getReader()
                 const decoder = new TextDecoder()
                 try {
                     while (true) {
                         const { done, value } = await reader.read()
-                        if (done) break
+                        if (done) {
+                            console.log('[PuttingSSE] Stream done (closed by server)')
+                            break
+                        }
                         buffer += decoder.decode(value, { stream: true })
                         const lines = buffer.split('\n')
                         buffer = lines.pop() ?? ''
@@ -362,9 +368,15 @@ export const useCheckinApi = () => {
                             if (line.startsWith('data: ')) {
                                 try {
                                     const data = JSON.parse(line.slice(6)) as FinalGamePuttingResponse
+                                    const status = data.puttingGame?.gameStatus
+                                    const playerCount = data.puttingGame?.players?.length ?? 0
+                                    console.log('[PuttingSSE] Message received:', { status, playerCount })
                                     onMessage(data)
                                 } catch {
-                                    // skip non-JSON
+                                    // skip non-JSON (e.g. heartbeat)
+                                    if (line.trim() !== ': heartbeat') {
+                                        console.log('[PuttingSSE] Non-JSON data line:', line.slice(0, 80))
+                                    }
                                 }
                             }
                         }
@@ -372,6 +384,7 @@ export const useCheckinApi = () => {
                     if (buffer.trim().startsWith('data: ')) {
                         try {
                             const data = JSON.parse(buffer.trim().slice(6)) as FinalGamePuttingResponse
+                            console.log('[PuttingSSE] Final buffered message:', data.puttingGame?.gameStatus)
                             onMessage(data)
                         } catch {
                             // ignore
@@ -382,7 +395,11 @@ export const useCheckinApi = () => {
                 }
                 onClose()
             } catch (err) {
-                if (err instanceof Error && err.name === 'AbortError') return
+                if (err instanceof Error && err.name === 'AbortError') {
+                    console.log('[PuttingSSE] Aborted (unsubscribe)')
+                    return
+                }
+                console.warn('[PuttingSSE] Error:', err)
                 onClose()
             }
         }

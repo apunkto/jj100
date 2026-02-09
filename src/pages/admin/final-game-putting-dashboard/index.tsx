@@ -16,6 +16,11 @@ export default function PuttingGameDashboard() {
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const applyState = useCallback((raw: FinalGamePuttingResponse) => {
+        console.log('[PuttingDashboard] applyState:', {
+            gameStatus: raw.puttingGame?.gameStatus,
+            currentLevel: raw.puttingGame?.currentLevel,
+            players: raw.puttingGame?.players?.length,
+        })
         setPuttingGame(raw.puttingGame)
     }, [])
 
