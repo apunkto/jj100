@@ -54,6 +54,8 @@ export type FinalGameParticipant = {
     id: number
     final_game_order: number
     player: { id: number; name: string }
+    /** Present when game is running/finished; 'out' = eliminated */
+    status?: 'active' | 'out'
 }
 export const useCheckinApi = () => {
     const checkIn = async () => {

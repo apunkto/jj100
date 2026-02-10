@@ -10,7 +10,6 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemSecondaryAction,
     ListItemText,
     Paper,
     Stack,
@@ -64,6 +63,7 @@ export default function FinalGameDrawPage() {
                 name: p.name,
                 order: p.order,
                 playerId: 0,
+                status: p.status,
             })) ?? [])
             setFinalGameCount(participants.length)
             setFinalGameParticipants(
@@ -71,6 +71,7 @@ export default function FinalGameDrawPage() {
                     id: p.id,
                     final_game_order: p.order,
                     player: { id: p.playerId || 0, name: p.name },
+                    ...('status' in p && p.status != null && { status: p.status as 'active' | 'out' }),
                 }))
             )
             const pg = fgState.puttingGame
@@ -264,7 +265,7 @@ export default function FinalGameDrawPage() {
 
                 {puttingGame?.status === 'running' && (
                     <Box sx={{ mt: 3 }}>
-                        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                        <Paper variant="outlined" sx={{ p: 2, mb: 2, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">Voor</Typography>
                             <Typography variant="h5" fontWeight="700">{puttingGame.currentLevel}m</Typography>
                             <Typography variant="body2" color="text.secondary" mt={1}>Järgmine</Typography>
@@ -337,10 +338,11 @@ export default function FinalGameDrawPage() {
                         </Typography>
                         <List dense disablePadding>
                             {finalGameParticipants.map((p) => (
-                                <ListItem key={p.id} sx={{ px: 0, py: 0.5 }}>
-                                    <ListItemText primary={`${p.final_game_order}. ${p.player.name}`} />
-                                    {(puttingGame == null || puttingGame?.status === 'not_started') && (
-                                        <ListItemSecondaryAction>
+                                <ListItem
+                                    key={p.id}
+                                    sx={{ px: 0, py: 0.5 }}
+                                    secondaryAction={
+                                        (puttingGame == null || puttingGame?.status === 'not_started') ? (
                                             <IconButton
                                                 edge="end"
                                                 size="small"
@@ -349,8 +351,13 @@ export default function FinalGameDrawPage() {
                                             >
                                                 <DeleteOutlineIcon fontSize="small" />
                                             </IconButton>
-                                        </ListItemSecondaryAction>
-                                    )}
+                                        ) : undefined
+                                    }
+                                >
+                                    <ListItemText
+                                        primary={`${p.final_game_order}. ${p.player.name}`}
+                                        slotProps={{ primary: p.status === 'out' ? { sx: { textDecoration: 'line-through', color: 'text.secondary' } } : undefined }}
+                                    />
                                 </ListItem>
                             ))}
                         </List>
