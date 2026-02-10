@@ -15,6 +15,8 @@ import {
     Stack,
     Typography,
 } from '@mui/material'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import {CheckedInPlayer, FinalGameParticipant, PuttingGameState, useCheckinApi} from '@/src/api/useCheckinApi'
 import {useAuth} from '@/src/contexts/AuthContext'
@@ -25,7 +27,7 @@ import AdminLayout from '@/src/components/AdminLayout'
 export default function FinalGameDrawPage() {
     const {
         getCheckins,
-        getFinalGameState,
+        getPuttingGameState,
         startPuttingGame,
         resetPuttingGame,
         recordPuttingResult,
@@ -39,7 +41,6 @@ export default function FinalGameDrawPage() {
     const router = useRouter()
     const competitionIdParam = router.query.competitionId
 
-    const [participantCount, setParticipantCount] = useState(0)
     const [finalGameCount, setFinalGameCount] = useState(0)
     const [finalGameParticipants, setFinalGameParticipants] = useState<FinalGameParticipant[]>([])
     const [removeConfirm, setRemoveConfirm] = useState<FinalGameParticipant | null>(null)
@@ -51,49 +52,18 @@ export default function FinalGameDrawPage() {
 
     const isAdmin = user?.isAdmin ?? false
 
+    const applyPuttingState = (state: PuttingGameState | null) => {
+        const participants = state?.players ?? []
+        setFinalGameCount(participants.length)
+        setFinalGameParticipants(participants)
+        setPuttingGame(state)
+    }
+
     const fetchData = async () => {
         try {
-            const [checkins, fgState] = await Promise.all([
-                getCheckins(),
-                getFinalGameState(),
-            ])
-            setParticipantCount(fgState.participantCount ?? 0)
-            const participants = fgState.finalGameParticipants ?? (fgState.puttingGame?.players?.map((p) => ({
-                id: p.id,
-                name: p.name,
-                order: p.order,
-                playerId: 0,
-                status: p.status,
-            })) ?? [])
-            setFinalGameCount(participants.length)
-            setFinalGameParticipants(
-                participants.map((p) => ({
-                    id: p.id,
-                    final_game_order: p.order,
-                    player: { id: p.playerId || 0, name: p.name },
-                    ...('status' in p && p.status != null && { status: p.status as 'active' | 'out' }),
-                }))
-            )
-            const pg = fgState.puttingGame
-                ? ({
-                      status: fgState.puttingGame.gameStatus,
-                      currentLevel: fgState.puttingGame.currentLevel,
-                      currentTurnParticipantId: fgState.puttingGame.currentTurnParticipantId,
-                      currentTurnName: fgState.puttingGame.currentTurnName,
-                      winnerFinalGameId: null,
-                      winnerName: fgState.puttingGame.winnerName,
-                      players: fgState.puttingGame.players.map((p) => ({
-                          id: p.id,
-                          order: p.order,
-                          name: p.name,
-                          status: p.status,
-                          lastLevel: p.lastLevel,
-                          lastResult: p.lastResult,
-                      })),
-                  } satisfies PuttingGameState)
-                : null
-            setPuttingGame(pg)
-            return fgState
+            const puttingGameState = await getPuttingGameState()
+            applyPuttingState(puttingGameState ?? null)
+            return puttingGameState
         } catch (err) {
             console.error('Failed to fetch:', err)
             return null
@@ -125,7 +95,7 @@ export default function FinalGameDrawPage() {
 
     const startDraw = async () => {
         if (!isAdmin) return
-        if (participantCount === 0 || finalGameCount >= 10) return
+        if (finalGameParticipants.length === 0 || finalGameCount >= 10) return
 
         setWinner(null)
         setCurrentName('')
@@ -147,7 +117,7 @@ export default function FinalGameDrawPage() {
             const fgState = await fetchData()
             setWinner(null)
             setCurrentName('')
-            const newCount = fgState?.finalGameParticipants?.length ?? fgState?.puttingGame?.players?.length ?? 0
+            const newCount = fgState?.players?.length ?? 0
             if (newCount < 10) {
                 const drawnWinner = await drawWinner(true)
                 setWinner(drawnWinner)
@@ -196,31 +166,31 @@ export default function FinalGameDrawPage() {
 
     return (
         <AdminLayout>
-            <Box sx={{ maxWidth: 400, mx: 'auto', px: 2, py: 3 }}>
+            <Box sx={{maxWidth: 400, mx: 'auto', px: 2, py: 3}}>
                 <Typography variant="h4" fontWeight="bold" mb={2}>
                     Putimäng
                 </Typography>
 
                 {(puttingGame == null || puttingGame?.status === 'not_started') && (
                     <>
-                        <Paper variant="outlined" sx={{ p: 2, mb: 3, textAlign: 'center' }}>
+                        <Paper variant="outlined" sx={{p: 2, mb: 3, textAlign: 'center'}}>
                             <Typography variant="body2" color="text.secondary">
                                 Loosis osalejaid
                             </Typography>
                             <Typography variant="h4" fontWeight="700">
-                                {participantCount}
+                                {finalGameParticipants.length }
                             </Typography>
                             <Typography variant="body2" color="text.secondary" mt={1}>
                                 Valitud: {finalGameCount} / 10
                             </Typography>
                         </Paper>
 
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
                             <Button
                                 variant="contained"
                                 color="primary"
                                 onClick={startDraw}
-                                disabled={participantCount === 0 || finalGameCount >= 10 || !!(currentName && winner)}
+                                disabled={finalGameParticipants.length  === 0 || finalGameCount >= 10 || !!(currentName && winner)}
                                 fullWidth
                             >
                                 {finalGameCount >= 10 ? '10 mängijat valitud' : 'Loosime'}
@@ -230,7 +200,7 @@ export default function FinalGameDrawPage() {
                 )}
 
                 {currentName && winner && (
-                    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center' }}>
+                    <Box sx={{mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center'}}>
                         <Typography variant="body2" color="text.secondary">
                             Loositud
                         </Typography>
@@ -249,7 +219,7 @@ export default function FinalGameDrawPage() {
                 )}
 
                 {finalGameCount >= 10 && (puttingGame == null || puttingGame?.status === 'not_started') && (
-                    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center' }}>
+                    <Box sx={{mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center'}}>
                         <Button variant="contained" color="primary" size="large" onClick={async () => {
                             try {
                                 await startPuttingGame()
@@ -264,14 +234,14 @@ export default function FinalGameDrawPage() {
                 )}
 
                 {puttingGame?.status === 'running' && (
-                    <Box sx={{ mt: 3 }}>
-                        <Paper variant="outlined" sx={{ p: 2, mb: 2, textAlign: 'center' }}>
+                    <Box sx={{mt: 3}}>
+                        <Paper variant="outlined" sx={{p: 2, mb: 2, textAlign: 'center'}}>
                             <Typography variant="body2" color="text.secondary">Voor</Typography>
                             <Typography variant="h5" fontWeight="700">{puttingGame.currentLevel}m</Typography>
                             <Typography variant="body2" color="text.secondary" mt={1}>Järgmine</Typography>
                             <Typography variant="h6" fontWeight="600">{puttingGame.currentTurnName ?? '-'}</Typography>
                         </Paper>
-                        <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 2 }}>
+                        <Stack direction="row" spacing={2} justifyContent="center" sx={{mb: 2}}>
                             <Button
                                 variant="contained"
                                 color="success"
@@ -281,8 +251,8 @@ export default function FinalGameDrawPage() {
                                     if (puttingGame.currentTurnParticipantId == null || isRecordingResult) return
                                     setIsRecordingResult(true)
                                     try {
-                                        await recordPuttingResult(puttingGame.currentTurnParticipantId, 'in')
-                                        await fetchData()
+                                        const state = await recordPuttingResult(puttingGame.currentTurnParticipantId, 'in')
+                                        applyPuttingState(state)
                                     } catch (e) {
                                         console.error('Failed:', e)
                                     } finally {
@@ -301,8 +271,8 @@ export default function FinalGameDrawPage() {
                                     if (puttingGame.currentTurnParticipantId == null || isRecordingResult) return
                                     setIsRecordingResult(true)
                                     try {
-                                        await recordPuttingResult(puttingGame.currentTurnParticipantId, 'out')
-                                        await fetchData()
+                                        const state = await recordPuttingResult(puttingGame.currentTurnParticipantId, 'out')
+                                        applyPuttingState(state)
                                     } catch (e) {
                                         console.error('Failed:', e)
                                     } finally {
@@ -313,8 +283,9 @@ export default function FinalGameDrawPage() {
                                 Mööda
                             </Button>
                         </Stack>
-                        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                            <Button variant="outlined" color="warning" size="small" onClick={() => setResetConfirm(true)}>
+                        <Stack direction="row" spacing={2} sx={{mb: 2}}>
+                            <Button variant="outlined" color="warning" size="small"
+                                    onClick={() => setResetConfirm(true)}>
                                 Lähtesta mäng
                             </Button>
                         </Stack>
@@ -322,44 +293,68 @@ export default function FinalGameDrawPage() {
                 )}
 
                 {puttingGame?.status === 'finished' && puttingGame.winnerName && (
-                    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center' }}>
+                    <Box sx={{mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center'}}>
                         <Typography variant="subtitle1" color="text.secondary">Võitja</Typography>
                         <Typography variant="h5" fontWeight="700">{puttingGame.winnerName}</Typography>
-                        <Button variant="outlined" color="warning" size="small" onClick={() => setResetConfirm(true)} sx={{ mt: 2 }}>
+                        <Button variant="outlined" color="warning" size="small" onClick={() => setResetConfirm(true)}
+                                sx={{mt: 2}}>
                             Lähtesta mäng
                         </Button>
                     </Box>
                 )}
 
                 {finalGameParticipants.length > 0 && (
-                    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+                    <Box sx={{mt: 3, pt: 3, borderTop: 1, borderColor: 'divider'}}>
                         <Typography variant="subtitle1" fontWeight="600" mb={1}>
                             Putimängus osalevad
                         </Typography>
                         <List dense disablePadding>
-                            {finalGameParticipants.map((p) => (
-                                <ListItem
-                                    key={p.id}
-                                    sx={{ px: 0, py: 0.5 }}
-                                    secondaryAction={
-                                        (puttingGame == null || puttingGame?.status === 'not_started') ? (
-                                            <IconButton
-                                                edge="end"
-                                                size="small"
-                                                onClick={() => setRemoveConfirm(p)}
-                                                aria-label="Eemalda"
-                                            >
-                                                <DeleteOutlineIcon fontSize="small" />
-                                            </IconButton>
-                                        ) : undefined
-                                    }
-                                >
-                                    <ListItemText
-                                        primary={`${p.final_game_order}. ${p.player.name}`}
-                                        slotProps={{ primary: p.status === 'out' ? { sx: { textDecoration: 'line-through', color: 'text.secondary' } } : undefined }}
-                                    />
-                                </ListItem>
-                            ))}
+                            {finalGameParticipants.map((p) => {
+                                const puttingPlayer = puttingGame?.players?.find((pl) => pl.finalParticipantId === p.finalParticipantId)
+                                const threwThisRound = puttingGame?.status === 'running' && puttingPlayer != null && puttingPlayer.lastLevel === puttingGame.currentLevel && puttingPlayer.lastResult != null
+                                const resultIcon = threwThisRound
+                                    ? puttingPlayer!.lastResult === 'in'
+                                        ? <CheckIcon sx={{fontSize: 18, color: 'success.main', ml: 0.5}} aria-hidden/>
+                                        : <CloseIcon sx={{fontSize: 18, color: 'error.main', ml: 0.5}} aria-hidden/>
+                                    : null
+                                return (
+                                    <ListItem
+                                        key={p.finalParticipantId}
+                                        sx={{px: 0, py: 0.5}}
+                                        secondaryAction={
+                                            (puttingGame == null || puttingGame?.status === 'not_started') ? (
+                                                <IconButton
+                                                    edge="end"
+                                                    size="small"
+                                                    onClick={() => setRemoveConfirm(p)}
+                                                    aria-label="Eemalda"
+                                                >
+                                                    <DeleteOutlineIcon fontSize="small"/>
+                                                </IconButton>
+                                            ) : undefined
+                                        }
+                                    >
+                                        <ListItemText
+                                            primary={
+                                                <Box
+                                                    component="span"
+                                                    sx={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        ...(p.status === 'out' && {
+                                                            textDecoration: 'line-through',
+                                                            color: 'text.secondary'
+                                                        }),
+                                                    }}
+                                                >
+                                                    {`${p.order}. ${p.name}`}
+                                                    {resultIcon}
+                                                </Box>
+                                            }
+                                        />
+                                    </ListItem>
+                                )
+                            })}
                         </List>
                     </Box>
                 )}
@@ -369,7 +364,7 @@ export default function FinalGameDrawPage() {
                     <DialogContent>
                         <DialogContentText>
                             Oled kindel, et soovid{' '}
-                            <Box component="span" sx={{ fontWeight: 700 }}>{removeConfirm?.player.name}</Box>
+                            <Box component="span" sx={{fontWeight: 700}}>{removeConfirm?.name}</Box>
                             {' '}putimängust eemaldada?
                         </DialogContentText>
                     </DialogContent>
@@ -381,7 +376,7 @@ export default function FinalGameDrawPage() {
                             onClick={async () => {
                                 if (!removeConfirm) return
                                 try {
-                                    await removeFinalGameParticipant(removeConfirm.id)
+                                    await removeFinalGameParticipant(removeConfirm.finalParticipantId)
                                     setRemoveConfirm(null)
                                     await fetchData()
                                 } catch (e) {

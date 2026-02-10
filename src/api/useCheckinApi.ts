@@ -12,32 +12,17 @@ export type CheckedInPlayer = {
     prize_won: boolean
 }
 
-export type PuttingGamePayload = {
-    gameStatus: 'not_started' | 'running' | 'finished'
-    currentLevel: number
-    currentTurnParticipantId: number | null
-    currentTurnName: string | null
-    winnerName: string | null
-    players: { id: number; order: number; name: string; status: 'active' | 'out'; lastLevel: number; lastResult: 'in' | 'out' | null }[]
-}
 
 export type PuttingGameState = {
     status: 'not_started' | 'running' | 'finished'
     currentLevel: number
     currentTurnParticipantId: number | null
     currentTurnName: string | null
-    winnerFinalGameId: number | null
+    winnerId: number | null
     winnerName: string | null
-    players: { id: number; order: number; name: string; status: 'active' | 'out'; lastLevel: number; lastResult: 'in' | 'out' | null }[]
+    players: FinalGameParticipant[]
 }
 
-export type FinalGameStateResponse = {
-    finalGameParticipants?: { id: number; name: string; order: number; playerId: number }[]
-    participantCount?: number
-    winnerName?: string
-    participantNames?: string[]
-    puttingGame?: PuttingGamePayload
-}
 
 export type FinalGameDrawResponse = {
     finalGameParticipants: { id: number; name: string; order: number; playerId: number }[]
@@ -46,15 +31,12 @@ export type FinalGameDrawResponse = {
     participantNames?: string[]
 }
 
-export type FinalGamePuttingResponse = {
-    puttingGame: PuttingGamePayload
-}
-
 export type FinalGameParticipant = {
-    id: number
-    final_game_order: number
-    player: { id: number; name: string }
-    /** Present when game is running/finished; 'out' = eliminated */
+    finalParticipantId: number
+    order: number
+    name: string
+    lastLevel: number
+    lastResult: 'in' | 'out' | null
     status?: 'active' | 'out'
 }
 export const useCheckinApi = () => {
@@ -220,12 +202,6 @@ export const useCheckinApi = () => {
         return () => ac.abort()
     }, [])
 
-    const getFinalGameState = useCallback(async (): Promise<FinalGameStateResponse> => {
-        const res = await authedFetch(`${API_BASE}/lottery/final-game-state`)
-        if (!res.ok) throw new Error('Failed to fetch final game state')
-        return res.json()
-    }, [])
-
     const getFinalGameParticipants = async (): Promise<FinalGameParticipant[]> => {
         const res = await authedFetch(`${API_BASE}/lottery/final-game/participants`)
         if (!res.ok) throw new Error('Failed to fetch final game participants')
@@ -260,7 +236,7 @@ export const useCheckinApi = () => {
         }
     }
 
-    const recordPuttingResult = async (participantId: number, result: 'in' | 'out') => {
+    const recordPuttingResult = async (participantId: number, result: 'in' | 'out'):Promise<PuttingGameState | null> => {
         const res = await authedFetch(`${API_BASE}/lottery/final-game/game/attempt`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -270,6 +246,7 @@ export const useCheckinApi = () => {
             const body = await res.json().catch(() => ({})) as { error?: string }
             throw new Error(body?.error ?? 'Failed to record result')
         }
+        return res.json()
     }
 
     const getFinalGameDrawState = useCallback(async (): Promise<FinalGameDrawResponse> => {
@@ -278,7 +255,7 @@ export const useCheckinApi = () => {
         return res.json()
     }, [])
 
-    const getFinalGamePuttingState = useCallback(async (): Promise<FinalGamePuttingResponse> => {
+    const getFinalGamePuttingState = useCallback(async (): Promise<PuttingGameState> => {
         const res = await authedFetch(`${API_BASE}/lottery/final-game-putting-state`)
         if (!res.ok) throw new Error('Failed to fetch final game putting state')
         return res.json()
@@ -339,7 +316,7 @@ export const useCheckinApi = () => {
     }, [])
 
     const subscribeToFinalGamePuttingState = useCallback((
-        onMessage: (state: FinalGamePuttingResponse) => void,
+        onMessage: (state: PuttingGameState) => void,
         onClose: () => void
     ): (() => void) => {
         const ac = new AbortController()
@@ -370,24 +347,26 @@ export const useCheckinApi = () => {
                         for (const line of lines) {
                             if (line.startsWith('data: ')) {
                                 try {
-                                    const data = JSON.parse(line.slice(6)) as FinalGamePuttingResponse
-                                    const status = data.puttingGame?.gameStatus
-                                    const playerCount = data.puttingGame?.players?.length ?? 0
-                                    console.log('[PuttingSSE] Message received:', { status, playerCount })
+                                    const data = JSON.parse(line.slice(6)) as PuttingGameState
+                                    const status = data.status
+                                    const playerCount = data.players?.length ?? 0
+                                    console.log('[PuttingSSE] Message received:', { status, playerCount }, data)
                                     onMessage(data)
                                 } catch {
                                     // skip non-JSON (e.g. heartbeat)
                                     if (line.trim() !== ': heartbeat') {
                                         console.log('[PuttingSSE] Non-JSON data line:', line.slice(0, 80))
                                     }
+                                    console.log('[PuttingSSE] Line received (non-JSON or heartbeat):', line.trim().slice(0, 80))
                                 }
                             }
                         }
                     }
+                    console.log( '[PuttingSSE] Stream ended, flushing buffer')
                     if (buffer.trim().startsWith('data: ')) {
                         try {
-                            const data = JSON.parse(buffer.trim().slice(6)) as FinalGamePuttingResponse
-                            console.log('[PuttingSSE] Final buffered message:', data.puttingGame?.gameStatus)
+                            const data = JSON.parse(buffer.trim().slice(6)) as PuttingGameState
+                            console.log('[PuttingSSE] Final buffered message:', data.status)
                             onMessage(data)
                         } catch {
                             // ignore
@@ -421,7 +400,6 @@ export const useCheckinApi = () => {
         resetDraw,
         getDrawState,
         subscribeToDrawState,
-        getFinalGameState,
         getFinalGameDrawState,
         getFinalGamePuttingState,
         subscribeToFinalGameDrawState,

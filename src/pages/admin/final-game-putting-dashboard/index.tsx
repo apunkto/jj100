@@ -1,9 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
-import CasinoOutlinedIcon from '@mui/icons-material/CasinoOutlined'
-import {useCheckinApi} from '@/src/api/useCheckinApi'
-import type {FinalGamePuttingResponse, PuttingGamePayload} from '@/src/api/useCheckinApi'
+import {PuttingGameState, useCheckinApi} from '@/src/api/useCheckinApi'
 
 const RECONNECT_DELAY_MS = 2000
 const MAX_DISPLAYED_LEVELS = 20
@@ -11,17 +9,13 @@ const MAX_DISPLAYED_LEVELS = 20
 export default function PuttingGameDashboard() {
     const {subscribeToFinalGamePuttingState} = useCheckinApi()
 
-    const [puttingGame, setPuttingGame] = useState<PuttingGamePayload | null>(null)
+    const [puttingGame, setPuttingGame] = useState<PuttingGameState | null>(null)
     const unsubscribeRef = useRef<(() => void) | null>(null)
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const applyState = useCallback((raw: FinalGamePuttingResponse) => {
-        console.log('[PuttingDashboard] applyState:', {
-            gameStatus: raw.puttingGame?.gameStatus,
-            currentLevel: raw.puttingGame?.currentLevel,
-            players: raw.puttingGame?.players?.length,
-        })
-        setPuttingGame(raw.puttingGame)
+    const applyState = useCallback((raw: PuttingGameState) => {
+        console.log('Received putting game state update:', raw)
+        setPuttingGame(raw)
     }, [])
 
     const subscribe = useCallback(() => {
@@ -54,13 +48,14 @@ export default function PuttingGameDashboard() {
     }, [subscribe])
 
     const sortedPlayers = useMemo(() => {
+        console.log('Putting game players:', puttingGame?.players)
         if (!puttingGame?.players) return []
         return [...puttingGame.players].sort((a, b) => a.order - b.order)
     }, [puttingGame?.players])
 
     const {maxLevel, levels} = useMemo(() => {
         if (sortedPlayers.length === 0)
-            return { maxLevel: 1, levels: [1] as number[] }
+            return {maxLevel: 1, levels: [1] as number[]}
         const max = Math.min(
             MAX_DISPLAYED_LEVELS,
             Math.max(
@@ -69,7 +64,7 @@ export default function PuttingGameDashboard() {
                 1
             )
         )
-        const allLevels = Array.from({ length: max }, (_, i) => i + 1)
+        const allLevels = Array.from({length: max}, (_, i) => i + 1)
         // Show only the last 10 rounds if there are more than 10
         const displayedLevels = allLevels.length > 10 ? allLevels.slice(-10) : allLevels
         return {
@@ -78,21 +73,21 @@ export default function PuttingGameDashboard() {
         }
     }, [sortedPlayers, puttingGame?.currentLevel])
 
-    const isPuttingRunning = puttingGame?.gameStatus === 'running'
-    const isPuttingFinished = puttingGame?.gameStatus === 'finished'
+    const isPuttingRunning = puttingGame?.status === 'running'
+    const isPuttingFinished = puttingGame?.status === 'finished'
 
     const renderContent = () => {
         if (!puttingGame) {
-            return <Typography sx={{ color: 'text.secondary', fontStyle: 'italic' }}>Ootan...</Typography>
+            return <Typography sx={{color: 'text.secondary', fontStyle: 'italic'}}>Ootan...</Typography>
         }
         if (sortedPlayers.length === 0) {
-            return <Typography sx={{ color: 'text.secondary', fontStyle: 'italic' }}>Ootan...</Typography>
+            return <Typography sx={{color: 'text.secondary', fontStyle: 'italic'}}>Ootan...</Typography>
         }
         if (!isPuttingRunning && !isPuttingFinished) {
             return sortedPlayers.map((p) => (
                 <Typography
-                    key={p.id}
-                    sx={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#1a1a1a' }}
+                    key={p.finalParticipantId}
+                    sx={{fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', fontWeight: 600, color: '#1a1a1a'}}
                 >
                     {p.order}. {p.name}
                 </Typography>
@@ -107,17 +102,22 @@ export default function PuttingGameDashboard() {
                     gap: '0.5rem 0.1rem',
                 }}
             >
-                <Box key="h-empty" />
+                <Box key="h-empty"/>
                 {levels.map((lvl) => (
                     <Typography
                         key={`h-${lvl}`}
-                        sx={{ fontSize: 'clamp(1rem, 2vw, 1.5rem)', fontWeight: 600, color: 'text.secondary', justifySelf: 'center' }}
+                        sx={{
+                            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+                            fontWeight: 600,
+                            color: 'text.secondary',
+                            justifySelf: 'center'
+                        }}
                     >
                         {lvl}
                     </Typography>
                 ))}
                 {sortedPlayers.map((p) => (
-                    <Box key={p.id} sx={{ display: 'contents' }}>
+                    <Box key={p.finalParticipantId} sx={{display: 'contents'}}>
                         <Typography
                             sx={{
                                 fontSize: isPuttingFinished ? 'clamp(1.5rem, 3vw, 2.25rem)' : 'clamp(1.25rem, 2.5vw, 1.75rem)',
@@ -129,7 +129,7 @@ export default function PuttingGameDashboard() {
                                 textOverflow: 'ellipsis',
                             }}
                         >
-                            {p.order}. {p.name}
+                            {p.order}. {p.name} {p.finalParticipantId}
                         </Typography>
                         {levels.map((lvl) => {
                             const cleared =
@@ -137,7 +137,8 @@ export default function PuttingGameDashboard() {
                                 (p.lastResult === 'out' && lvl < p.lastLevel)
                             const missed = p.lastResult === 'out' && lvl === p.lastLevel
                             return (
-                                <Box key={`${p.id}-${lvl}`} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Box key={`${p.finalParticipantId}-${lvl}`}
+                                     sx={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                                     {cleared ? (
                                         <Box
                                             sx={{
@@ -199,28 +200,54 @@ export default function PuttingGameDashboard() {
                     mx: 'auto',
                 }}
             >
-                <Box sx={{ flexShrink: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <SportsGolfIcon sx={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'primary.main' }} />
+                <Box sx={{
+                    flexShrink: 0,
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 0.5
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        justifyContent: 'center'
+                    }}>
+                        <SportsGolfIcon sx={{fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'primary.main'}}/>
                         <Typography
                             component="h1"
-                            sx={{ fontSize: 'clamp(2rem, 5.5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.02em', color: '#1a1a1a', lineHeight: 1.15 }}
+                            sx={{
+                                fontSize: 'clamp(2rem, 5.5vw, 3.25rem)',
+                                fontWeight: 800,
+                                letterSpacing: '-0.02em',
+                                color: '#1a1a1a',
+                                lineHeight: 1.15
+                            }}
                         >
                             JJ100 Putimäng
                         </Typography>
                     </Box>
                     {isPuttingRunning && (
-                        <Typography sx={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: '#1a1a1a', mt: 1 }}>
+                        <Typography
+                            sx={{fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: '#1a1a1a', mt: 1}}>
                             Kaugus: {puttingGame?.currentLevel}m
                         </Typography>
                     )}
                     {isPuttingRunning && puttingGame?.currentTurnName && (
-                        <Typography sx={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.5rem)', fontWeight: 600, color: 'primary.main', mt: 0.5 }}>
+                        <Typography sx={{
+                            fontSize: 'clamp(1.25rem, 2.5vw, 1.5rem)',
+                            fontWeight: 600,
+                            color: 'primary.main',
+                            mt: 0.5
+                        }}>
                             Viskab: {puttingGame.currentTurnName}
                         </Typography>
                     )}
                     {isPuttingFinished && puttingGame?.winnerName && (
-                        <Typography sx={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, color: 'primary.main', mt: 1 }}>
+                        <Typography
+                            sx={{fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, color: 'primary.main', mt: 1}}>
                             Võitja: {puttingGame.winnerName}
                         </Typography>
                     )}
