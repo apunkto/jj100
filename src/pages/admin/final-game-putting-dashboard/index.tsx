@@ -129,7 +129,7 @@ export default function PuttingGameDashboard() {
                                 textOverflow: 'ellipsis',
                             }}
                         >
-                            {p.order}. {p.name} {p.finalParticipantId}
+                            {p.order}. {p.name}
                         </Typography>
                         {levels.map((lvl) => {
                             const cleared =
