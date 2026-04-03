@@ -25,7 +25,6 @@ export type MetrixPlayerStats = {
         dnf: boolean;
     };
     deltaToClassLeader: number | null;
-    overallPlace: number | null;
     scoreBreakdown: {
         eagles: number;
         birdies: number;

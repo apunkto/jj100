@@ -33,7 +33,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     )
 }
 
-export default function CtpStatsPage() {
+export default function PlayerStatsPage() {
     const { getMetrixPlayerStats } = useMetrixApi()
     const [stats, setStats] = useState<MetrixPlayerStats | null>(null)
     const [loadingStats, setLoadingStats] = useState(false)
@@ -72,7 +72,6 @@ export default function CtpStatsPage() {
             <Box
                 sx={{
                     maxWidth: 560,
-                    mx: 'auto',
                     px: 2,
                     py: 3,
                 }}
@@ -133,10 +132,6 @@ export default function CtpStatsPage() {
                                 <StatRow
                                     label="Liidrist maas"
                                     value={stats.deltaToClassLeader === null ? '–' : `${stats.deltaToClassLeader} viset`}
-                                />
-                                <StatRow
-                                    label="Üldjärjestus"
-                                    value={stats.overallPlace === null ? '–' : `${stats.overallPlace}. koht`}
                                 />
                                 <StatRow
                                     label="Läbitud rajad"
