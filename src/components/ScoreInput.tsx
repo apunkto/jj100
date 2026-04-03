@@ -38,15 +38,17 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
 
     // Update input value when external value changes (e.g., when loading from API)
     useEffect(() => {
-        if (value === null || value === undefined) {
-            setInputValue('')
-        } else if (value === 0) {
-            setInputValue('0')
-        } else if (value > 0) {
-            setInputValue(`+${value}`)
-        } else {
-            setInputValue(String(value))
-        }
+        queueMicrotask(() => {
+            if (value === null || value === undefined) {
+                setInputValue('')
+            } else if (value === 0) {
+                setInputValue('0')
+            } else if (value > 0) {
+                setInputValue(`+${value}`)
+            } else {
+                setInputValue(String(value))
+            }
+        })
     }, [value])
 
     // Validation logic

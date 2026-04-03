@@ -1,4 +1,4 @@
-import React, {forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState} from 'react'
+import React, {forwardRef, useCallback, useImperativeHandle, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
 
 // Tuned for large LED ~1200x800; can be overridden via props if needed
@@ -59,7 +59,10 @@ function SingleReel({
     const [offset, setOffset] = useState(0)
     const [stopped, setStopped] = useState(false)
     const onStoppedRef = useRef(onStopped)
-    onStoppedRef.current = onStopped
+
+    React.useEffect(() => {
+        onStoppedRef.current = onStopped
+    }, [onStopped])
 
     React.useEffect(() => {
         if (!startSpinning) return
@@ -156,13 +159,16 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
         buildIdleStrip(names),
     ])
     const onStoppedRef = useRef(onStopped)
-    onStoppedRef.current = onStopped
     const stoppedCount = useRef(0)
     const hasSpunRef = useRef(false)
     const initialNamesRef = useRef<string[]>(names)
 
     // Only rebuild idle strips on initial mount (when names first become available) or when component remounts
     // Don't rebuild when names change after mount - that causes flickering
+    React.useEffect(() => {
+        onStoppedRef.current = onStopped
+    }, [onStopped])
+
     React.useEffect(() => {
         // If we haven't spun yet and names just became available (were empty, now have values), initialize strips
         if (phase === 'idle' && !hasSpunRef.current && initialNamesRef.current.length === 0 && names.length > 0) {
@@ -171,7 +177,7 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
         }
     }, [names, phase])
 
-    const spinKeyRef = useRef(0)
+    const [spinKey, setSpinKey] = useState(0)
     const draw = useCallback(
         (winner: string) => {
             const pool = names.length > 0 ? names : [winner]
@@ -181,7 +187,7 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
                 buildReelStrip(winner, pool),
             ])
             stoppedCount.current = 0
-            spinKeyRef.current += 1
+            setSpinKey((k) => k + 1)
             hasSpunRef.current = true
             setPhase('spinning')
         },
@@ -198,7 +204,7 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
     }, [])
 
     const startSpinning = phase === 'spinning'
-    const key = spinKeyRef.current
+    const key = spinKey
 
     return (
         <Box

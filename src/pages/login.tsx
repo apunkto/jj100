@@ -6,12 +6,12 @@ import {
     Button,
     CircularProgress,
     Dialog,
+    DialogActions,
     DialogContent,
     DialogTitle,
     IconButton,
     List,
     ListItemButton,
-    Paper,
     Stack,
     TextField,
     Typography,
@@ -43,6 +43,7 @@ export default function LoginPage() {
     const [cooldown, setCooldown] = useState(0)
     const [identityPickerOpen, setIdentityPickerOpen] = useState(false)
     const [identityPickerList, setIdentityPickerList] = useState<MetrixIdentity[]>([])
+    const [metrixConsentOpen, setMetrixConsentOpen] = useState(false)
 
     const normalizedEmail = email.trim().toLowerCase()
     const canSend = normalizedEmail.length > 3 && normalizedEmail.includes("@")
@@ -74,7 +75,7 @@ export default function LoginPage() {
         setInfo("Saatsime PIN-koodi sinu e-mailile.")
     }
 
-    const sendPin = async () => {
+    const sendPin = async (options?: { fetchMetrixIfNewUser?: boolean }) => {
         setErrorMsg(null)
         setInfo(null)
 
@@ -85,19 +86,33 @@ export default function LoginPage() {
 
         if (cooldown > 0) return
 
+        const fetchMetrix = options?.fetchMetrixIfNewUser === true
+        const isResendFromPin = stage === "pin"
+
+        if (fetchMetrix || isResendFromPin) {
+            setCooldown(8)
+        }
+
         setLoading(true)
-        setCooldown(8)
 
         try {
-            const result = await preLogin(normalizedEmail)
+            const result = await preLogin(normalizedEmail, {
+                fetchMetrixIfNewUser: fetchMetrix,
+            })
 
             if (result.inDb) {
-                // User exists in DB, send OTP directly
+                if (!fetchMetrix && !isResendFromPin) {
+                    setCooldown(8)
+                }
                 await sendOtpAndGoToPin()
                 return
             }
 
-            // Not in DB: check Metrix identities
+            if (result.needsMetrixConsent) {
+                setMetrixConsentOpen(true)
+                return
+            }
+
             const identities = result.identities || []
 
             if (identities.length === 0) {
@@ -106,13 +121,11 @@ export default function LoginPage() {
             }
 
             if (identities.length === 1) {
-                // Single identity: register and send OTP
                 await registerFromMetrix(normalizedEmail, identities[0].userId)
                 await sendOtpAndGoToPin()
                 return
             }
 
-            // More than one: show picker; registration and OTP sent after user selects
             setIdentityPickerList(identities)
             setIdentityPickerOpen(true)
         } catch (e: unknown) {
@@ -120,6 +133,11 @@ export default function LoginPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const onConfirmMetrixConsent = () => {
+        setMetrixConsentOpen(false)
+        void sendPin({ fetchMetrixIfNewUser: true })
     }
 
     const onChooseIdentity = async (identity: MetrixIdentity) => {
@@ -177,20 +195,24 @@ export default function LoginPage() {
 
     return (
         <Layout minimal>
-            <Box maxWidth={460} mx="auto" width="100%">
-                <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-                    <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        Logi sisse
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                        Sisesta oma <strong>dgmetrixi e-mail</strong> ja saadame sulle ühekordse PIN-koodi.
-                    </Typography>
+            <Box
+                maxWidth={560}
+                mx="auto"
+                width="100%"
+                sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
+            >
+                <Typography variant="h5" fontWeight={700} mb={0.5}>
+                    Logi sisse
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={2}>
+                    Sisesta oma <strong>dgmetrixi e-mail</strong> ja saadame sulle ühekordse PIN-koodi.
+                </Typography>
 
-                    <Stack spacing={2}>
-                        {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
-                        {info && <Alert severity="info">{info}</Alert>}
+                <Stack spacing={2}>
+                    {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
+                    {info && <Alert severity="info">{info}</Alert>}
 
-                        {stage === "email" ? (
+                    {stage === "email" ? (
                             <>
                                 <TextField
                                     fullWidth
@@ -232,7 +254,7 @@ export default function LoginPage() {
                                     size="large"
                                     variant="contained"
                                     disabled={!canSend || loading || cooldown > 0}
-                                    onClick={sendPin}
+                                    onClick={() => void sendPin()}
                                 >
                                     {loading ? <CircularProgress size={20} /> : cooldown > 0 ? `Oota ${cooldown}s...` : "Saada PIN"}
                                 </Button>
@@ -287,9 +309,35 @@ export default function LoginPage() {
                                     </Button>
                                 </Stack>
                             </>
-                        )}
-                    </Stack>
-                </Paper>
+                    )}
+                </Stack>
+
+                <Dialog
+                    open={metrixConsentOpen}
+                    onClose={() => !loading && setMetrixConsentOpen(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle>DiscGolf Metrix</DialogTitle>
+                    <DialogContent>
+              
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                            Kinnitades annad nõusoleku, et JJ100 äpp võib kasutada Sinu DiscGolfMetrixi andmeid (ID, nimi, e-mail).
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                            Andmeid kasutakse üksnes JJ100 äpis ja neid ei jagata edasi.
+                        </Typography>
+                       
+                    </DialogContent>
+                    <DialogActions sx={{ px: 3, pb: 2 }}>
+                        <Button onClick={() => setMetrixConsentOpen(false)} disabled={loading}>
+                            Katkesta
+                        </Button>
+                        <Button variant="contained" onClick={onConfirmMetrixConsent} disabled={loading}>
+                            Nõustun ja jätkan
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
                 <Dialog open={identityPickerOpen} onClose={() => setIdentityPickerOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -47,12 +47,9 @@ export type MetrixIdentity = { userId: number; name: string }
 
 type PreLoginPayload = {
     inDb: boolean
+    /** Present when email is not in our DB and client must ask consent before Metrix lookup */
+    needsMetrixConsent?: boolean
     identities?: MetrixIdentity[]
-}
-
-type CheckEmailPayload = {
-    metrixUserId: number | null
-    identities: MetrixIdentity[]
 }
 
 type StatsPayload = MetrixPlayerStats;
@@ -100,11 +97,19 @@ const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
     return result.data;
 };
 
-const preLogin = async (email: string): Promise<PreLoginPayload> => {
+const preLogin = async (
+    email: string,
+    options?: { fetchMetrixIfNewUser?: boolean }
+): Promise<PreLoginPayload> => {
     const res = await fetch(`${API_BASE}/auth/pre-login`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email}),
+        body: JSON.stringify({
+            email,
+            ...(options?.fetchMetrixIfNewUser === true
+                ? { fetchMetrixIfNewUser: true }
+                : {}),
+        }),
     })
 
     if (!res.ok) throw new Error('Failed to check email')
@@ -131,21 +136,6 @@ const registerFromMetrix = async (email: string, metrixUserId: number): Promise<
     if (!result.success) {
         throw new Error(typeof result.error === 'string' ? result.error : 'Failed to register from Metrix')
     }
-}
-
-const checkMetrixEmail = async (email: string): Promise<CheckEmailPayload> => {
-    const res = await fetch(`${API_BASE}/metrix/check-email`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email}),
-    })
-
-    if (!res.ok) throw new Error('Failed to check email')
-
-    const result = (await res.json()) as ApiResponse<CheckEmailPayload>
-    if (!result.success) throw new Error('Backend returned error checking email')
-
-    return result.data
 }
 
 const getTopPlayersByDivision = async (competitionId: number): Promise<TopPlayersByDivisionPayload> => {
@@ -198,7 +188,6 @@ export default function useMetrixApi() {
         getCompetitionStats,
         preLogin,
         registerFromMetrix,
-        checkMetrixEmail,
         getUserCurrentHoleNumber,
     };
 }

@@ -1,6 +1,5 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined'
 import CasinoOutlinedIcon from '@mui/icons-material/CasinoOutlined'
 import Confetti from 'react-dom-confetti'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
@@ -89,7 +88,10 @@ export default function DrawDashboardPage() {
     const slotRef = useRef<SlotMachineHandle>(null)
     const lastWinnerRef = useRef<string | null>(null)
     const currentParticipantCountRef = useRef<number>(0)
-    const refs = { lastWinnerRef, currentParticipantCountRef }
+    const refs = useMemo(
+        () => ({ lastWinnerRef, currentParticipantCountRef }),
+        []
+    )
 
     const isAdmin = user?.isAdmin ?? false
 
@@ -103,7 +105,7 @@ export default function DrawDashboardPage() {
             () => setTimeout(reconnect, RECONNECT_DELAY_MS)
         )
         unsubscribeRef.current = unsub
-    }, [subscribeToDrawState])
+    }, [subscribeToDrawState, refs])
 
     // When we have a winner, tell the slot machine to run the draw animation
     useEffect(() => {

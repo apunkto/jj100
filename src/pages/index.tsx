@@ -2,15 +2,15 @@ import Layout from '@/src/components/Layout'
 import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import Countdown from 'react-countdown'
-import {useEffect, useState} from 'react'
+import {useSyncExternalStore} from 'react'
 
 export default function HomePage() {
     const targetDate = new Date('2026-05-02T08:00:00')
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
+    const mounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    )
 
     return (
         <Layout>

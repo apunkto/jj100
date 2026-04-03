@@ -112,7 +112,7 @@ export default function HistoryPage() {
 
     useEffect(() => {
         if (leaderboard?.maxAmount != null) {
-            setExpandedAmount(leaderboard.maxAmount)
+            queueMicrotask(() => setExpandedAmount(leaderboard.maxAmount))
         }
     }, [leaderboard?.maxAmount])
 

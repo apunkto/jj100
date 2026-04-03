@@ -111,11 +111,11 @@ export default function Layout({
 
     // Filter menu items based on activeCompetitionId
     const menuItems = allMenuItems.filter((item) => {
-        // Always show Info, History, and Results
-        if (item.href === '/info' || item.href === '/history' || item.href === '/results') {
+        // Always show Info and History
+        if (item.href === '/info' || item.href === '/history') {
             return true
         }
-        // Only show other items if user has activeCompetitionId
+        // Top 10 (/results) and competition-scoped items need an active competition
         return !!user?.activeCompetitionId
     })
 

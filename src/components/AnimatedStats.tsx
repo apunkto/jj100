@@ -21,7 +21,7 @@ export default function StatBox({
     const [displayedSub, setDisplayedSub] = useState(sub)
 
     useEffect(() => {
-        setIsVisible(false)
+        queueMicrotask(() => setIsVisible(false))
 
         const timeout = setTimeout(() => {
             setDisplayedValue(value)

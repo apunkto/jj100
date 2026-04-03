@@ -12,6 +12,7 @@ export default function PuttingGameDashboard() {
     const [puttingGame, setPuttingGame] = useState<PuttingGameState | null>(null)
     const unsubscribeRef = useRef<(() => void) | null>(null)
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const subscribeRef = useRef<(() => void) | null>(null)
 
     const applyState = useCallback((raw: PuttingGameState) => {
         console.log('Received putting game state update:', raw)
@@ -27,11 +28,15 @@ export default function PuttingGameDashboard() {
         const unsub = subscribeToFinalGamePuttingState(applyState, () => {
             reconnectTimerRef.current = setTimeout(() => {
                 reconnectTimerRef.current = null
-                subscribe()
+                subscribeRef.current?.()
             }, RECONNECT_DELAY_MS)
         })
         unsubscribeRef.current = unsub
     }, [subscribeToFinalGamePuttingState, applyState])
+
+    useEffect(() => {
+        subscribeRef.current = subscribe
+    }, [subscribe])
 
     useEffect(() => {
         subscribe()
@@ -51,7 +56,7 @@ export default function PuttingGameDashboard() {
         console.log('Putting game players:', puttingGame?.players)
         if (!puttingGame?.players) return []
         return [...puttingGame.players].sort((a, b) => a.order - b.order)
-    }, [puttingGame?.players])
+    }, [puttingGame])
 
     const {maxLevel, levels} = useMemo(() => {
         if (sortedPlayers.length === 0)

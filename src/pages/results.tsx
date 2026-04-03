@@ -25,12 +25,12 @@ function ResultsTabs({
     const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
     const { getMyDivisionResult } = useMetrixApi()
     const [myDivisionResult, setMyDivisionResult] = useState<MyDivisionResultPayload>(null)
-    const divisionEntries = Object.entries(topPlayersByDivision)
     const myDivisionName = myDivisionResult?.player?.ClassName
 
     const divisionEntriesOrdered = useMemo(() => {
+        const divisionEntries = Object.entries(topPlayersByDivision)
         const divisionMap = new Map(divisionEntries)
-        const ordered: [string, typeof divisionEntries[0][1]][] = []
+        const ordered: [string, (typeof divisionEntries)[0][1]][] = []
         const added = new Set<string>()
         if (myDivisionName != null && divisionMap.has(myDivisionName)) {
             ordered.push(divisionEntries.find(([n]) => n === myDivisionName)!)
@@ -54,7 +54,7 @@ function ResultsTabs({
 
     useEffect(() => {
         if (currentUserMetrixId == null) {
-            setMyDivisionResult(null)
+            queueMicrotask(() => setMyDivisionResult(null))
             return
         }
         getMyDivisionResult(competitionId)
@@ -66,7 +66,7 @@ function ResultsTabs({
         setSelectedTab(newValue)
     }
 
-    if (loading && divisionEntries.length === 0) {
+    if (loading && divisionEntriesOrdered.length === 0) {
         return (
             <Box
                 sx={{
@@ -82,7 +82,7 @@ function ResultsTabs({
         )
     }
 
-    if (error && divisionEntries.length === 0) {
+    if (error && divisionEntriesOrdered.length === 0) {
         return (
             <Box
                 sx={{
@@ -97,7 +97,7 @@ function ResultsTabs({
         )
     }
 
-    if (divisionEntries.length === 0) {
+    if (divisionEntriesOrdered.length === 0) {
         return (
             <Box
                 sx={{
