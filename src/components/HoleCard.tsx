@@ -1,9 +1,13 @@
-import {alpha, darken, lighten} from '@mui/material/styles'
+import {alpha, lighten} from '@mui/material/styles'
 import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import {Hole} from "@/src/api/useCtpApi";
 import {useMemo} from "react";
 
+/** Shared color style for smaller labels (PAR / length). */
+const labelOutlineTextSx = (theme: {palette: {primary: {main: string}}}) => ({
+    color: theme.palette.primary.main,
+})
 
 type Props = {
     number: number
@@ -28,289 +32,211 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
 
     return (
         <Box
-            sx={(theme) => {
-                const p = theme.palette.primary.main
-                const pLite = lighten(p, 0.62)
-                const pMid  = darken(p, 0.18)
-                const pDark = darken(p, 0.60)
-
-                return {
+            sx={{
                     position: 'relative',
                     width: '100%',
                     maxWidth: `${maxWidth}px`,
                     mx: 'auto',
-                    borderRadius: 'calc(var(--pad) * 1.2)',
+                    borderRadius: 'var(--card-radius)',
                     overflow: 'hidden',
                     aspectRatio: '5 / 7',
-                    outline: `1px solid ${alpha('#000', 0.08)}`,
+                    outline: 'none',
                     "@media print": {
                         width: "100%",
                         maxWidth: "100%",
                         height: "100%",
                         outline: "none",
+                        boxShadow: "none",
                     },
                     containerType: 'inline-size',
                     containerName: 'card',
 
-                    /* tokens */
-                    '--pad': '3cqw',
-                    '--badge': '22cqw',
-                    '--gutter': '7.5cqw',
-                    '--inner': '3cqw',
+                    '--pad': '2.8cqw',
+                    '--card-radius': '6%',
 
-                    background: `
-      /* carbon weave — TINTED with primary */
-      repeating-linear-gradient(45deg,
-        ${alpha(pLite, 0.18)} 0px,
-        ${alpha(pLite, 0.18)} 4px,
-        ${alpha(pDark, 0.20)} 4px,
-        ${alpha(pDark, 0.20)} 8px
-      ),
-      repeating-linear-gradient(-45deg,
-        ${alpha(pLite, 0.12)} 0px,
-        ${alpha(pLite, 0.12)} 4px,
-        ${alpha(pDark, 0.16)} 4px,
-        ${alpha(pDark, 0.16)} 8px
-      ),
-
-      /* top light (slightly stronger) */
-      radial-gradient(120% 70% at 50% 0%,
-        ${alpha('#fff', 0.18)} 0%,
-        ${alpha('#fff', 0.00)} 60%
-      ),
-
-      /* subtle depth */
-      radial-gradient(110% 90% at 85% 95%,
-        ${alpha('#000', 0.14)} 0%,
-        ${alpha('#000', 0.00)} 62%
-      ),
-
-      /* blue base */
-      linear-gradient(180deg,
-        ${pMid} 0%,
-        ${pDark} 100%
-      )
-    `,
-                }
+                    border: 'none',
+                    background: 'transparent',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: 0,
+                        border: '3px solid #000',
+                        borderRadius: 'inherit',
+                        boxSizing: 'border-box',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                    },
             }}
         >
-            {/* ───────────────── TOP BADGES ───────────────── */}
             <Box
                 sx={{
-                    position: 'absolute',
-                    top: 'var(--pad)',
-                    left: 'var(--pad)',
-                    right: 'var(--pad)',
-                    zIndex: 5,
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    pointerEvents: 'none',
+                    flexDirection: 'row',
+                    alignItems: 'stretch',
+                    height: '100%',
+                    minHeight: 0,
+                    borderRadius: 'inherit',
+                    overflow: 'hidden',
+                    bgcolor: '#fff',
+                    boxShadow: 'none',
                 }}
             >
-                {/* Hole number */}
+                {/* ───────── LEFT: logo, stats, rules ───────── */}
                 <Box
                     sx={(theme) => ({
-                        width: 'var(--badge)',
-                        aspectRatio: '1 / 1',
-                        borderRadius: '50%',
-                        backgroundColor: '#fff',
-                        display: 'grid',
-                        placeItems: 'center',
-                        boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                    })}
-                >
-                    <Typography
-                        sx={{
-                            fontSize: 'calc(var(--badge) * 0.49)',
-                            fontWeight: 800,
-                            lineHeight: 1,
-                        }}
-                    >
-                        {number}
-                    </Typography>
-                </Box>
-
-                {/* PAR circle */}
-                <Box
-                    sx={(theme) => ({
-                        width: 'var(--badge)',
-                        aspectRatio: '1 / 1',
-                        borderRadius: '50%',
-                        backgroundColor: '#fff',
+                        flex: 1,
+                        minWidth: 0,
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: `0 6px 14px ${alpha('#000', 0.12)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                        gap: 'calc(var(--badge) * 0.03)',
+                        alignItems: 'stretch',
+                        bgcolor: theme.palette.primary.main,
+                        borderRight: `2px solid ${alpha('#000', 0.22)}`,
+                        pt: '2.8cqw',
+                        pb: '2.6cqw',
+                        gap: 0,
                     })}
                 >
-                    <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'end'}}>
-                        {length ? (
-                            <Typography
-                                sx={{
-                                    fontSize: 'calc(var(--badge) * 0.2)',
-                                    fontWeight: 700,
-                                    lineHeight: 1,
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                                {length}m
-                            </Typography>
-                        ) : (
-                            <Box sx={{height: 'calc(var(--badge) * 0.2)'}}/>
-                        )}
-
-                        <Typography
-                            sx={{
-                                fontSize: 'calc(var(--badge) * 0.23)',
-                                fontWeight: 700,
-                                lineHeight: 1,
-                                whiteSpace: 'nowrap',
-                            }}
-                        >
-                            PAR {par}
-                        </Typography>
-                    </Box>
-                </Box>
-            </Box>
-
-            {/* ───────────────── WHITE CARD WITH IMAGE ───────────────── */}
-            <Box
-                sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 2,
-                    px: 'var(--gutter)',
-                    pt: 'var(--gutter)',
-                    pb: 'var(--gutter)',
-                    display: 'flex',
-                }}
-            >
-                <Box
-                    sx={(theme) => ({
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: 'calc(var(--pad) * 1.2)',
-                        overflow: 'hidden',
-                        backgroundColor: '#fff',
-                        boxShadow: `0 12px 24px ${alpha('#000', 0.14)}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    })}
-                >
-                    {/* ✅ IMAGE AREA: full width, fixed ratio 400/425 */}
                     <Box
                         sx={{
-                            width: '100%',
-                            aspectRatio: '400 / 425',
-                            position: 'relative',
-                            flexShrink: 0,
-                            pt: '7%', // your top padding
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            px: '2.4cqw',
+                            py: '2.6cqw',
                         }}
                     >
                         <Image
-                            src={cardImageSrc}
-                            alt={`Rada ${number}`}
-                            fill
-                            sizes="(max-width: 600px) 80vw, 400px"
-                            priority={isPriority}
-                            style={{objectFit: 'contain'}}
+                            src="/logo.webp"
+                            alt="Logo"
+                            width={500}
+                            height={220}
+                            style={{
+                                width: '84%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                            }}
                         />
                     </Box>
 
-                    {/* ✅ INFO AREA: takes remaining height */}
                     <Box
                         sx={(theme) => ({
-                            flex: 1,
-                            minHeight: 0,
-                            mx: 'var(--inner)',
-                            my: 'calc(var(--inner) * 0.8)',
-                            borderRadius: 'calc(var(--pad) * 1)',
-
-                            px: '3.2cqw',
-                            py: '2.2cqw',
-                            backgroundColor: alpha(lighten(theme.palette.primary.main, 0.68), 0.9),
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-                            boxShadow: `0 10px 18px ${alpha('#000', 0.1)}`,
-                            overflow: 'hidden',
-                            position: 'relative',
+                            mx: '1.8cqw',
+                            bgcolor: '#fff',
+                            borderRadius: '1.2cqw',
+                            clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+                            py: '4.4cqw',
+                            px: '2.2cqw',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '1.6cqw',
+                            color: theme.palette.primary.main,
+                            zIndex: 1,
                         })}
                     >
-                        {/* 👇 keeps text from going under the bottom-right logo badge (except first line) */}
+                        <Typography
+                            component="div"
+                            sx={(theme) => ({
+                                ...labelOutlineTextSx(theme),
+                                fontSize: number > 99 ? '18.5cqw' : '20.35cqw',
+                                fontWeight: 900,
+                                lineHeight: 0.95,
+                                letterSpacing: '0.01em',
+                                textAlign: 'center',
+                            })}
+                        >
+                            {number}
+                        </Typography>
+
+                        <Typography
+                            sx={(theme) => ({
+                                ...labelOutlineTextSx(theme),
+                                fontSize: '5.8cqw',
+                                fontWeight: 800,
+                                lineHeight: 1,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                whiteSpace: 'nowrap',
+                            })}
+                        >
+                            PAR {par}
+                        </Typography>
+
+                        {length ? (
+                            <Typography
+                                sx={(theme) => ({
+                                    ...labelOutlineTextSx(theme),
+                                    fontSize: '6.1cqw',
+                                    fontWeight: 800,
+                                    lineHeight: 1,
+                                    letterSpacing: '0.03em',
+                                })}
+                            >
+                                {length}m
+                            </Typography>
+                        ) : null}
+                    </Box>
+
+                    <Box
+                        sx={{
+                            flex: 1,
+                            minHeight: 0,
+                            pt: '5.3cqw',
+                            pb: '2.2cqw',
+                            px: '2.5cqw',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'flex-start',
+                            color: '#fff',
+                        }}
+                    >
                         <Typography
                             sx={{
                                 whiteSpace: 'break-spaces',
-                                fontSize: '3.0cqw',
+                                fontSize: '2.7cqw',
                                 fontWeight: 500,
-                                lineHeight: 1.2,
+                                lineHeight: 1.4,
+                                color: alpha('#fff', 0.9),
                                 overflow: 'hidden',
                                 display: '-webkit-box',
                                 WebkitBoxOrient: 'vertical',
-                                WebkitLineClamp: 4,
-
-                                /* reserve space on the right only after the first line */
-                                '&::after': {
-                                    content: '""',
-                                    float: 'right',
-                                    width: 'var(--badge)',
-                                    height: '100%',
-                                },
-                                '&::before': {
-                                    content: '""',
-                                    float: 'right',
-                                    width: 0,
-                                    height: '1.2em', // ≈ first line height
-                                },
+                                WebkitLineClamp: 8,
                             }}
                         >
                             {rules}
                         </Typography>
                     </Box>
                 </Box>
-            </Box>
 
-            {/* ───────────────── BOTTOM BADGE ───────────────── */}
-            <Box
-                sx={{
-                    position: 'absolute',
-                    bottom: 'var(--pad)',
-                    left: 'var(--pad)',
-                    right: 'var(--pad)',
-                    zIndex: 6,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                    pointerEvents: 'none',
-                }}
-            >
+                {/* ───────── RIGHT: hole map / image ───────── */}
                 <Box
                     sx={(theme) => ({
-                        width: 'var(--badge)',
-                        aspectRatio: '1 / 1',
-                        borderRadius: '50%',
-                        bgcolor: theme.palette.primary.main,
-                        display: 'grid',
-                        placeItems: 'center',
-                        boxShadow: `0 10px 18px ${alpha('#000', 0.18)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-                        overflow: 'hidden',
+                        flex: '0 0 auto',
+                        alignSelf: 'stretch',
+                        height: '100%',
+                        /* Hole art is width:height 5:12 — column width follows full card height */
+                        aspectRatio: '5 / 12',
+                        width: 'auto',
+                        minWidth: 0,
+                        position: 'relative',
+                        bgcolor: alpha(lighten(theme.palette.primary.main, 0.75), 0.5),
+                        backgroundImage: `
+              linear-gradient(135deg,
+                ${alpha('#fff', 0.35)} 0%,
+                transparent 50%),
+              radial-gradient(ellipse 80% 60% at 50% 40%,
+                ${alpha('#fff', 0.2)} 0%,
+                transparent 70%)
+            `,
                     })}
                 >
-                    {/* non-square logo: do NOT use fill; constrain with max sizes */}
                     <Image
-                        src="/logo.webp"
-                        alt="Logo"
-                        width={400}
-                        height={400}
+                        src={cardImageSrc}
+                        alt={`Rada ${number}`}
+                        fill
+                        sizes="(max-width: 600px) 40vw, 280px"
+                        priority={isPriority}
                         style={{
-                            maxWidth: '85%',
-                            maxHeight: '85%',
-                            width: 'auto',
-                            height: 'auto',
                             objectFit: 'contain',
                         }}
                     />
