@@ -37,7 +37,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     width: '100%',
                     maxWidth: `${maxWidth}px`,
                     mx: 'auto',
-                    borderRadius: 'var(--card-radius)',
+                    borderRadius: '16px',
                     overflow: 'hidden',
                     aspectRatio: '5 / 7',
                     outline: 'none',
@@ -54,18 +54,8 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     '--pad': '2.8cqw',
                     '--card-radius': '6%',
 
-                    border: 'none',
-                    background: 'transparent',
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        border: '3px solid #000',
-                        borderRadius: 'inherit',
-                        boxSizing: 'border-box',
-                        pointerEvents: 'none',
-                        zIndex: 5,
-                    },
+                    border: '2px solid #000',
+
             }}
         >
             <Box
@@ -75,7 +65,6 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     alignItems: 'stretch',
                     height: '100%',
                     minHeight: 0,
-                    borderRadius: 'inherit',
                     overflow: 'hidden',
                     bgcolor: '#fff',
                     boxShadow: 'none',
@@ -123,58 +112,67 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                             mx: '1.8cqw',
                             bgcolor: '#fff',
                             borderRadius: '1.2cqw',
-                            clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+                            transform: 'skewY(-4deg)',
+                            transformOrigin: 'center',
                             py: '4.4cqw',
                             px: '2.2cqw',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '1.6cqw',
                             color: theme.palette.primary.main,
                             zIndex: 1,
                         })}
                     >
-                        <Typography
-                            component="div"
-                            sx={(theme) => ({
-                                ...labelOutlineTextSx(theme),
-                                fontSize: number > 99 ? '18.5cqw' : '20.35cqw',
-                                fontWeight: 900,
-                                lineHeight: 0.95,
-                                letterSpacing: '0.01em',
-                                textAlign: 'center',
-                            })}
+                        <Box
+                            sx={{
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '1.6cqw',
+                                transform: 'skewY(4deg)',
+                                transformOrigin: 'center',
+                            }}
                         >
-                            {number}
-                        </Typography>
+                            <Typography
+                                component="div"
+                                sx={(theme) => ({
+                                    ...labelOutlineTextSx(theme),
+                                    fontSize: number > 99 ? '18.5cqw' : '20.35cqw',
+                                    fontWeight: 900,
+                                    lineHeight: 0.95,
+                                    letterSpacing: '0.01em',
+                                    textAlign: 'center',
+                                })}
+                            >
+                                {number}
+                            </Typography>
 
-                        <Typography
-                            sx={(theme) => ({
-                                ...labelOutlineTextSx(theme),
-                                fontSize: '5.8cqw',
-                                fontWeight: 800,
-                                lineHeight: 1,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.04em',
-                                whiteSpace: 'nowrap',
-                            })}
-                        >
-                            PAR {par}
-                        </Typography>
-
-                        {length ? (
                             <Typography
                                 sx={(theme) => ({
                                     ...labelOutlineTextSx(theme),
-                                    fontSize: '6.1cqw',
+                                    fontSize: '5.8cqw',
                                     fontWeight: 800,
                                     lineHeight: 1,
-                                    letterSpacing: '0.03em',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.04em',
+                                    whiteSpace: 'nowrap',
                                 })}
                             >
-                                {length}m
+                                PAR {par}
                             </Typography>
-                        ) : null}
+
+                            {length ? (
+                                <Typography
+                                    sx={(theme) => ({
+                                        ...labelOutlineTextSx(theme),
+                                        fontSize: '6.1cqw',
+                                        fontWeight: 800,
+                                        lineHeight: 1,
+                                        letterSpacing: '0.03em',
+                                    })}
+                                >
+                                    {length}m
+                                </Typography>
+                            ) : null}
+                        </Box>
                     </Box>
 
                     <Box
