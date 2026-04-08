@@ -4,6 +4,9 @@ import Image from 'next/image'
 import {Hole} from "@/src/api/useCtpApi";
 import {useMemo} from "react";
 
+/** Right panel (hole map) background — shows around letterboxing when image exists. */
+const HOLE_PANEL_BG = '#9bd94e'
+
 /** Shared color style for smaller labels (PAR / length). */
 const labelOutlineTextSx = (theme: { palette: { primary: { main: string } } }) => ({
     color: theme.palette.primary.main,
@@ -21,13 +24,13 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
     const length = hole?.length;
     const rules = hole?.rules || "Erireeglid puuduvad";
 
-    const cardImageSrc = useMemo(() => {
+    const cardImageSrc = useMemo((): string | null => {
         const img = hole?.card_img
         if (img && img !== 'no_image') {
             const base = img.includes('.') ? img : `${img}.webp`
             return `/cards/${base}`
         }
-        return '/cards/no_image.webp'
+        return null
     }, [hole?.card_img])
 
     return (
@@ -205,18 +208,21 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     width: 'auto',
                     minWidth: 0,
                     position: 'relative',
+                    bgcolor: HOLE_PANEL_BG,
                 }}
             >
-                <Image
-                    src={cardImageSrc}
-                    alt={`Rada ${number}`}
-                    fill
-                    sizes="(max-width: 600px) 40vw, 280px"
-                    priority={isPriority}
-                    style={{
-                        objectFit: 'contain',
-                    }}
-                />
+                {cardImageSrc ? (
+                    <Image
+                        src={cardImageSrc}
+                        alt={`Rada ${number}`}
+                        fill
+                        sizes="(max-width: 600px) 40vw, 280px"
+                        priority={isPriority}
+                        style={{
+                            objectFit: 'contain',
+                        }}
+                    />
+                ) : null}
             </Box>
 
         </Box>
