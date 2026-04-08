@@ -82,7 +82,6 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                         justifyContent: 'center',
                         alignItems: 'center',
                         px: '2.4cqw',
-                        py: '2.6cqw',
                     }}
                 >
                     <Image
@@ -107,6 +106,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                         transformOrigin: 'center',
                         py: '4.4cqw',
                         px: '2.2cqw',
+                        marginTop: '8cqw',
                         color: theme.palette.primary.main,
                         zIndex: 1,
                     })}
@@ -177,12 +177,14 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                         flexDirection: 'column',
                         justifyContent: 'flex-end',
                         color: '#fff',
-                    }}
+                   }}
                 >
                     <Typography
                         sx={{
+                            borderTop: '2px solid #FFF',
+                            paddingTop: '2.5cqw',
                             whiteSpace: 'break-spaces',
-                            fontSize: '2.7cqw',
+                            fontSize: '3.25cqw',
                             fontWeight: 500,
                             lineHeight: 1.4,
                             color: alpha('#fff', 0.9),
