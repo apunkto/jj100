@@ -7,6 +7,7 @@ type CompetitionInfo = {
     ctp_enabled: boolean
     checkin_enabled: boolean
     prediction_enabled: boolean
+    food_choice_enabled?: boolean
 }
 
 const fetchCompetitionInfo = async (competitionId: number): Promise<CompetitionInfo> => {
@@ -33,19 +34,25 @@ const resolveCompetitionId = async (competitionId: number | null | undefined): P
     return activeCompetitionId
 }
 
-type CompetitionFeature = keyof Pick<CompetitionInfo, 'ctp_enabled' | 'checkin_enabled' | 'prediction_enabled'>
+type CompetitionFeature = keyof Pick<
+    CompetitionInfo,
+    'ctp_enabled' | 'checkin_enabled' | 'prediction_enabled' | 'food_choice_enabled'
+>
 
 const isFeatureEnabled = async (feature: CompetitionFeature, competitionId?: number | null): Promise<boolean> => {
     const id = await resolveCompetitionId(competitionId)
     if (!id) return false
     const competition = await fetchCompetitionInfo(id)
-    return competition[feature]
+    return Boolean(competition[feature])
 }
 
 export default function useConfigApi() {
     return {
+        fetchCompetitionInfo,
         isCtpEnabled: (competitionId?: number | null) => isFeatureEnabled('ctp_enabled', competitionId),
         isCheckinEnabled: (competitionId?: number | null) => isFeatureEnabled('checkin_enabled', competitionId),
         isPredictionEnabled: (competitionId?: number | null) => isFeatureEnabled('prediction_enabled', competitionId),
+        isFoodChoiceEnabled: (competitionId?: number | null) =>
+            isFeatureEnabled('food_choice_enabled', competitionId),
     }
 }

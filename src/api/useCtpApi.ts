@@ -129,6 +129,12 @@ const getCtpHoles = async (): Promise<HoleWithCtp[]> => {
     return await res.json()
 }
 
+const getCateringHoles = async (): Promise<Hole[]> => {
+    const res = await authedFetch(`${API_BASE}/holes/catering`)
+    if (!res.ok) throw new Error(`Failed to fetch catering holes: ${res.status}`)
+    return await res.json()
+}
+
 export default function useCtpApi() {
     return {
         getHole,
@@ -138,6 +144,7 @@ export default function useCtpApi() {
         getHoleCount,
         submitCtp,
         getCtpHoles,
+        getCateringHoles,
         getPoolMates,
     }
 }

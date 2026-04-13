@@ -11,6 +11,7 @@ interface CompetitionSettingsProps {
     onCtpToggle: (enabled: boolean) => void
     onCheckinToggle: (enabled: boolean) => void
     onPredictionToggle: (enabled: boolean) => void
+    onFoodChoiceToggle: (enabled: boolean) => void
     onDidRainToggle: (enabled: boolean) => void
 }
 
@@ -27,6 +28,7 @@ export function CompetitionSettings({
     onCtpToggle,
     onCheckinToggle,
     onPredictionToggle,
+    onFoodChoiceToggle,
     onDidRainToggle,
 }: CompetitionSettingsProps) {
     return (
@@ -81,6 +83,17 @@ export function CompetitionSettings({
                         />
                     }
                     label="Luba ennustamine"
+                />
+
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={competition.food_choice_enabled ?? false}
+                            onChange={(e) => onFoodChoiceToggle(e.target.checked)}
+                            disabled={updating}
+                        />
+                    }
+                    label="Toitlustuse valikud"
                 />
 
                 <FormControlLabel

@@ -10,7 +10,15 @@ import {useToast} from '@/src/contexts/ToastContext'
 export default function AdminSettingsPage() {
     const {user, loading: authLoading} = useAuth()
     const router = useRouter()
-    const {getAdminCompetition, updateCtpEnabled, updateCheckinEnabled, updatePredictionEnabled, updateDidRainEnabled, updateCompetitionStatus} = useAdminApi()
+    const {
+        getAdminCompetition,
+        updateCtpEnabled,
+        updateCheckinEnabled,
+        updatePredictionEnabled,
+        updateFoodChoiceEnabled,
+        updateDidRainEnabled,
+        updateCompetitionStatus,
+    } = useAdminApi()
     const {showToast} = useToast()
 
     const [competition, setCompetition] = useState<AdminCompetition | null>(null)
@@ -102,6 +110,22 @@ export default function AdminSettingsPage() {
         } catch (err) {
             console.error('Failed to update prediction setting:', err)
             showToast('Ennustusmängu seadistuse uuendamine ebaõnnestus', 'error')
+        } finally {
+            setUpdating(false)
+        }
+    }
+
+    const handleFoodChoiceToggle = async (enabled: boolean) => {
+        if (!competition || updating || !user?.activeCompetitionId) return
+
+        try {
+            setUpdating(true)
+            await updateFoodChoiceEnabled(user.activeCompetitionId, enabled)
+            setCompetition({...competition, food_choice_enabled: enabled})
+            showToast(`Toitlustuse valikud ${enabled ? 'lubatud' : 'keelatud'}`, 'success')
+        } catch (err) {
+            console.error('Failed to update food choice setting:', err)
+            showToast('Toitlustuse seadistuse uuendamine ebaõnnestus', 'error')
         } finally {
             setUpdating(false)
         }
@@ -220,6 +244,7 @@ export default function AdminSettingsPage() {
                     onCtpToggle={handleCtpToggle}
                     onCheckinToggle={handleCheckinToggle}
                     onPredictionToggle={handlePredictionToggle}
+                    onFoodChoiceToggle={handleFoodChoiceToggle}
                     onDidRainToggle={handleDidRainToggle}
                 />
             </Box>

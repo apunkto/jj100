@@ -9,6 +9,7 @@ export type AdminCompetition = {
     ctp_enabled: boolean
     checkin_enabled: boolean
     prediction_enabled: boolean
+    food_choice_enabled?: boolean
     did_rain: boolean
 }
 
@@ -51,6 +52,9 @@ const updateCheckinEnabled = (competitionId: number, enabled: boolean) =>
 const updatePredictionEnabled = (competitionId: number, enabled: boolean) =>
     patchCompetitionField(competitionId, 'prediction', { enabled }, 'Failed to update prediction setting')
 
+const updateFoodChoiceEnabled = (competitionId: number, enabled: boolean) =>
+    patchCompetitionField(competitionId, 'food-choice', { enabled }, 'Failed to update food choice setting')
+
 const updateDidRainEnabled = (competitionId: number, enabled: boolean) =>
     patchCompetitionField(competitionId, 'did-rain', { enabled }, 'Failed to update did rain setting')
 
@@ -68,6 +72,7 @@ export default function useAdminApi() {
         updateCtpEnabled,
         updateCheckinEnabled,
         updatePredictionEnabled,
+        updateFoodChoiceEnabled,
         updateDidRainEnabled,
         updateCompetitionStatus,
     }

@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react'
-import { Snackbar, Alert } from '@mui/material'
+import React, {createContext, ReactNode, useCallback, useContext, useMemo, useState} from 'react'
+import {Alert, Snackbar} from '@mui/material'
 
 type ToastContextType = {
     showToast: (message: string, severity?: 'success' | 'error' | 'warning' | 'info') => void
@@ -12,18 +12,20 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     const [message, setMessage] = useState('')
     const [severity, setSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('success')
 
-    const showToast = (msg: string, sev: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    const showToast = useCallback((msg: string, sev: 'success' | 'error' | 'warning' | 'info' = 'success') => {
         setMessage(msg)
         setSeverity(sev)
         setOpen(true)
-    }
+    }, [])
 
     const handleClose = () => {
         setOpen(false)
     }
 
+    const contextValue = useMemo(() => ({ showToast }), [showToast])
+
     return (
-        <ToastContext.Provider value={{ showToast }}>
+        <ToastContext.Provider value={contextValue}>
             {children}
             <Snackbar
                 open={open}

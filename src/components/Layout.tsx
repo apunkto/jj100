@@ -31,6 +31,7 @@ import QuizIcon from '@mui/icons-material/Quiz'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LineChartIcon from '@mui/icons-material/ShowChart'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import RestaurantIcon from '@mui/icons-material/Restaurant'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import {useRouter} from 'next/router'
 import {supabase} from '@/src/lib/supabaseClient'
@@ -101,6 +102,7 @@ export default function Layout({
         { href: '/info', label: 'Üldinfo', icon: <InfoIcon /> },
         { href: '/course', label: 'Rada', icon: <MapIcon /> },
         { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
+        { href: '/catering', label: 'Toitlustus', icon: <RestaurantIcon /> },
         { href: '/stats', label: 'Minu statistika', icon: <LineChartIcon /> },
         { href: '/results', label: 'Top 10', icon: <EmojiEventsIcon /> },
         { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
