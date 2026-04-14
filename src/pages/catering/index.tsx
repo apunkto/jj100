@@ -38,11 +38,11 @@ export default function CateringPage() {
     const [saving, setSaving] = useState(false)
     const [ingredientsDialog, setIngredientsDialog] = useState<IngredientsDialogState | null>(null)
 
-    const { user } = useAuth()
-    const { showToast } = useToast()
-    const { getCateringHoles } = useCtpApi()
-    const { fetchCompetitionInfo } = useConfigApi()
-    const { getFoodChoices, patchFoodChoices } = useFoodChoicesApi()
+    const {user} = useAuth()
+    const {showToast} = useToast()
+    const {getCateringHoles} = useCtpApi()
+    const {fetchCompetitionInfo} = useConfigApi()
+    const {getFoodChoices, patchFoodChoices} = useFoodChoicesApi()
 
     const competitionId = user?.activeCompetitionId
 
@@ -73,7 +73,7 @@ export default function CateringPage() {
                 setPizzaDraft(null)
             } else {
                 setNoPlayerRow(false)
-                setSavedFood({ is_vege_food: fc.is_vege_food, pizza: fc.pizza })
+                setSavedFood({is_vege_food: fc.is_vege_food, pizza: fc.pizza})
                 if (fc.pizza == null) {
                     // Defaults before first save: Lihaga supp + Türi
                     setSoupDraft(false)
@@ -113,7 +113,7 @@ export default function CateringPage() {
                 is_vege_food: soupDraft === true,
                 pizza: pizzaDraft,
             })
-            setSavedFood({ is_vege_food: data.is_vege_food, pizza: data.pizza })
+            setSavedFood({is_vege_food: data.is_vege_food, pizza: data.pizza})
             setSoupDraft(data.is_vege_food)
             setPizzaDraft((data.pizza as PizzaChoiceId) ?? null)
             showToast('Valikud salvestatud', 'success')
@@ -129,236 +129,255 @@ export default function CateringPage() {
 
     return (
         <Layout>
-            <Box sx={{ width: '100%', px: 2, py: 3, boxSizing: 'border-box', maxWidth: 560, mx: 'auto' }}>
+            <Box sx={{width: '100%', px: 2, py: 3, boxSizing: 'border-box', maxWidth: 560, mx: 'auto'}}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center">
                     Toitlustus
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={700} sx={{mt: 2.5, mb: 1, textAlign: 'center'}}>
+                    Söögivalikud
                 </Typography>
 
                 {loading && competitionId != null && Number.isFinite(competitionId) ? (
                     <Box display="flex" justifyContent="center" py={6}>
-                        <CircularProgress />
+                        <CircularProgress/>
                     </Box>
                 ) : (
                     <>
-                {competitionId != null && Number.isFinite(competitionId) && (
-                    <Box sx={{ mt: 3, p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-                        {noPlayerRow ? (
-                            <Typography variant="body2" color="text.secondary">
-                                Sinu osalemist sellel võistlusel ei leitud — toiduvalikud pole saadaval.
-                            </Typography>
-                        ) : foodChoiceEnabled ? (
-                            <>
-                                <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                    Lõuna
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Supp
-                                </Typography>
-                                <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
-                                    <RadioGroup
-                                        value={soupDraft === null ? '' : soupDraft ? 'vege' : 'meat'}
-                                        onChange={(_, v) => {
-                                            if (v === 'meat') setSoupDraft(false)
-                                            else if (v === 'vege') setSoupDraft(true)
-                                        }}
-                                    >
-                                        <FormControlLabel
-                                            value="meat"
-                                            control={<Radio size="small" />}
-                                            label={
-                                                <Typography
-                                                    component="span"
-                                                    variant="body2"
-                                                    fontWeight={soupDraft === false ? 700 : 400}
-                                                    sx={{ lineHeight: 1.25 }}
-                                                >
-                                                    Lihaga supp
-                                                </Typography>
-                                            }
-                                            sx={{ alignItems: 'center', ml: 0, mr: 0 }}
-                                        />
-                                        <FormControlLabel
-                                            value="vege"
-                                            control={<Radio size="small" />}
-                                            label={
-                                                <Typography
-                                                    component="span"
-                                                    variant="body2"
-                                                    fontWeight={soupDraft === true ? 700 : 400}
-                                                    sx={{ lineHeight: 1.25 }}
-                                                >
-                                                    Vege supp
-                                                </Typography>
-                                            }
-                                            sx={{ alignItems: 'center', ml: 0, mr: 0 }}
-                                        />
-                                    </RadioGroup>
-                                </FormControl>
-                                <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 1 }}>
-                                    Õhtu
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Pitsa
-                                </Typography>
-                                <FormControl component="fieldset" sx={{ width: '100%' }}>
-                                    <RadioGroup
-                                        value={pizzaDraft ?? ''}
-                                        onChange={(_, v) => setPizzaDraft(v as PizzaChoiceId)}
-                                    >
-                                        {PIZZA_OPTIONS.map((p) => (
-                                            <Box
-                                                key={p.id}
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 0.5,
-                                                    mb: 0.5,
+                        {competitionId != null && Number.isFinite(competitionId) && (
+                            <Box sx={{
+                                mt: 1,
+                                p: 2,
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                bgcolor: 'background.paper'
+                            }}>
+                                {noPlayerRow ? (
+                                    <Typography variant="body2" color="text.secondary">
+                                        Sinu osalemist sellel võistlusel ei leitud — toiduvalikud pole saadaval.
+                                    </Typography>
+                                ) : foodChoiceEnabled ? (
+                                    <>
+                                        <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                                            Lõuna - Supp
+                                        </Typography>
+
+                                        <FormControl component="fieldset" sx={{width: '100%', mb: 2}}>
+                                            <RadioGroup
+                                                value={soupDraft === null ? '' : soupDraft ? 'vege' : 'meat'}
+                                                onChange={(_, v) => {
+                                                    if (v === 'meat') setSoupDraft(false)
+                                                    else if (v === 'vege') setSoupDraft(true)
                                                 }}
                                             >
                                                 <FormControlLabel
-                                                    value={p.id}
-                                                    control={<Radio size="small" />}
+                                                    value="meat"
+                                                    control={<Radio size="small"/>}
                                                     label={
                                                         <Typography
                                                             component="span"
                                                             variant="body2"
-                                                            fontWeight={pizzaDraft === p.id ? 700 : 400}
-                                                            sx={{ lineHeight: 1.25 }}
+                                                            fontWeight={soupDraft === false ? 700 : 400}
+                                                            sx={{lineHeight: 1.25}}
                                                         >
-                                                            {p.label}
+                                                            Lihaga supp
                                                         </Typography>
                                                     }
-                                                    sx={{ flex: 1, alignItems: 'center', ml: 0, mr: 0 }}
+                                                    sx={{alignItems: 'center', ml: 0, mr: 0}}
                                                 />
+                                                <FormControlLabel
+                                                    value="vege"
+                                                    control={<Radio size="small"/>}
+                                                    label={
+                                                        <Typography
+                                                            component="span"
+                                                            variant="body2"
+                                                            fontWeight={soupDraft === true ? 700 : 400}
+                                                            sx={{lineHeight: 1.25}}
+                                                        >
+                                                            Vege supp
+                                                        </Typography>
+                                                    }
+                                                    sx={{alignItems: 'center', ml: 0, mr: 0}}
+                                                />
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{mt: 1}}>
+                                            Õhtu - Pitsa
+                                        </Typography>
+
+                                        <FormControl component="fieldset" sx={{width: '100%'}}>
+                                            <RadioGroup
+                                                value={pizzaDraft ?? ''}
+                                                onChange={(_, v) => setPizzaDraft(v as PizzaChoiceId)}
+                                            >
+                                                {PIZZA_OPTIONS.map((p) => (
+                                                    <Box
+                                                        key={p.id}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 0.5,
+                                                            mb: 0.5,
+                                                        }}
+                                                    >
+                                                        <FormControlLabel
+                                                            value={p.id}
+                                                            control={<Radio size="small"/>}
+                                                            label={
+                                                                <Typography
+                                                                    component="span"
+                                                                    variant="body2"
+                                                                    fontWeight={pizzaDraft === p.id ? 700 : 400}
+                                                                    sx={{lineHeight: 1.25}}
+                                                                >
+                                                                    {p.label}
+                                                                </Typography>
+                                                            }
+                                                            sx={{flex: 1, alignItems: 'center', ml: 0, mr: 0}}
+                                                        />
+                                                        <IconButton
+                                                            size="small"
+                                                            aria-label={`${p.label} koostis`}
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                setIngredientsDialog({
+                                                                    title: p.label,
+                                                                    text: p.ingredients
+                                                                })
+                                                            }}
+                                                            sx={{color: 'text.secondary', flexShrink: 0}}
+                                                        >
+                                                            <SearchIcon fontSize="small"/>
+                                                        </IconButton>
+                                                    </Box>
+                                                ))}
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <Button
+                                            variant="contained"
+                                            fullWidth
+                                            sx={{mt: 2}}
+                                            disabled={!canSave}
+                                            onClick={() => void handleSave()}
+                                        >
+                                            {saving ? <CircularProgress size={22} color="inherit"/> : 'Salvesta'}
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                                            Lõuna
+                                        </Typography>
+                                        <Typography variant="body2" sx={{mb: 1.5}}>
+                                            <strong>Supp:</strong>{' '}
+                                            <Typography component="span" variant="body2"
+                                                        fontWeight={hasSavedChoices ? 700 : 400}>
+                                                {hasSavedChoices ? soupLabel(savedFood!.is_vege_food) : 'Pole valitud'}
+                                            </Typography>
+                                        </Typography>
+                                        <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                                            Õhtu
+                                        </Typography>
+                                        <Typography variant="body2" sx={{mb: 1}}>
+                                            <strong>Pitsa:</strong>{' '}
+                                            <Typography component="span" variant="body2"
+                                                        fontWeight={hasSavedChoices ? 700 : 400}>
+                                                {hasSavedChoices ? pizzaLabel(savedFood!.pizza) : 'Pole valitud'}
+                                            </Typography>
+                                        </Typography>
+                                        {hasSavedChoices && savedFood!.pizza ? (
+                                            <Box sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 0.5,
+                                                flexWrap: 'wrap'
+                                            }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Õhtu — valitud pitsa koostis
+                                                </Typography>
                                                 <IconButton
                                                     size="small"
-                                                    aria-label={`${p.label} koostis`}
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        e.stopPropagation()
-                                                        setIngredientsDialog({ title: p.label, text: p.ingredients })
-                                                    }}
-                                                    sx={{ color: 'text.secondary', flexShrink: 0 }}
+                                                    aria-label="Vaata valitud pitsa koostist"
+                                                    onClick={() =>
+                                                        setIngredientsDialog({
+                                                            title: pizzaLabel(savedFood!.pizza),
+                                                            text: pizzaIngredients(savedFood!.pizza),
+                                                        })
+                                                    }
+                                                    sx={{color: 'text.secondary'}}
                                                 >
-                                                    <SearchIcon fontSize="small" />
+                                                    <SearchIcon fontSize="small"/>
                                                 </IconButton>
                                             </Box>
-                                        ))}
-                                    </RadioGroup>
-                                </FormControl>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    sx={{ mt: 2 }}
-                                    disabled={!canSave}
-                                    onClick={() => void handleSave()}
-                                >
-                                    {saving ? <CircularProgress size={22} color="inherit" /> : 'Salvesta'}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                    Lõuna
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 1.5 }}>
-                                    <strong>Supp:</strong>{' '}
-                                    <Typography component="span" variant="body2" fontWeight={hasSavedChoices ? 700 : 400}>
-                                        {hasSavedChoices ? soupLabel(savedFood!.is_vege_food) : 'Pole valitud'}
-                                    </Typography>
-                                </Typography>
-                                <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                    Õhtu
-                                </Typography>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    <strong>Pitsa:</strong>{' '}
-                                    <Typography component="span" variant="body2" fontWeight={hasSavedChoices ? 700 : 400}>
-                                        {hasSavedChoices ? pizzaLabel(savedFood!.pizza) : 'Pole valitud'}
-                                    </Typography>
-                                </Typography>
-                                {hasSavedChoices && savedFood!.pizza ? (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Õhtu — valitud pitsa koostis
+                                        ) : null}
+                                        <Typography variant="caption" color="text.secondary" display="block"
+                                                    sx={{mt: 1}}>
+                                            Valikute muutmine on praegu suletud.
                                         </Typography>
-                                        <IconButton
-                                            size="small"
-                                            aria-label="Vaata valitud pitsa koostist"
-                                            onClick={() =>
-                                                setIngredientsDialog({
-                                                    title: pizzaLabel(savedFood!.pizza),
-                                                    text: pizzaIngredients(savedFood!.pizza),
-                                                })
-                                            }
-                                            sx={{ color: 'text.secondary' }}
-                                        >
-                                            <SearchIcon fontSize="small" />
-                                        </IconButton>
-                                    </Box>
-                                ) : null}
-                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                                    Valikute muutmine on praegu suletud.
-                                </Typography>
-                            </>
+                                    </>
+                                )}
+                            </Box>
                         )}
-                    </Box>
-                )}
 
-                <Box sx={{ mt: competitionId != null && Number.isFinite(competitionId) ? 4 : 3 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                        Toitlustuspunktid avatakse kell 11:00. Palun söö esimeses toitlustuspunktis, kuhu jõuad peale 11:00 — järgmises
-                        punktis ei pruugi Sulle toitu jätkuda!
-                    </Typography>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ mt: 2.5, mb: 1, textAlign: 'center' }}>
-                        Toitlustuspunktid rajal
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        {holes.length === 0 ? (
-                            <Typography variant="body2" color="text.secondary" textAlign="center">
-                                Toitlustuspunkte pole märgitud.
+                        <Box sx={{mt: competitionId != null && Number.isFinite(competitionId) ? 4 : 3}}>
+
+                            <Typography variant="subtitle1" fontWeight={700} sx={{mt: 2.5, mb: 1, textAlign: 'center'}}>
+                                Toitlustuspunktid rajal
                             </Typography>
-                        ) : (
-                            holes.map((hole) => (
-                                <Box
-                                    key={hole.id}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        width: '100%',
-                                        boxSizing: 'border-box',
-                                        borderRadius: 2,
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        backgroundColor: 'background.paper',
-                                        px: 2,
-                                        py: 1.5,
-                                        minHeight: 56,
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            bgcolor: 'action.hover',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        <Typography variant="body1" fontWeight={700} color="text.primary">
-                                            {hole.number}
-                                        </Typography>
-                                    </Box>
-                                    <Typography variant="body1" fontWeight={600} sx={{ pl: 2 }}>
-                                        Korv {hole.number}
+                            <Typography variant="body2" color="text.secondary" sx={{textAlign: 'center', mb:"1rem"}}>
+                                Toitlustuspunktid avatakse kell 11:00. Palun söö esimeses toitlustuspunktis, kuhu jõuad
+                                peale 11:00 — järgmises
+                                punktis ei pruugi Sulle toitu jätkuda!
+                            </Typography>
+                            <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
+                                {holes.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary" textAlign="center">
+                                        Toitlustuspunkte pole märgitud.
                                     </Typography>
-                                </Box>
-                            ))
-                        )}
-                    </Box>
-                </Box>
+                                ) : (
+                                    holes.map((hole) => (
+                                        <Box
+                                            key={hole.id}
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                width: '100%',
+                                                boxSizing: 'border-box',
+                                                borderRadius: 2,
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                backgroundColor: 'background.paper',
+                                                px: 2,
+                                                py: 1.5,
+                                                minHeight: 56,
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: '50%',
+                                                    bgcolor: 'action.hover',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                }}
+                                            >
+                                                <Typography variant="body1" fontWeight={700} color="text.primary">
+                                                    {hole.number}
+                                                </Typography>
+                                            </Box>
+                                            <Typography variant="body1" fontWeight={600} sx={{pl: 2}}>
+                                                Korv {hole.number}
+                                            </Typography>
+                                        </Box>
+                                    ))
+                                )}
+                            </Box>
+                        </Box>
                     </>
                 )}
             </Box>
@@ -372,11 +391,11 @@ export default function CateringPage() {
             >
                 <DialogTitle id="ingredients-dialog-title">{ingredientsDialog?.title}</DialogTitle>
                 <DialogContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ pt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{pt: 0.5}}>
                         {ingredientsDialog?.text}
                     </Typography>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
+                <DialogActions sx={{px: 3, pb: 2}}>
                     <Button onClick={() => setIngredientsDialog(null)}>Sulge</Button>
                 </DialogActions>
             </Dialog>

@@ -502,7 +502,7 @@ export default function PredictionPage() {
 
                                 <ScoreInput
                                     label="Sinu enda tulemus"
-                                    description="Milline tuleb Sinu enda tulemus?"
+                                    description="Milline tuleb Sinu enda tulemus? Kui pakud alla par-i sisesta negatiivne väärtus."
                                     value={formData.player_own_score}
                                     onChange={(value) => {
                                         setFormData({
