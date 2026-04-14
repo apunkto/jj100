@@ -58,7 +58,7 @@ export default function CoursePage() {
 
     const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1)
     const [initialHole, setInitialHole] = useState<number | null>(null)
-    const [initialSlideToDone, setInitialSlideToDone] = useState(false)
+    const initialSlideApplied = useRef(false)
 
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
@@ -105,9 +105,10 @@ export default function CoursePage() {
         if (authLoading) return
         if (user?.activeCompetitionId == null) {
             setTotalCards(DEFAULT_TOTAL_CARDS)
-            setInitialHole(1)
             return
         }
+        setInitialHole(null)
+        initialSlideApplied.current = false
         const init = async () => {
             try {
                 const [count, ch] = await Promise.all([getHoleCount(user.activeCompetitionId), getUserCurrentHoleNumber()])
@@ -126,18 +127,17 @@ export default function CoursePage() {
 
     // after swiper is ready AND initialHole is known, jump once (no animation)
     useEffect(() => {
-        if (!swiperInstance) return
-        if (initialHole == null) return
-        if (initialSlideToDone) return
+        if (!swiperInstance || initialHole == null) return
+        if (initialSlideApplied.current) return
 
         swiperInstance.slideTo(initialHole - 1, 0)
         setCurrentHoleNumber(initialHole)
-        setInitialSlideToDone(true)
-    }, [swiperInstance, initialHole, initialSlideToDone])
+        initialSlideApplied.current = true
+    }, [swiperInstance, initialHole])
 
     // preload current, prev, next — only when we have competitionId (loadHole no-op without it)
     useEffect(() => {
-        if (authLoading || user?.activeCompetitionId == null || !initialSlideToDone) return
+        if (authLoading || user?.activeCompetitionId == null || initialHole == null) return
 
         if (currentHoleNumber >= 1 && currentHoleNumber <= totalCards) {
             loadHole(currentHoleNumber)
@@ -145,7 +145,7 @@ export default function CoursePage() {
             if (currentHoleNumber < totalCards) loadHole(currentHoleNumber + 1)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authLoading, user?.activeCompetitionId, currentHoleNumber, initialSlideToDone])
+    }, [authLoading, user?.activeCompetitionId, currentHoleNumber, initialHole])
 
     useEffect(() => {
         const handleVisibilityChange = () => {

@@ -168,15 +168,13 @@ const getCompetitionStats = async (competitionId: number): Promise<CompetitionSt
 };
 
 const getUserCurrentHoleNumber = async (): Promise<number | null> => {
-    //TODO: switch to api call when competition is created
-    return 1;
-    /*
+
     const res = await authedFetch(`${API_BASE}/metrix/player/current-hole`);
     if (!res.ok) throw new Error('Failed to fetch user current hole number');
 
     const result = (await res.json()) as ApiResponse<{ currentHole: number | null }>;
     if (!result.success) throw new Error('Backend returned error fetching user current hole number');
-    return result.data.currentHole;*/
+    return result.data.currentHole;
 };
 
 export default function useMetrixApi() {
