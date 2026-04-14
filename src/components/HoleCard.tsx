@@ -85,7 +85,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                     }}
                 >
                     <Image
-                        src="/logo.webp"
+                        src="/logo2.webp"
                         alt="Logo"
                         width={500}
                         height={220}
