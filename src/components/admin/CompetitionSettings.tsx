@@ -93,7 +93,7 @@ export function CompetitionSettings({
                             disabled={updating}
                         />
                     }
-                    label="Toitlustuse valikud"
+                    label="Luba toidu valik"
                 />
 
                 <FormControlLabel
