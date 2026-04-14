@@ -117,7 +117,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 57 }}>
                         <Link href="/">
                             <Box display="flex" alignItems="center">
-                                <Image src="/logo.webp" alt="Logo" width={57} height={49} priority />
+                                <Image src="/logo2.webp" alt="Logo" width={57} height={49} priority />
                             </Box>
                         </Link>
                     </Box>
