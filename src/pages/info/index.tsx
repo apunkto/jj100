@@ -58,7 +58,7 @@ export default function InfoPage() {
                         <SectionTitle>Raja kaart</SectionTitle>
                         <Box
                             component="a"
-                            href="https://www.google.com/maps/d/u/0/viewer?mid=1MKfo8i7cJcaNYnHXZGOwrDgGy2x_HSY&ll=59.03964897449547%2C25.88895708498072&z=15"
+                            href="https://www.google.com/maps/d/u/0/viewer?mid=1uxEagB1g3LfwP6U_4NL12TQelxV2cbg&ll=59.03964897449547%2C25.88895708498072&z=15"
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={linkCardSx}
