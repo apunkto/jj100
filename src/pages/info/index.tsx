@@ -252,6 +252,10 @@ export default function InfoPage() {
                     </IconButton>
                 </DialogTitle>
                 <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+                        Arve saad väljastada maksekorralduse alusel. Arve väljastatakse isikule, kes on makse
+                        sooritaja.
+                    </Typography>
                     <TextField
                         label="Maksja pangakonto nr"
                         placeholder="EE..."
@@ -259,7 +263,6 @@ export default function InfoPage() {
                         value={iban}
                         onChange={(e) => setIban(e.target.value)}
                         disabled={loading}
-                        sx={{mt: 1}}
                     />
                     <TextField
                         label="Maksekorralduse nr"
