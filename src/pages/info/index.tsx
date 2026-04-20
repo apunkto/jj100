@@ -24,6 +24,7 @@ import usePlayerApi from '@/src/api/usePlayerApi'
 import useBillApi from '@/src/api/useBillApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import {generateBillPdf} from '@/src/utils/generateBillPdf'
+import {normalizeBillIban, normalizeBillInstructionId} from '@/src/utils/billInputNormalize'
 
 const cardSx = {
     width: '100%',
@@ -97,21 +98,21 @@ export default function InfoPage() {
     const handleSubmit = async () => {
         setError(null)
 
-        const trimmedIban = iban.trim()
-        const trimmedInstrId = instructionId.trim()
+        const normalizedIban = normalizeBillIban(iban)
+        const normalizedInstrId = normalizeBillInstructionId(instructionId)
 
-        if (!trimmedIban) {
+        if (!normalizedIban) {
             setError('Pangakonto number on kohustuslik')
             return
         }
-        if (!trimmedInstrId) {
+        if (!normalizedInstrId) {
             setError('Maksekorralduse number on kohustuslik')
             return
         }
 
         setLoading(true)
         try {
-            const bill = await lookupBill(trimmedIban, trimmedInstrId)
+            const bill = await lookupBill(normalizedIban, normalizedInstrId)
             await generateBillPdf(bill)
             showToast('Arve allalaetud!', 'success')
             setDialogOpen(false)
