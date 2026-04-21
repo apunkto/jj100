@@ -44,7 +44,8 @@ export type Hole = {
     bogeys?: number
     double_bogeys?: number
     others?: number
-    rules: string
+    rules_et?: string | null
+    rules_en?: string | null
     is_food: boolean
     card_img?: string | null
     user_result?: string | null
