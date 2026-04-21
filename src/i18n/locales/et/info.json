@@ -1,0 +1,21 @@
+{
+  "title": "Üldinfo",
+  "mapSection": "Raja kaart",
+  "googleMaps": "Google Maps Kaart",
+  "organizers": "Korraldajad",
+  "resultsSection": "Tulemused",
+  "metrixLink": "Discgolf Metrix",
+  "socialSection": "Sotsiaalmeedia",
+  "facebook": "Facebook",
+  "invoiceSection": "Arve",
+  "issueInvoice": "Väljasta arve",
+  "dialogTitle": "Väljasta arve",
+  "dialogBody": "Arve saad väljastada maksekorralduse alusel. Arve väljastatakse isikule, kes on makse sooritaja.",
+  "ibanLabel": "Maksja pangakonto nr",
+  "instructionLabel": "Maksekorralduse nr",
+  "cancel": "Katkesta",
+  "buildInvoice": "Koosta arve",
+  "ibanRequired": "Pangakonto number on kohustuslik",
+  "instructionRequired": "Maksekorralduse number on kohustuslik",
+  "toastDownloaded": "Arve allalaetud!"
+}

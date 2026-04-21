@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "title": "Järva-Jaani 100!",
+    "description": "Järva-Jaani 100 disc golf event"
+  },
+  "loading": "Loading...",
+  "competition": "Competition",
+  "competitionFallback": "Competition {{id}}",
+  "logout": "Log out",
+  "admin": "Admin",
+  "footer": "Problems? Call +372 51994444",
+  "appTitle": "Järva-Jaani 100!",
+  "languageEt": "Estonian",
+  "languageEn": "English",
+  "closeAria": "Close",
+  "player": "Player"
+}

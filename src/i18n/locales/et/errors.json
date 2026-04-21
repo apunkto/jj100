@@ -1,0 +1,5 @@
+{
+  "bill_missing_payment_details": "Palun täida pangakonto number ja maksekorralduse number.",
+  "bill_transaction_not_found": "Makset ei leitud. Kontrolli pangakonto numbrit ja maksekorralduse numbrit.",
+  "bill_lookup_failed": "Arve koostamine ebaõnnestus"
+}

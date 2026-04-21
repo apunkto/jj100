@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "title": "Järva-Jaani 100!",
+    "description": "Järva-Jaani 100 discgolfi üritus"
+  },
+  "loading": "Laadimine...",
+  "competition": "Võistlus",
+  "competitionFallback": "Võistlus {{id}}",
+  "logout": "Logi välja",
+  "admin": "Admin",
+  "footer": "Probleem? Helista +372 51994444",
+  "appTitle": "Järva-Jaani 100!",
+  "languageEt": "Eesti",
+  "languageEn": "English",
+  "closeAria": "Sulge",
+  "player": "Mängija"
+}

@@ -40,6 +40,7 @@ import {useAuth} from '@/src/contexts/AuthContext'
 import usePlayerApi, {CompetitionOption} from '@/src/api/usePlayerApi'
 import useAdminApi from '@/src/api/useAdminApi'
 import {decodeHtmlEntities} from '@/src/utils/textUtils'
+import {LanguageFlagIconButtons} from '@/src/components/LanguageFlagIconButtons'
 
 export default function Layout({
                                    children,
@@ -57,9 +58,7 @@ export default function Layout({
 
     const router = useRouter()
     const currentPath = router.pathname
-    const {t, i18n} = useTranslation(['common', 'nav'])
-
-    const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'et'
+    const {t} = useTranslation(['common', 'nav'])
 
     const allMenuItems = useMemo(
         () => [
@@ -204,36 +203,7 @@ export default function Layout({
                             ) : (
                                 <Box sx={{ flex: 1 }} />
                             )}
-                            <Box sx={{ display: 'flex', flexShrink: 0, alignItems: 'center', gap: 0.25 }}>
-                                <IconButton
-                                    size="small"
-                                    color={lang === 'et' ? 'primary' : 'default'}
-                                    onClick={() => {
-                                        void i18n.changeLanguage('et')
-                                    }}
-                                    aria-label={t('common:languageEt')}
-                                    aria-pressed={lang === 'et'}
-                                    sx={{ fontSize: '1.1rem', p: 0.35 }}
-                                >
-                                    <Box component="span" aria-hidden sx={{ lineHeight: 1 }}>
-                                        🇪🇪
-                                    </Box>
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    color={lang === 'en' ? 'primary' : 'default'}
-                                    onClick={() => {
-                                        void i18n.changeLanguage('en')
-                                    }}
-                                    aria-label={t('common:languageEn')}
-                                    aria-pressed={lang === 'en'}
-                                    sx={{ fontSize: '1.1rem', p: 0.35 }}
-                                >
-                                    <Box component="span" aria-hidden sx={{ lineHeight: 1 }}>
-                                        🇬🇧
-                                    </Box>
-                                </IconButton>
-                            </Box>
+                            <LanguageFlagIconButtons />
                         </Box>
 
                         {isAuthed && competitions.length > 0 && (

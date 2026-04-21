@@ -1,0 +1,6 @@
+{
+  "welcome": "Tere tulemast {{name}}!",
+  "countdownTitle": "Maratoni alguseni",
+  "countdownDays": "{{days}} päeva",
+  "countdownRest": "{{hours}} tundi {{minutes}} min {{seconds}} sek"
+}

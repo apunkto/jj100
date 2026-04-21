@@ -20,6 +20,7 @@ import CloseIcon from "@mui/icons-material/Close"
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 import {supabase} from "@/src/lib/supabaseClient"
 import Layout from "@/src/components/Layout"
+import {LanguageFlagIconButtons} from "@/src/components/LanguageFlagIconButtons"
 import type {MetrixIdentity} from "@/src/api/useMetrixApi"
 import useMetrixApi from "@/src/api/useMetrixApi"
 import {Trans, useTranslation} from "react-i18next"
@@ -203,9 +204,12 @@ export default function LoginPage() {
                 width="100%"
                 sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
             >
-                <Typography variant="h5" fontWeight={700} mb={0.5}>
-                    {t("title")}
-                </Typography>
+                <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 0.5}}>
+                    <Typography variant="h5" fontWeight={700} sx={{flex: 1, minWidth: 0}}>
+                        {t("title")}
+                    </Typography>
+                    <LanguageFlagIconButtons />
+                </Box>
                 <Typography variant="body2" color="text.secondary" mb={2}>
                     <Trans i18nKey="login:intro" components={{ 1: <strong /> }} />
                 </Typography>

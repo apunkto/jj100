@@ -1,0 +1,166 @@
+{
+  "catering": {
+    "title": "Toitlustus",
+    "choicesTitle": "Söögivalikud",
+    "notRegistered": "Sinu osalemist sellel võistlusel ei leitud — toiduvalikud pole saadaval.",
+    "lunchSoup": "Lõuna - Supp",
+    "dinnerPizza": "Õhtu - Pitsa",
+    "meatSoup": "Lihaga supp",
+    "vegeSoup": "Vege supp",
+    "save": "Salvesta",
+    "lunch": "Lõuna",
+    "dinner": "Õhtu",
+    "soupLabel": "Supp:",
+    "pizzaLabel": "Pitsa:",
+    "notChosen": "Pole valitud",
+    "eveningIngredients": "Õhtu — valitud pitsa koostis",
+    "ariaIngredients": "{{label}} koostis",
+    "ariaViewIngredients": "Vaata valitud pitsa koostist",
+    "choicesClosed": "Valikute muutmine on praegu suletud.",
+    "pointsTitle": "Toitlustuspunktid rajal",
+    "pointsHint": "Toitlustuspunktid avatakse kell 11:00. Palun söö esimeses toitlustuspunktis, kuhu jõuad peale 11:00 — järgmises punktis ei pruugi Sulle toitu jätkuda!",
+    "noPoints": "Toitlustuspunkte pole märgitud.",
+    "basket": "Korv {{n}}",
+    "dialogClose": "Sulge",
+    "toastLoadFailed": "Andmete laadimine ebaõnnestus",
+    "toastSaved": "Valikud salvestatud",
+    "toastSaveFailed": "Salvestamine ebaõnnestus",
+    "pizza": {
+      "tyri": {
+        "label": "Türi",
+        "ingredients": "Kaste, juust, hakkliha, sink, peekon, marineeritud kurk, küüslauk, punane sibul"
+      },
+      "mafioso": {
+        "label": "Mafioso",
+        "ingredients": "Kaste, juust, salaami, sink, suitsukana, rohelised oliivid, paprika, sinihallitusjuust, suitsujuust"
+      },
+      "vegetariana": {
+        "label": "Vegetariana",
+        "ingredients": "Kaste, juust, šampinjon, paprika, rohelised oliivid, ananass, tomat"
+      }
+    }
+  },
+  "stats": {
+    "title": "Minu statistika",
+    "notPlayed": "Sa ei osalenud sellel võistlusel.",
+    "overview": "Võistluse ülevaade",
+    "placeInClass": "Koht klassis",
+    "behindLeader": "Liidrist maas",
+    "throws": "viset",
+    "holesPlayed": "Läbitud rajad",
+    "obHoles": "OB radu",
+    "scoreDistribution": "Skoori jaotus",
+    "scoreEagle": "Eagle",
+    "scoreBirdie": "Birdie",
+    "scorePar": "Par",
+    "scoreBogey": "Bogey",
+    "scoreDouble": "Double",
+    "scoreTriple": "Triple+"
+  },
+  "results": {
+    "title": "Tulemused",
+    "noCompetition": "Aktiivset võistlust ei ole valitud. Palun vali võistlus oma profiilis.",
+    "loading": "Laen...",
+    "notFound": "Tulemusi ei leitud"
+  },
+  "history": {
+    "title": "Minu osalemised",
+    "cancelledCovid": "Jäi ära koroonaviiruse tõttu",
+    "notParticipated": "Ei osalenud",
+    "placeScore": "Koht: {{place}} ({{score}})",
+    "leaderboardTitle": "Enim osalemisi",
+    "noData": "Andmeid ei leitud.",
+    "timesOne": "{{count}} kord",
+    "timesMany": "{{count}} korda"
+  },
+  "course": {
+    "basket": "Korv {{n}}",
+    "foodPointTitle": "Toidupunkt",
+    "searchPlaceholder": "Otsi korvi..",
+    "myResult": "Minu tulemus:",
+    "navigateToHole": "📍 Juhata rajale",
+    "hasCtp": "Sellel korvil on CTP",
+    "markCtp": "Märgi CTP",
+    "difficulty": "Raskuselt {{rank}}. rada ({{diff}} viset par-ile)",
+    "obPercent": "{{pct}}% viskas OB"
+  },
+  "ctpList": {
+    "title": "CTP Rajad",
+    "subtitle": "Vajuta rajal et CTP tulemust sisestada",
+    "basket": "Korv {{n}}",
+    "noResult": "Tulemust pole"
+  },
+  "ctpHole": {
+    "back": "CTP Rajad",
+    "title": "CTP Tulemus",
+    "holeNotFound": "Korvi {{n}} ei leitud",
+    "noCtpGame": "Korvil {{n}} ei toimu CTP mängu",
+    "resultSection": "Tulemus",
+    "noResultYet": "CTP tulemust pole veel sisestatud",
+    "closerQuestion": "Kas viskasid lähemale?",
+    "distanceLabel": "Kaugus korvist (cm)",
+    "distancePositive": "CTP peab olema suurem kui 0 cm",
+    "distanceLessThan": "CTP peab olema väiksem kui {{cm}} cm",
+    "confirm": "Kinnita",
+    "entryClosed": "CTP sisestamine ei ole veel avatud",
+    "poolMateLink": "Sisesta puulikaaslase CTP",
+    "poolMateTitle": "Sisesta {{name}} CTP",
+    "history": "Ajalugu",
+    "dialogConfirmTitle": "Kinnita CTP tulemus",
+    "dialogOwn": "Kas kinnitad, et Sinu ketas on korvist {{distance}} cm?",
+    "dialogMate": "Kas kinnitad, et {{name}} ketas on korvist {{distance}} cm?",
+    "cancel": "Katkesta",
+    "iConfirm": "Kinnitan",
+    "pickMateTitle": "Vali puulikaaslane",
+    "pickMateBody": "Sisestades puulikaaslase CTP vastutad õigete andmete eest Sina!",
+    "alreadySubmitted": "– juba sisestatud",
+    "toastOwnSuccess": "CTP tulemus sisestatud!",
+    "toastMateSuccess": "Puulikaaslase CTP tulemus sisestatud!",
+    "toastNotParticipant": "Sa ei osale võistlusel!",
+    "toastSamePool": "Saad sisestada CTP ainult sama raja mängijatele",
+    "toastSubmitFailed": "CTP sisestamine ebaõnnestus!"
+  },
+  "feedback": {
+    "title": "Tagasiside",
+    "success": "Aitäh! Sinu tagasiside on salvestatud.",
+    "ratingTitle": "Kuidas jäid üritusega rahule?",
+    "ratingAria": "Ürituse hinnang",
+    "ratingRequired": "Palun vali hinnang.",
+    "commentTitle": "Mis meeldis, mis mitte? Soovitusi järgmiseks aastaks? Mis probleeme tekkis?",
+    "commentLabel": "Sinu tagasiside",
+    "commentPlaceholder": "Kirjuta siia oma mõtted...",
+    "commentMin": "Palun kirjuta vähemalt 3 tähemärki.",
+    "submit": "Saada tagasiside",
+    "toastError": "Midagi läks valesti. Palun proovi uuesti."
+  },
+  "checkin": {
+    "title": "Loosimängu registreerimine",
+    "notOpen": "Registreerumine ei ole veel avatud!",
+    "registeredTitle": "Oled loosimisse registreeritud!",
+    "unregister": "Tühista registreering",
+    "infoAlert": "Auhinna saamiseks peab mängija olema loosimise hetkel kohal!",
+    "register": "Registreeri",
+    "dialogTitle": "Registreeru loosimängu?",
+    "dialogBody": "Kas oled kindel, et soovid end loosimängu registreerida?\n\nKinnitan, et olen loosimise ajal kohal!",
+    "cancel": "Katkesta",
+    "confirm": "Kinnita",
+    "toastRegistered": "Registreeritud!",
+    "toastAlreadyIn": "Mängija on juba loosimängu registreeritud!",
+    "toastNotParticipant": "Sa ei osale võistlusel!",
+    "toastRegisterError": "Registreerimisel tekkis viga!",
+    "toastUnregistered": "Registreering tühistatud!",
+    "toastUnregisterFailed": "Registreeringu tühistamine ebaõnnestus!"
+  },
+  "print": {
+    "downloadPdf": "Laadi PDF alla (A4)"
+  },
+  "holeCard": {
+    "noSpecialRules": "Erireeglid puuduvad"
+  },
+  "dashboard": {
+    "loading": "Laen...",
+    "competitionRequired": "Võistlus on nõutav",
+    "openWithId": "Ava ekraan võistluse ID-ga: /dashboard?competitionId=123",
+    "noDivisions": "Klassid puuduvad"
+  }
+}

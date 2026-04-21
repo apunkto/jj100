@@ -1,0 +1,6 @@
+{
+  "welcome": "Welcome, {{name}}!",
+  "countdownTitle": "Time until start",
+  "countdownDays": "{{days}} days",
+  "countdownRest": "{{hours}} h {{minutes}} min {{seconds}} sec"
+}

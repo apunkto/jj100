@@ -1,0 +1,16 @@
+{
+  "invoiceTitle": "ARVE nr. {{number}}",
+  "reg": "Reg.",
+  "tel": "tel.",
+  "bankIban": "{{bank}} a/a {{iban}}",
+  "payer": "Maksja:",
+  "colDescription": "Nimetus",
+  "colQty": "Kogus",
+  "colPrice": "Hind",
+  "colSum": "Summa",
+  "total": "Kogusumma",
+  "amountInWords": "Summa sõnadega: {{words}}",
+  "dueDate": "Maksetähtaeg: {{date}}",
+  "boardMember": "Juhatuse liige: {{name}}",
+  "filename": "arve-{{number}}.pdf"
+}

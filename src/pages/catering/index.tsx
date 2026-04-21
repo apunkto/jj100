@@ -19,7 +19,7 @@ import Layout from '@/src/components/Layout'
 import useCtpApi, {Hole} from '@/src/api/useCtpApi'
 import useConfigApi from '@/src/api/useConfigApi'
 import useFoodChoicesApi from '@/src/api/useFoodChoicesApi'
-import {PIZZA_OPTIONS, type PizzaChoiceId, pizzaIngredients, pizzaLabel,} from '@/src/constants/cateringPizzas'
+import {isPizzaChoiceId, PIZZA_IDS, type PizzaChoiceId} from '@/src/constants/cateringPizzas'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useToast} from '@/src/contexts/ToastContext'
 import {useTranslation} from 'react-i18next'
@@ -42,6 +42,22 @@ export default function CateringPage() {
     const {user} = useAuth()
     const {showToast} = useToast()
     const {t} = useTranslation('pages')
+
+    const pizzaLabel = useCallback(
+        (id: string | null | undefined) => {
+            if (!isPizzaChoiceId(id)) return id ?? ''
+            return t(`catering.pizza.${id}.label`)
+        },
+        [t],
+    )
+
+    const pizzaIngredients = useCallback(
+        (id: string | null | undefined) => {
+            if (!isPizzaChoiceId(id)) return ''
+            return t(`catering.pizza.${id}.ingredients`)
+        },
+        [t],
+    )
     const {getCateringHoles} = useCtpApi()
     const {fetchCompetitionInfo} = useConfigApi()
     const {getFoodChoices, patchFoodChoices} = useFoodChoicesApi()
@@ -213,9 +229,9 @@ export default function CateringPage() {
                                                 value={pizzaDraft ?? ''}
                                                 onChange={(_, v) => setPizzaDraft(v as PizzaChoiceId)}
                                             >
-                                                {PIZZA_OPTIONS.map((p) => (
+                                                {PIZZA_IDS.map((id) => (
                                                     <Box
-                                                        key={p.id}
+                                                        key={id}
                                                         sx={{
                                                             display: 'flex',
                                                             alignItems: 'center',
@@ -224,29 +240,31 @@ export default function CateringPage() {
                                                         }}
                                                     >
                                                         <FormControlLabel
-                                                            value={p.id}
+                                                            value={id}
                                                             control={<Radio size="small"/>}
                                                             label={
                                                                 <Typography
                                                                     component="span"
                                                                     variant="body2"
-                                                                    fontWeight={pizzaDraft === p.id ? 700 : 400}
+                                                                    fontWeight={pizzaDraft === id ? 700 : 400}
                                                                     sx={{lineHeight: 1.25}}
                                                                 >
-                                                                    {p.label}
+                                                                    {pizzaLabel(id)}
                                                                 </Typography>
                                                             }
                                                             sx={{flex: 1, alignItems: 'center', ml: 0, mr: 0}}
                                                         />
                                                         <IconButton
                                                             size="small"
-                                                            aria-label={t('catering.ariaIngredients', {label: p.label})}
+                                                            aria-label={t('catering.ariaIngredients', {
+                                                                label: pizzaLabel(id),
+                                                            })}
                                                             onClick={(e) => {
                                                                 e.preventDefault()
                                                                 e.stopPropagation()
                                                                 setIngredientsDialog({
-                                                                    title: p.label,
-                                                                    text: p.ingredients
+                                                                    title: pizzaLabel(id),
+                                                                    text: pizzaIngredients(id),
                                                                 })
                                                             }}
                                                             sx={{color: 'text.secondary', flexShrink: 0}}

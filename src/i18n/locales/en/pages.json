@@ -1,0 +1,166 @@
+{
+  "catering": {
+    "title": "Food",
+    "choicesTitle": "Meal choices",
+    "notRegistered": "We could not find your registration for this competition — food choices are unavailable.",
+    "lunchSoup": "Lunch — soup",
+    "dinnerPizza": "Dinner — pizza",
+    "meatSoup": "Meat soup",
+    "vegeSoup": "Vegetarian soup",
+    "save": "Save",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "soupLabel": "Soup:",
+    "pizzaLabel": "Pizza:",
+    "notChosen": "Not selected",
+    "eveningIngredients": "Dinner — selected pizza ingredients",
+    "ariaIngredients": "{{label}} ingredients",
+    "ariaViewIngredients": "View selected pizza ingredients",
+    "choicesClosed": "Changing choices is currently closed.",
+    "pointsTitle": "Food stops on the course",
+    "pointsHint": "Food stops open at 11:00. Please eat at the first stop you reach after 11:00 — the next stop may run out of food for you!",
+    "noPoints": "No food stops are marked.",
+    "basket": "Hole {{n}}",
+    "dialogClose": "Close",
+    "toastLoadFailed": "Failed to load data",
+    "toastSaved": "Choices saved",
+    "toastSaveFailed": "Save failed",
+    "pizza": {
+      "tyri": {
+        "label": "Türi",
+        "ingredients": "Sauce, cheese, minced meat, ham, bacon, pickled cucumber, garlic, red onion"
+      },
+      "mafioso": {
+        "label": "Mafioso",
+        "ingredients": "Sauce, cheese, salami, ham, smoked chicken, green olives, bell pepper, blue cheese, smoked cheese"
+      },
+      "vegetariana": {
+        "label": "Vegetariana",
+        "ingredients": "Sauce, cheese, mushrooms, bell pepper, green olives, pineapple, tomato"
+      }
+    }
+  },
+  "stats": {
+    "title": "My stats",
+    "notPlayed": "You did not play in this competition.",
+    "overview": "Event overview",
+    "placeInClass": "Rank in division",
+    "behindLeader": "Behind the leader",
+    "throws": "throws",
+    "holesPlayed": "Holes played",
+    "obHoles": "OB holes",
+    "scoreDistribution": "Score distribution",
+    "scoreEagle": "Eagle",
+    "scoreBirdie": "Birdie",
+    "scorePar": "Par",
+    "scoreBogey": "Bogey",
+    "scoreDouble": "Double",
+    "scoreTriple": "Triple+"
+  },
+  "results": {
+    "title": "Results",
+    "noCompetition": "No active competition selected. Please choose a competition in your profile.",
+    "loading": "Loading...",
+    "notFound": "No results found"
+  },
+  "history": {
+    "title": "My participations",
+    "cancelledCovid": "Cancelled due to COVID-19",
+    "notParticipated": "Did not participate",
+    "placeScore": "Rank: {{place}} ({{score}})",
+    "leaderboardTitle": "Most participations",
+    "noData": "No data found.",
+    "timesOne": "{{count}} time",
+    "timesMany": "{{count}} times"
+  },
+  "course": {
+    "basket": "Hole {{n}}",
+    "foodPointTitle": "Food stop",
+    "searchPlaceholder": "Find hole..",
+    "myResult": "My score:",
+    "navigateToHole": "📍 Directions to hole",
+    "hasCtp": "CTP hole",
+    "markCtp": "Enter CTP",
+    "difficulty": "{{rank}}. hardest hole ({{diff}} throws vs par)",
+    "obPercent": "{{pct}}% threw OB"
+  },
+  "ctpList": {
+    "title": "CTP holes",
+    "subtitle": "Tap a hole to enter a CTP result",
+    "basket": "Hole {{n}}",
+    "noResult": "No result yet"
+  },
+  "ctpHole": {
+    "back": "CTP holes",
+    "title": "CTP result",
+    "holeNotFound": "Hole {{n}} not found",
+    "noCtpGame": "There is no CTP game on hole {{n}}",
+    "resultSection": "Result",
+    "noResultYet": "No CTP result entered yet",
+    "closerQuestion": "Did you throw closer?",
+    "distanceLabel": "Distance to basket (cm)",
+    "distancePositive": "CTP distance must be greater than 0 cm",
+    "distanceLessThan": "CTP must be less than {{cm}} cm",
+    "confirm": "Confirm",
+    "entryClosed": "CTP entry is not open yet",
+    "poolMateLink": "Enter card-mate's CTP",
+    "poolMateTitle": "Enter CTP for {{name}}",
+    "history": "History",
+    "dialogConfirmTitle": "Confirm CTP result",
+    "dialogOwn": "Do you confirm your disc is {{distance}} cm from the basket?",
+    "dialogMate": "Do you confirm {{name}}'s disc is {{distance}} cm from the basket?",
+    "cancel": "Cancel",
+    "iConfirm": "I confirm",
+    "pickMateTitle": "Choose card-mate",
+    "pickMateBody": "By entering someone else's CTP you are responsible for correct data!",
+    "alreadySubmitted": "— already entered",
+    "toastOwnSuccess": "CTP result saved!",
+    "toastMateSuccess": "Card-mate CTP saved!",
+    "toastNotParticipant": "You are not in this competition!",
+    "toastSamePool": "You can only enter CTP for players on the same layout",
+    "toastSubmitFailed": "CTP entry failed!"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "success": "Thanks! Your feedback has been saved.",
+    "ratingTitle": "How satisfied were you with the event?",
+    "ratingAria": "Event rating",
+    "ratingRequired": "Please choose a rating.",
+    "commentTitle": "What did you like or dislike? Suggestions for next year? Any issues?",
+    "commentLabel": "Your feedback",
+    "commentPlaceholder": "Write your thoughts here...",
+    "commentMin": "Please write at least 3 characters.",
+    "submit": "Send feedback",
+    "toastError": "Something went wrong. Please try again."
+  },
+  "checkin": {
+    "title": "Draw registration",
+    "notOpen": "Registration is not open yet!",
+    "registeredTitle": "You are registered for the draw!",
+    "unregister": "Cancel registration",
+    "infoAlert": "To win a prize you must be present when the draw is held!",
+    "register": "Register",
+    "dialogTitle": "Register for the draw?",
+    "dialogBody": "Are you sure you want to register for the draw?\n\nI confirm I will be present at draw time!",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "toastRegistered": "Registered!",
+    "toastAlreadyIn": "Player is already registered for the draw!",
+    "toastNotParticipant": "You are not playing in this competition!",
+    "toastRegisterError": "Registration failed!",
+    "toastUnregistered": "Registration cancelled!",
+    "toastUnregisterFailed": "Could not cancel registration!"
+  },
+  "print": {
+    "downloadPdf": "Download PDF (A4)"
+  },
+  "holeCard": {
+    "noSpecialRules": "No special rules"
+  },
+  "dashboard": {
+    "loading": "Loading...",
+    "competitionRequired": "Competition required",
+    "openWithId": "Open the dashboard with a competition ID: /dashboard?competitionId=123",
+    "noDivisions": "No divisions yet"
+  }
+}

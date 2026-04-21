@@ -1,0 +1,21 @@
+{
+  "title": "General info",
+  "mapSection": "Course map",
+  "googleMaps": "Google Maps",
+  "organizers": "Organisers",
+  "resultsSection": "Results",
+  "metrixLink": "Disc Golf Metrix",
+  "socialSection": "Social media",
+  "facebook": "Facebook",
+  "invoiceSection": "Invoice",
+  "issueInvoice": "Download invoice",
+  "dialogTitle": "Download invoice",
+  "dialogBody": "You can issue an invoice based on your bank payment. The invoice is issued to the person who made the payment.",
+  "ibanLabel": "Payer IBAN",
+  "instructionLabel": "Payment reference number",
+  "cancel": "Cancel",
+  "buildInvoice": "Create invoice",
+  "ibanRequired": "Bank account number is required",
+  "instructionRequired": "Payment reference number is required",
+  "toastDownloaded": "Invoice downloaded!"
+}
