@@ -25,6 +25,7 @@ import useBillApi from '@/src/api/useBillApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import {generateBillPdf} from '@/src/utils/generateBillPdf'
 import {normalizeBillIban, normalizeBillInstructionId} from '@/src/utils/billInputNormalize'
+import {useTranslation} from 'react-i18next'
 
 const cardSx = {
     width: '100%',
@@ -70,7 +71,8 @@ export default function InfoPage() {
     const {getPlayerCompetitions} = usePlayerApi()
     const {lookupBill} = useBillApi()
     const {showToast} = useToast()
-
+    const {t} = useTranslation('info')
+    const {t: tErr} = useTranslation('errors')
     const [isParticipant, setIsParticipant] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [iban, setIban] = useState('')
@@ -102,11 +104,11 @@ export default function InfoPage() {
         const normalizedInstrId = normalizeBillInstructionId(instructionId)
 
         if (!normalizedIban) {
-            setError('Pangakonto number on kohustuslik')
+            setError(t('ibanRequired'))
             return
         }
         if (!normalizedInstrId) {
-            setError('Maksekorralduse number on kohustuslik')
+            setError(t('instructionRequired'))
             return
         }
 
@@ -114,13 +116,15 @@ export default function InfoPage() {
         try {
             const bill = await lookupBill(normalizedIban, normalizedInstrId)
             await generateBillPdf(bill)
-            showToast('Arve allalaetud!', 'success')
+            showToast(t('toastDownloaded'), 'success')
             setDialogOpen(false)
             setIban('')
             setInstructionId('')
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Arve koostamine ebaõnnestus'
-            setError(message)
+            const code =
+                err instanceof Error && 'code' in err ? (err as Error & {code?: string}).code : undefined
+            const fallback = err instanceof Error ? err.message : tErr('bill_lookup_failed')
+            setError(code ? tErr(code, {defaultValue: fallback}) : fallback)
         } finally {
             setLoading(false)
         }
@@ -130,13 +134,13 @@ export default function InfoPage() {
         <Layout>
             <Box sx={{width: '100%', maxWidth: '100%', px: 2, py: 3, boxSizing: 'border-box'}}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center">
-                    Üldinfo
+                    {t('title')}
                 </Typography>
 
                 <Box sx={{mt: 3, display: 'flex', flexDirection: 'column', gap: 2}}>
                     {/* Map */}
                     <Box>
-                        <SectionTitle>Raja kaart</SectionTitle>
+                        <SectionTitle>{t('mapSection')}</SectionTitle>
                         <Box
                             component="a"
                             href="https://www.google.com/maps/d/u/0/viewer?mid=1uxEagB1g3LfwP6U_4NL12TQelxV2cbg&ll=59.03964897449547%2C25.88895708498072&z=15"
@@ -147,7 +151,7 @@ export default function InfoPage() {
                             <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5}}>
                                 <MapIcon color="primary" />
                                 <Typography fontWeight={600} color="primary.main">
-                                    Google Maps Kaart
+                                    {t('googleMaps')}
                                 </Typography>
                             </Box>
                             <ChevronRightIcon sx={{color: 'primary.main', fontSize: 20}} />
@@ -156,7 +160,7 @@ export default function InfoPage() {
 
                     {/* Organizers */}
                     <Box>
-                        <SectionTitle>Korraldajad</SectionTitle>
+                        <SectionTitle>{t('organizers')}</SectionTitle>
                         <Box sx={cardSx}>
                             <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
                                 <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 0.5}}>
@@ -181,7 +185,7 @@ export default function InfoPage() {
 
                     {/* Metrix */}
                     <Box>
-                        <SectionTitle>Tulemused</SectionTitle>
+                        <SectionTitle>{t('resultsSection')}</SectionTitle>
                         <Box
                             component="a"
                             href="https://discgolfmetrix.com/3522494"
@@ -192,7 +196,7 @@ export default function InfoPage() {
                             <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5}}>
                                 <EmojiEventsIcon color="primary" />
                                 <Typography fontWeight={600} color="primary.main">
-                                    Discgolf Metrix
+                                    {t('metrixLink')}
                                 </Typography>
                             </Box>
                             <ChevronRightIcon sx={{color: 'primary.main', fontSize: 20}} />
@@ -201,7 +205,7 @@ export default function InfoPage() {
 
                     {/* Facebook */}
                     <Box>
-                        <SectionTitle>Sotsiaalmeedia</SectionTitle>
+                        <SectionTitle>{t('socialSection')}</SectionTitle>
                         <Box
                             component="a"
                             href="https://www.facebook.com/events/1663196438386742"
@@ -212,7 +216,7 @@ export default function InfoPage() {
                             <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5}}>
                                 <FacebookIcon color="primary" />
                                 <Typography fontWeight={600} color="primary.main">
-                                    Facebook
+                                    {t('facebook')}
                                 </Typography>
                             </Box>
                             <ChevronRightIcon sx={{color: 'primary.main', fontSize: 20}} />
@@ -221,7 +225,7 @@ export default function InfoPage() {
 
                     {(isParticipant || user?.isAdmin) && (
                         <Box>
-                            <SectionTitle>Arve</SectionTitle>
+                            <SectionTitle>{t('invoiceSection')}</SectionTitle>
                             <Box
                                 sx={{
                                     ...linkCardSx,
@@ -235,7 +239,7 @@ export default function InfoPage() {
                                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5}}>
                                     <ReceiptLongIcon color="primary" />
                                     <Typography fontWeight={600} color="primary.main">
-                                        Väljasta arve
+                                        {t('issueInvoice')}
                                     </Typography>
                                 </Box>
                                 <ChevronRightIcon sx={{color: 'primary.main', fontSize: 20}} />
@@ -247,18 +251,17 @@ export default function InfoPage() {
 
             <Dialog open={dialogOpen} onClose={() => !loading && setDialogOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle sx={{m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                    Väljasta arve
+                    {t('dialogTitle')}
                     <IconButton aria-label="close" onClick={() => setDialogOpen(false)} disabled={loading} sx={{ml: 1}}>
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-                        Arve saad väljastada maksekorralduse alusel. Arve väljastatakse isikule, kes on makse
-                        sooritaja.
+                        {t('dialogBody')}
                     </Typography>
                     <TextField
-                        label="Maksja pangakonto nr"
+                        label={t('ibanLabel')}
                         placeholder="EE..."
                         fullWidth
                         value={iban}
@@ -266,7 +269,7 @@ export default function InfoPage() {
                         disabled={loading}
                     />
                     <TextField
-                        label="Maksekorralduse nr"
+                        label={t('instructionLabel')}
                         fullWidth
                         value={instructionId}
                         onChange={(e) => setInstructionId(e.target.value)}
@@ -281,10 +284,10 @@ export default function InfoPage() {
                 </DialogContent>
                 <DialogActions sx={{px: 3, pb: 2}}>
                     <Button onClick={() => setDialogOpen(false)} disabled={loading}>
-                        Katkesta
+                        {t('cancel')}
                     </Button>
                     <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-                        {loading ? <CircularProgress size={20} /> : 'Koosta arve'}
+                        {loading ? <CircularProgress size={20} /> : t('buildInvoice')}
                     </Button>
                 </DialogActions>
             </Dialog>

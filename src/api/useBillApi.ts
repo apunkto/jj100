@@ -27,10 +27,17 @@ async function lookupBill(iban: string, instructionId: string): Promise<BillData
         body: JSON.stringify({iban, instructionId}),
     })
 
-    const json = (await res.json()) as {success: boolean; data?: BillData; error?: string}
+    const json = (await res.json()) as {
+        success: boolean
+        data?: BillData
+        error?: string
+        code?: string
+    }
 
     if (!res.ok || !json.success) {
-        throw new Error(json.error ?? 'Arve koostamine ebaõnnestus')
+        const err = new Error(json.error ?? 'Request failed') as Error & {code?: string}
+        err.code = json.code ?? 'bill_lookup_failed'
+        throw err
     }
 
     return json.data!

@@ -4,6 +4,7 @@ import {Controller, useForm} from 'react-hook-form'
 import Layout from '@/src/components/Layout'
 import useFeedbackApi from '@/src/api/useFeedbackApi'
 import {useToast} from '@/src/contexts/ToastContext'
+import {useTranslation} from 'react-i18next'
 
 type FeedbackForm = {
     score: number
@@ -11,6 +12,7 @@ type FeedbackForm = {
 }
 
 export default function FeedbackPage() {
+    const { t } = useTranslation('pages')
     const [submitted, setSubmitted] = useState(false)
     const { submitFeedback } = useFeedbackApi()
     const { showToast } = useToast()
@@ -34,7 +36,7 @@ export default function FeedbackPage() {
             reset()
         } catch (err) {
             console.error(err)
-            showToast('Midagi läks valesti. Palun proovi uuesti.', 'error')
+            showToast(t('feedback.toastError'), 'error')
         }
     }
 
@@ -45,12 +47,12 @@ export default function FeedbackPage() {
                     variant="h4"
                     fontWeight="bold"
                 >
-                    Tagasiside
+                    {t('feedback.title')}
                 </Typography>
 
                 {submitted && (
                     <Alert severity="success" sx={{ mb: 3 }}>
-                        Aitäh! Sinu tagasiside on salvestatud.
+                        {t('feedback.success')}
                     </Alert>
                 )}
 
@@ -62,7 +64,7 @@ export default function FeedbackPage() {
                     <Box display="flex" flexDirection="column" gap={2}>
                         <Box textAlign="center">
                             <Typography variant="subtitle1" gutterBottom>
-                                Kuidas jäid üritusega rahule?
+                                {t('feedback.ratingTitle')}
                             </Typography>
                             <Controller
                                 name="score"
@@ -71,7 +73,7 @@ export default function FeedbackPage() {
                                 render={({ field }) => (
                                     <Rating
                                         name="event-rating"
-                                        aria-label="Ürituse hinnang"
+                                        aria-label={t('feedback.ratingAria')}
                                         value={field.value}
                                         onChange={(_, value) => field.onChange(value)}
                                     />
@@ -79,12 +81,12 @@ export default function FeedbackPage() {
                             />
                             {errors.score && (
                                 <Typography variant="body2" color="error">
-                                    Palun vali hinnang.
+                                    {t('feedback.ratingRequired')}
                                 </Typography>
                             )}
                         </Box>
                         <Typography variant="subtitle1" gutterBottom mt={2}>
-                            Mis meeldis, mis mitte? Soovitusi järgmiseks aastaks? Mis probleeme tekkis?
+                            {t('feedback.commentTitle')}
                         </Typography>
 
                         <Controller
@@ -94,15 +96,15 @@ export default function FeedbackPage() {
                             render={({ field }) => (
                                 <TextField
                                     {...field}
-                                    label="Sinu tagasiside"
+                                    label={t('feedback.commentLabel')}
                                     fullWidth
                                     multiline
                                     minRows={3}
                                     variant="outlined"
-                                    placeholder="Kirjuta siia oma mõtted..."
+                                    placeholder={t('feedback.commentPlaceholder')}
                                     error={!!errors.feedback}
                                     helperText={
-                                        errors.feedback ? 'Palun kirjuta vähemalt 3 tähemärki.' : ' '
+                                        errors.feedback ? t('feedback.commentMin') : ' '
                                     }
                                 />
                             )}
@@ -114,7 +116,7 @@ export default function FeedbackPage() {
                             disabled={isSubmitting}
                             sx={{ alignSelf: 'center', minWidth: 150 }}
                         >
-                            Saada tagasiside
+                            {t('feedback.submit')}
                         </Button>
                     </Box>
                 </Box>

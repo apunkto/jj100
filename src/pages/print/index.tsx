@@ -3,9 +3,11 @@ import HoleCard from "@/src/components/HoleCard"
 import useCtpApi, {Hole} from "@/src/api/useCtpApi"
 import {useEffect, useRef, useState} from "react"
 import {Box, Button} from "@mui/material"
+import {useTranslation} from "react-i18next"
 // jsPDF is dynamically imported in exportPdf to reduce bundle size
 
 export default function PrintHolesPage() {
+    const { t } = useTranslation("pages")
     const { getHoles } = useCtpApi()
     const [holes, setHoles] = useState<Hole[] | null>(null)
 
@@ -102,7 +104,7 @@ export default function PrintHolesPage() {
         <Box sx={{ py: 2, fontFamily: '"Poppins", sans-serif' }}>
             <Box sx={{ display: "flex", justifyContent: "center", mb: 2, gap: 1 }}>
                 <Button variant="contained" onClick={exportPdf}>
-                    Download PDF (A4)
+                    {t("print.downloadPdf")}
                 </Button>
             </Box>
 

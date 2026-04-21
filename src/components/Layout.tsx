@@ -17,7 +17,8 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material'
-import React, {ReactNode, useCallback, useEffect, useState} from 'react'
+import React, {ReactNode, useCallback, useEffect, useMemo, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import MenuIcon from '@mui/icons-material/Menu'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -56,6 +57,25 @@ export default function Layout({
 
     const router = useRouter()
     const currentPath = router.pathname
+    const {t, i18n} = useTranslation(['common', 'nav'])
+
+    const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'et'
+
+    const allMenuItems = useMemo(
+        () => [
+            {href: '/info', labelKey: 'info' as const, icon: <InfoIcon />},
+            {href: '/course', labelKey: 'course' as const, icon: <MapIcon />},
+            {href: '/ctp', labelKey: 'ctp' as const, icon: <GolfCourseIcon />},
+            {href: '/catering', labelKey: 'catering' as const, icon: <RestaurantIcon />},
+            {href: '/stats', labelKey: 'stats' as const, icon: <LineChartIcon />},
+            {href: '/results', labelKey: 'results' as const, icon: <EmojiEventsIcon />},
+            {href: '/check-in', labelKey: 'checkIn' as const, icon: <CardGiftcardIcon />},
+            {href: '/prediction', labelKey: 'prediction' as const, icon: <QuizIcon />},
+            {href: '/feedback', labelKey: 'feedback' as const, icon: <FeedbackIcon />},
+            {href: '/history', labelKey: 'history' as const, icon: <HistoryIcon />},
+        ],
+        [],
+    )
 
     useEffect(() => {
         if (user) {
@@ -98,19 +118,6 @@ export default function Layout({
         [setActiveCompetition, refreshMe, router]
     )
 
-    const allMenuItems = [
-        { href: '/info', label: 'Üldinfo', icon: <InfoIcon /> },
-        { href: '/course', label: 'Rada', icon: <MapIcon /> },
-        { href: '/ctp', label: 'CTP rajad', icon: <GolfCourseIcon /> },
-        { href: '/catering', label: 'Toitlustus', icon: <RestaurantIcon /> },
-        { href: '/stats', label: 'Minu statistika', icon: <LineChartIcon /> },
-        { href: '/results', label: 'Top 10', icon: <EmojiEventsIcon /> },
-        { href: '/check-in', label: 'Loosimised', icon: <CardGiftcardIcon /> },
-        { href: '/prediction', label: 'Ennustusmäng', icon: <QuizIcon /> },
-        { href: '/feedback', label: 'Tagasiside', icon: <FeedbackIcon /> },
-        { href: '/history', label: 'Ajalugu', icon: <HistoryIcon /> },
-    ]
-
     // Filter menu items based on activeCompetitionId
     const menuItems = allMenuItems.filter((item) => {
         // Always show Info and History
@@ -133,7 +140,7 @@ export default function Layout({
                             <IconButton
                                 edge="start"
                                 color="inherit"
-                                aria-label="menu"
+                                aria-label={t('nav:menuAria')}
                                 onClick={() => setDrawerOpen(true)}
                             >
                                 <MenuIcon />
@@ -150,16 +157,16 @@ export default function Layout({
                                     fontWeight: 700,
                                 }}
                             >
-                                Järva-Jaani 100!
+                                {t('common:appTitle')}
                             </Typography>
                         </Link>
                     </Box>
 
-                    {/* Right side - Logo */}
+                    {/* Right side — logo */}
                     <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 57 }}>
                         <Link href="/">
                             <Box display="flex" alignItems="center">
-                                <Image src="/logo2.webp" alt="Logo" width={57} height={49} priority />
+                                <Image src="/logo2.webp" alt={t('common:appTitle')} width={57} height={49} priority />
                             </Box>
                         </Link>
                     </Box>
@@ -185,11 +192,52 @@ export default function Layout({
                         onClick={() => setDrawerOpen(false)}
                         onKeyDown={() => setDrawerOpen(false)}
                     >
+                        <Box
+                            sx={{ display: 'flex', alignItems: 'center', mb: isAuthed && competitions.length > 0 ? 0.5 : 2, gap: 1 }}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            {isAuthed && competitions.length > 0 ? (
+                                <Typography variant="caption" color="text.secondary" sx={{ flex: 1, minWidth: 0 }}>
+                                    {t('common:competition')}
+                                </Typography>
+                            ) : (
+                                <Box sx={{ flex: 1 }} />
+                            )}
+                            <Box sx={{ display: 'flex', flexShrink: 0, alignItems: 'center', gap: 0.25 }}>
+                                <IconButton
+                                    size="small"
+                                    color={lang === 'et' ? 'primary' : 'default'}
+                                    onClick={() => {
+                                        void i18n.changeLanguage('et')
+                                    }}
+                                    aria-label={t('common:languageEt')}
+                                    aria-pressed={lang === 'et'}
+                                    sx={{ fontSize: '1.1rem', p: 0.35 }}
+                                >
+                                    <Box component="span" aria-hidden sx={{ lineHeight: 1 }}>
+                                        🇪🇪
+                                    </Box>
+                                </IconButton>
+                                <IconButton
+                                    size="small"
+                                    color={lang === 'en' ? 'primary' : 'default'}
+                                    onClick={() => {
+                                        void i18n.changeLanguage('en')
+                                    }}
+                                    aria-label={t('common:languageEn')}
+                                    aria-pressed={lang === 'en'}
+                                    sx={{ fontSize: '1.1rem', p: 0.35 }}
+                                >
+                                    <Box component="span" aria-hidden sx={{ lineHeight: 1 }}>
+                                        🇬🇧
+                                    </Box>
+                                </IconButton>
+                            </Box>
+                        </Box>
+
                         {isAuthed && competitions.length > 0 && (
                             <Box sx={{ mb: 2 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                                    Võistlus
-                                </Typography>
                                 {competitions.length > 1 ? (
                                     <FormControl fullWidth size="small">
                                         <Select
@@ -210,7 +258,8 @@ export default function Layout({
                                                             py: 0.5,
                                                         }}
                                                     >
-                                                        {decodeHtmlEntities(c?.name ?? null) || `Competition ${value ?? ''}`}
+                                                        {decodeHtmlEntities(c?.name ?? null) ||
+                                                            t('common:competitionFallback', {id: String(value ?? '')})}
                                                     </Typography>
                                                 )
                                             }}
@@ -224,7 +273,8 @@ export default function Layout({
                                         >
                                             {competitions.map((c) => (
                                                 <MenuItem key={c.id} value={c.id} sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                                    {decodeHtmlEntities(c.name) || `Competition ${c.id}`}
+                                                    {decodeHtmlEntities(c.name) ||
+                                                        t('common:competitionFallback', {id: String(c.id)})}
                                                 </MenuItem>
                                             ))}
                                         </Select>
@@ -239,13 +289,15 @@ export default function Layout({
                                             wordBreak: 'break-word',
                                         }}
                                     >
-                                        {decodeHtmlEntities(competitions[0]?.name) || `Competition ${competitions[0]?.id ?? ''}`}
+                                        {decodeHtmlEntities(competitions[0]?.name) ||
+                                            t('common:competitionFallback', {id: String(competitions[0]?.id ?? '')})}
                                     </Typography>
                                 )}
                             </Box>
                         )}
+
                         <List>
-                            {menuItems.map(({ href, label, icon }) => {
+                            {menuItems.map(({ href, labelKey, icon }) => {
                                 const isActive = currentPath === href
                                 const showDividerBefore = href === '/check-in'
 
@@ -267,7 +319,7 @@ export default function Layout({
                                                                     color: 'text.primary',
                                                                 }}
                                                             >
-                                                                {label}
+                                                                {t(`nav:${labelKey}`)}
                                                             </Typography>
                                                         }
                                                     />
@@ -300,7 +352,7 @@ export default function Layout({
                                                                 color: 'text.primary',
                                                             }}
                                                         >
-                                                            Admin
+                                                            {t('common:admin')}
                                                         </Typography>
                                                     }
                                                 />
@@ -323,7 +375,7 @@ export default function Layout({
                                             <ListItemText
                                                 primary={
                                                     <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
-                                                        Logi välja
+                                                        {t('common:logout')}
                                                     </Typography>
                                                 }
                                             />
@@ -362,7 +414,8 @@ export default function Layout({
                     }}
                 >
                     <Typography variant="body2" sx={{fontSize: '0.8rem'}}>
-                        Probleem? Helista +372 51994444</Typography>
+                        {t('common:footer')}
+                    </Typography>
                 </Box>
             </Box>
         </Box>

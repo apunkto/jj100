@@ -4,8 +4,10 @@ import Image from 'next/image'
 import Countdown from 'react-countdown'
 import {useSyncExternalStore} from 'react'
 import {useAuth} from '@/src/contexts/AuthContext'
+import {useTranslation} from 'react-i18next'
 
 export default function HomePage() {
+    const {t} = useTranslation('home')
     const targetDate = new Date('2026-05-02T08:00:00')
     const mounted = useSyncExternalStore(
         () => () => {},
@@ -20,7 +22,7 @@ export default function HomePage() {
               <Box textAlign="center" mt={6}>
                 {firstName && (
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                        Tere tulemast {firstName}!
+                        {t('welcome', {name: firstName})}
                     </Typography>
                 )}
                 </Box>
@@ -38,18 +40,22 @@ export default function HomePage() {
             <Box textAlign="center" mt={6}>
                 
                 <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    Maratoni alguseni
+                    {t('countdownTitle')}
                 </Typography>
 
-                <Typography variant="h5" fontWeight="bold">
-                    {mounted && ( // 👈 Only render Countdown after mounted
+                <Typography variant="h5" fontWeight="bold" component="div">
+                    {mounted && (
                         <Countdown
                             date={targetDate}
                             daysInHours={false}
                             renderer={({ days, hours, minutes, seconds }) => (
                                 <>
-                                    {days} päeva<br />
-                                    {hours} tundi {minutes} min {seconds} sek
+                                    <Typography variant="h5" fontWeight="bold" component="span" display="block">
+                                        {t('countdownDays', {days})}
+                                    </Typography>
+                                    <Typography variant="h5" fontWeight="bold" component="span" display="block">
+                                        {t('countdownRest', {hours, minutes, seconds})}
+                                    </Typography>
                                 </>
                             )}
                         />

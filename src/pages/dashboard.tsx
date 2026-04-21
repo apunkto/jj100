@@ -9,8 +9,10 @@ import TopHolesSlide from '@/src/components/dashboard/TopHolesSlide'
 import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
 import {TopPlayersByDivisionContent} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
 import StatsSlide from '@/src/components/dashboard/StatsSlide'
+import {useTranslation} from 'react-i18next'
 
 export default function Dashboard() {
+    const { t } = useTranslation('pages')
     const router = useRouter()
     const competitionIdParam = router.query.competitionId
     const competitionId =
@@ -33,14 +35,14 @@ export default function Dashboard() {
                 }}
             >
                 {!router.isReady ? (
-                    <Typography>Laen...</Typography>
+                    <Typography>{t('dashboard.loading')}</Typography>
                 ) : (
                     <>
                         <Typography variant="h5" color="error">
-                            Competition required
+                            {t('dashboard.competitionRequired')}
                         </Typography>
                         <Typography>
-                            Please open the dashboard with a competition ID: /dashboard?competitionId=123
+                            {t('dashboard.openWithId')}
                         </Typography>
                     </>
                 )}
@@ -54,6 +56,7 @@ export default function Dashboard() {
 }
 
 function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; isLooping: boolean }) {
+    const { t } = useTranslation('pages')
     const swiperRef = useRef<any>(null)
     const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
     const divisionEntries = Object.entries(topPlayersByDivision)
@@ -84,7 +87,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                             justifyContent: 'center',
                         }}
                     >
-                        <Typography>Laen...</Typography>
+                        <Typography>{t('dashboard.loading')}</Typography>
                     </Box>
                 </SwiperSlide>
             ) : error && divisionEntries.length === 0 ? (
@@ -112,7 +115,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                             justifyContent: 'center',
                         }}
                     >
-                        <Typography>No divisions yet</Typography>
+                        <Typography>{t('dashboard.noDivisions')}</Typography>
                     </Box>
                 </SwiperSlide>
             ) : (

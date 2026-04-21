@@ -22,6 +22,7 @@ import {supabase} from "@/src/lib/supabaseClient"
 import Layout from "@/src/components/Layout"
 import type {MetrixIdentity} from "@/src/api/useMetrixApi"
 import useMetrixApi from "@/src/api/useMetrixApi"
+import {Trans, useTranslation} from "react-i18next"
 
 type Stage = "email" | "pin"
 
@@ -49,6 +50,7 @@ export default function LoginPage() {
     const canSend = normalizedEmail.length > 3 && normalizedEmail.includes("@")
     const canVerify = pin.length === 6
     const { preLogin, registerFromMetrix } = useMetrixApi()
+    const { t } = useTranslation("login")
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
@@ -72,7 +74,7 @@ export default function LoginPage() {
             return
         }
         setStage("pin")
-        setInfo("Saatsime PIN-koodi sinu e-mailile.")
+        setInfo(t("pinSent"))
     }
 
     const sendPin = async (options?: { fetchMetrixIfNewUser?: boolean }) => {
@@ -80,7 +82,7 @@ export default function LoginPage() {
         setInfo(null)
 
         if (!canSend) {
-            setErrorMsg("Palun sisesta korrektne e-mail.")
+            setErrorMsg(t("invalidEmail"))
             return
         }
 
@@ -116,7 +118,7 @@ export default function LoginPage() {
             const identities = result.identities || []
 
             if (identities.length === 0) {
-                setErrorMsg("Selle e-mailiga kasutajat DiscGolfMetrixis ei leitud.")
+                setErrorMsg(t("metrixUserNotFound"))
                 return
             }
 
@@ -129,7 +131,7 @@ export default function LoginPage() {
             setIdentityPickerList(identities)
             setIdentityPickerOpen(true)
         } catch (e: unknown) {
-            setErrorMsg(e instanceof Error ? e.message : "Midagi läks valesti.")
+            setErrorMsg(e instanceof Error ? e.message : t("genericError"))
         } finally {
             setLoading(false)
         }
@@ -149,7 +151,7 @@ export default function LoginPage() {
             await registerFromMetrix(normalizedEmail, identity.userId)
             await sendOtpAndGoToPin()
         } catch (e: unknown) {
-            setErrorMsg(e instanceof Error ? e.message : "Midagi läks valesti.")
+            setErrorMsg(e instanceof Error ? e.message : t("genericError"))
         } finally {
             setLoading(false)
         }
@@ -162,7 +164,7 @@ export default function LoginPage() {
         setInfo(null)
 
         if (token.length !== 6) {
-            setErrorMsg("Palun sisesta 6-kohaline PIN-kood.")
+            setErrorMsg(t("pinLength"))
             return
         }
 
@@ -202,10 +204,10 @@ export default function LoginPage() {
                 sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}
             >
                 <Typography variant="h5" fontWeight={700} mb={0.5}>
-                    Logi sisse
+                    {t("title")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mb={2}>
-                    Sisesta oma <strong>dgmetrixi e-mail</strong> ja saadame sulle ühekordse PIN-koodi.
+                    <Trans i18nKey="login:intro" components={{ 1: <strong /> }} />
                 </Typography>
 
                 <Stack spacing={2}>
@@ -216,7 +218,7 @@ export default function LoginPage() {
                             <>
                                 <TextField
                                     fullWidth
-                                    label="E-mail"
+                                    label={t("emailLabel")}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     autoComplete="email"
@@ -224,7 +226,7 @@ export default function LoginPage() {
 
                                 <Alert severity="info" sx={{ textAlign: "left" }}>
                                     <Typography variant="body2" sx={{ mb: 0.75 }}>
-                                        Ei mäleta oma metrixi e-maili?
+                                        {t("metrixForgotTitle")}
                                     </Typography>
 
                                     <Button
@@ -236,16 +238,15 @@ export default function LoginPage() {
                                         rel="noreferrer"
                                         sx={{ px: 0, textTransform: "none", alignSelf: "flex-start" }}
                                     >
-                                        Ava Metrixi konto seaded
+                                        {t("metrixOpenSettings")}
                                     </Button>
 
                                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                                        Kui oled Metrixisse sisse logitud, näed seal oma meiliaadressi
+                                        {t("metrixHint1")}
                                     </Typography>
 
                                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
-                                        Või: logi metrixisse sisse ja klõpsa paremal üleval oma nimel →{" "}
-                                        <strong>Seadistused</strong> → <strong>Meiliaadress</strong>
+                                        <Trans i18nKey="login:metrixHint2" components={{ 1: <strong /> }} />
                                     </Typography>
                                 </Alert>
 
@@ -256,17 +257,23 @@ export default function LoginPage() {
                                     disabled={!canSend || loading || cooldown > 0}
                                     onClick={() => void sendPin()}
                                 >
-                                    {loading ? <CircularProgress size={20} /> : cooldown > 0 ? `Oota ${cooldown}s...` : "Saada PIN"}
+                                    {loading ? (
+                                        <CircularProgress size={20} />
+                                    ) : cooldown > 0 ? (
+                                        t("waitSeconds", { seconds: cooldown })
+                                    ) : (
+                                        t("sendPin")
+                                    )}
                                 </Button>
 
                                 <Typography variant="caption" color="text.secondary">
-                                    PIN-kood kehtib lühikest aega. Kui kiri ei jõua kohale, kontrolli rämpsposti.
+                                    {t("pinExpiryHint")}
                                 </Typography>
                             </>
                         ) : (
                             <>
                                 <Typography variant="body2" color="text.secondary">
-                                    Sisesta e-postile saadetud PIN:
+                                    {t("enterPin")}
                                 </Typography>
                                 <Typography mb={-0.5} fontWeight={600}>
                                     {normalizedEmail}
@@ -274,7 +281,7 @@ export default function LoginPage() {
 
                                 <TextField
                                     fullWidth
-                                    label="PIN (6 numbrit)"
+                                    label={t("pinLabel")}
                                     value={pin}
                                     onChange={(e) => {
                                         const next = e.target.value.replace(/\D/g, "").slice(0, 6)
@@ -297,15 +304,15 @@ export default function LoginPage() {
                                     disabled={!canVerify || loading}
                                     onClick={() => verifyPin()}
                                 >
-                                    {loading ? <CircularProgress size={20} /> : "Kinnita"}
+                                    {loading ? <CircularProgress size={20} /> : t("confirm")}
                                 </Button>
 
                                 <Stack direction="row" spacing={1}>
                                     <Button fullWidth variant="outlined" disabled={loading} onClick={resendPin}>
-                                        Saada uuesti
+                                        {t("resend")}
                                     </Button>
                                     <Button fullWidth variant="text" disabled={loading} onClick={changeEmail}>
-                                        Muuda e-maili
+                                        {t("changeEmail")}
                                     </Button>
                                 </Stack>
                             </>
@@ -318,37 +325,35 @@ export default function LoginPage() {
                     maxWidth="sm"
                     fullWidth
                 >
-                    <DialogTitle>DiscGolf Metrix</DialogTitle>
+                    <DialogTitle>{t("metrixDialogTitle")}</DialogTitle>
                     <DialogContent>
-              
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                            Kinnitades annad nõusoleku, et JJ100 äpp võib kasutada Sinu DiscGolfMetrixi andmeid (ID, nimi, e-mail).
+                            {t("metrixConsent1")}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                            Andmeid kasutakse üksnes JJ100 äpis ja neid ei jagata edasi.
+                            {t("metrixConsent2")}
                         </Typography>
-                       
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2 }}>
                         <Button onClick={() => setMetrixConsentOpen(false)} disabled={loading}>
-                            Katkesta
+                            {t("cancel")}
                         </Button>
                         <Button variant="contained" onClick={onConfirmMetrixConsent} disabled={loading}>
-                            Nõustun ja jätkan
+                            {t("agreeContinue")}
                         </Button>
                     </DialogActions>
                 </Dialog>
 
                 <Dialog open={identityPickerOpen} onClose={() => setIdentityPickerOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        Vali konto
+                        {t("chooseAccount")}
                         <IconButton aria-label="close" onClick={() => setIdentityPickerOpen(false)} sx={{ ml: 1 }}>
                             <CloseIcon />
                         </IconButton>
                     </DialogTitle>
                     <DialogContent>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Selle e-maili all on DiscGolfMetrixis mitu profiili. Vali, millist soovid kasutada.
+                            {t("multipleProfiles")}
                         </Typography>
                         <List>
                             {identityPickerList.map((identity) => (
@@ -360,7 +365,7 @@ export default function LoginPage() {
                                     <Stack direction="row" alignItems="center" spacing={2}>
                                         <Typography fontWeight={600}>{identity.name}</Typography>
                                         <Typography variant="caption" color="text.secondary">
-                                            ID: {identity.userId}
+                                            {t("idLabel", { id: identity.userId })}
                                         </Typography>
                                     </Stack>
                                 </ListItemButton>

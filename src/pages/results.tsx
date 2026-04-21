@@ -6,6 +6,7 @@ import type {MyDivisionResultPayload} from '@/src/api/useMetrixApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
 import {TopPlayersByDivisionResults} from '@/src/components/admin/TopPlayersByDivisionResults'
+import {useTranslation} from 'react-i18next'
 
 const PREFERRED_DIVISION_ORDER = [
     'Noored Mehed',
@@ -22,6 +23,7 @@ function ResultsTabs({
     competitionId: number
     currentUserMetrixId?: number
 }) {
+    const { t } = useTranslation('pages')
     const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
     const { getMyDivisionResult } = useMetrixApi()
     const [myDivisionResult, setMyDivisionResult] = useState<MyDivisionResultPayload>(null)
@@ -77,7 +79,7 @@ function ResultsTabs({
                 }}
             >
                 <CircularProgress />
-                <Typography ml={2}>Laen...</Typography>
+                <Typography ml={2}>{t('results.loading')}</Typography>
             </Box>
         )
     }
@@ -107,7 +109,7 @@ function ResultsTabs({
                     justifyContent: 'center',
                 }}
             >
-                <Typography>Tulemusi ei leitud</Typography>
+                <Typography>{t('results.notFound')}</Typography>
             </Box>
         )
     }
@@ -155,6 +157,7 @@ function ResultsTabs({
 
 export default function ResultsPage() {
     const { user } = useAuth()
+    const { t } = useTranslation('pages')
 
     if (!user) return <Layout><Box /></Layout>
 
@@ -164,10 +167,10 @@ export default function ResultsPage() {
             <Layout>
                 <Box px={2} textAlign="center">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
-                        Tulemused
+                        {t('results.title')}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Aktiivset võistlust ei ole valitud. Palun vali võistlus oma profiilis.
+                        {t('results.noCompetition')}
                     </Typography>
                 </Box>
             </Layout>

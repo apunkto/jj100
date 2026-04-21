@@ -15,6 +15,7 @@ import HoleCard from "@/src/components/HoleCard";
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import GpsFixedIcon from '@mui/icons-material/GpsFixed'
 import {useRouter} from 'next/router'
+import {useTranslation} from 'react-i18next'
 
 type HoleCacheEntry = {
     data: Hole
@@ -44,6 +45,7 @@ function getHoleResultColor(result: number, par: number): string {
 }
 
 export default function CoursePage() {
+    const { t } = useTranslation('pages')
     const [totalCards, setTotalCards] = useState<number>(DEFAULT_TOTAL_CARDS)
     const cards = Array.from({length: totalCards}, (_, i) => i + 1)
 
@@ -176,6 +178,18 @@ export default function CoursePage() {
 
     useEffect(() => () => debouncedSlideTo.cancel(), [debouncedSlideTo])
 
+    const scoreLabel = (key: string) => {
+        const m: Record<string, string> = {
+            eagles: t('stats.scoreEagle'),
+            birdies: t('stats.scoreBirdie'),
+            pars: t('stats.scorePar'),
+            bogeys: t('stats.scoreBogey'),
+            double_bogeys: t('stats.scoreDouble'),
+            others: t('stats.scoreTriple'),
+        }
+        return m[key] ?? key
+    }
+
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setSearchInput(value)
@@ -215,7 +229,7 @@ export default function CoursePage() {
                 </Box>
 
                 <Box mt={1} display="flex" flexWrap="wrap" justifyContent="center" gap={1}>
-                    {SCORE_CATEGORIES.map(({key, color, label}) => {
+                    {SCORE_CATEGORIES.map(({key, color}) => {
                         const value = holeData[key as keyof typeof holeData] || 0
                         if (!value) return null
                         return (
@@ -234,7 +248,7 @@ export default function CoursePage() {
                                     fontSize: '10px',
                                 }}
                             >
-                                {label}: {value}
+                                {scoreLabel(key)}: {value}
                             </Box>
                         )
                     })}
@@ -258,7 +272,7 @@ export default function CoursePage() {
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Box display="flex" alignItems="center" gap={1}>
                         <Typography variant="h4" fontWeight="bold" component="span">
-                            Korv {currentHoleNumber}
+                            {t('course.basket', { n: currentHoleNumber })}
                         </Typography>
 
                         {/* icons shown only when current hole has flags */}
@@ -275,7 +289,7 @@ export default function CoursePage() {
 
                         {hasFood && (
                             <Box
-                                title="Toidupunkt"
+                                title={t('course.foodPointTitle')}
                                 sx={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}
                             >
                                 <RestaurantIcon color="primary" fontSize="small" />
@@ -285,7 +299,7 @@ export default function CoursePage() {
 
                     <TextField
                         size="small"
-                        placeholder="Otsi korvi.."
+                        placeholder={t('course.searchPlaceholder')}
                         value={searchInput}
                         onChange={handleSearchChange}
                         sx={{
@@ -359,7 +373,7 @@ export default function CoursePage() {
                         {userResult != null ? (
                             <Box display="flex" alignItems="center" gap={1}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Minu tulemus:
+                                    {t('course.myResult')}
                                 </Typography>
                                 <Box
                                     sx={{
@@ -395,7 +409,7 @@ export default function CoursePage() {
                                     )
                                 }}
                             >
-                                📍 Juhata rajale
+                                {t('course.navigateToHole')}
                             </Button>
                         ) : null}
                     </Box>
@@ -408,14 +422,14 @@ export default function CoursePage() {
                     <Box  textAlign="center">
                         <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
                             <GpsFixedIcon color="primary" fontSize="small" />
-                            <Typography color="primary">Sellel korvil on CTP</Typography>
+                            <Typography color="primary">{t('course.hasCtp')}</Typography>
                             <Button
                                 variant="contained"
                                 color="primary"
                                 size="small"
                                 onClick={() => router.push(`/ctp/${currentHoleNumber}`)}
                             >
-                                Märgi CTP
+                                {t('course.markCtp')}
                             </Button>
                         </Box>
                     </Box>
@@ -425,34 +439,38 @@ export default function CoursePage() {
                     <Box  textAlign="center">
                         <Box mt={1} display="flex" justifyContent="center" gap={1} alignItems="center">
                             <RestaurantIcon color="primary" fontSize="small" />
-                            <Typography color="primary">Toidupunkt</Typography>
+                            <Typography color="primary">{t('course.foodPointTitle')}</Typography>
                         </Box>
                     </Box>
                 )}
 
                 <Box mt={2} display="flex" justifyContent="space-between" gap={2} alignItems="start">
                     <Typography fontSize={12}>
-                        Raskuselt <strong>{holeInfo[currentHoleNumber]?.data.rank}</strong>. rada (
-                        {holeInfo[currentHoleNumber]?.data.average_diff !== undefined
-                            ? (() => {
-                                const diff = holeInfo[currentHoleNumber].data.average_diff
-                                const rounded = Number(diff.toFixed(1))
-                                if (rounded === 0) return '0'
-                                return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`
-                            })()
-                            : ''}{' '}
-                        viset par-ile)
+                        {(() => {
+                            const rank = holeInfo[currentHoleNumber]?.data.rank
+                            const diffRaw = holeInfo[currentHoleNumber]?.data.average_diff
+                            let diffStr = ''
+                            if (diffRaw !== undefined) {
+                                const rounded = Number(diffRaw.toFixed(1))
+                                diffStr = rounded === 0 ? '0' : `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}`
+                            }
+                            return t('course.difficulty', { rank: rank ?? '', diff: diffStr })
+                        })()}
                     </Typography>
 
                     <Typography fontSize={12} sx={{borderTop: '3px solid #f42b03'}}>
                         {holeInfo[currentHoleNumber]?.data.ob_percent !== undefined
-                            ? (() => {
-                                const rounded = Number(holeInfo[currentHoleNumber]?.data.ob_percent.toFixed(0))
-                                if (rounded === 0) return '0'
-                                return rounded
-                            })()
+                            ? t('course.obPercent', {
+                                  pct:
+                                      (() => {
+                                          const rounded = Number(
+                                              holeInfo[currentHoleNumber]?.data.ob_percent!.toFixed(0),
+                                          )
+                                          if (rounded === 0) return '0'
+                                          return String(rounded)
+                                      })(),
+                              })
                             : ''}
-                        % viskas OB
                     </Typography>
                 </Box>
 

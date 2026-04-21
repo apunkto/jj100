@@ -1,26 +1,38 @@
 import {format, parseISO} from 'date-fns'
+import {enUS, et} from 'date-fns/locale'
 import {toZonedTime} from 'date-fns-tz'
+import type {AppLocale} from '@/src/utils/appLocale'
 
 const ESTONIA_TIMEZONE = 'Europe/Tallinn'
 
-/**
- * Format an ISO date string to Estonian time (HH:mm)
- */
-export function formatEstonianDateTime(isoDateString: string): string {
-    const utcDate = parseISO(isoDateString)
-    const localDate = toZonedTime(utcDate, ESTONIA_TIMEZONE)
-    return format(localDate, 'HH:mm')
+function dateFnsLocale(locale: AppLocale) {
+    return locale === 'en' ? enUS : et
 }
 
 /**
- * Format date as dd.MM.yyyy
+ * Format an ISO date string to local time in Europe/Tallinn (HH:mm)
  */
-export function formatDate(date: string | Date | null | undefined): string {
+export function formatLocalDateTime(isoDateString: string, locale: AppLocale = 'et'): string {
+    const utcDate = parseISO(isoDateString)
+    const localDate = toZonedTime(utcDate, ESTONIA_TIMEZONE)
+    return format(localDate, 'HH:mm', {locale: dateFnsLocale(locale)})
+}
+
+/** @deprecated use formatLocalDateTime */
+export function formatEstonianDateTime(isoDateString: string): string {
+    return formatLocalDateTime(isoDateString, 'et')
+}
+
+/**
+ * Format calendar date for display (locale-specific pattern).
+ */
+export function formatDate(date: string | Date | null | undefined, locale: AppLocale = 'et'): string {
     if (!date) return ''
-    
+
     const dateObj = typeof date === 'string' ? parseISO(date) : date
-    
+
     if (isNaN(dateObj.getTime())) return ''
-    
-    return format(dateObj, 'dd.MM.yyyy')
+
+    const pattern = locale === 'en' ? 'MMM d, yyyy' : 'dd.MM.yyyy'
+    return format(dateObj, pattern, {locale: dateFnsLocale(locale)})
 }

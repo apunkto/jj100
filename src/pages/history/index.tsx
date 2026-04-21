@@ -17,6 +17,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import StarIcon from '@mui/icons-material/Star'
 import usePlayerApi, {ParticipationLeaderboard, Player, UserParticipation,} from '@/src/api/usePlayerApi'
 import {useEffect, useMemo, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 
 // Comma-separated list with ability to bold "me"
 function NamesCommaList({
@@ -53,12 +54,13 @@ function NamesCommaList({
 }
 
 export default function HistoryPage() {
+    const { t } = useTranslation('pages')
     const [participations, setParticipations] = useState<UserParticipation[]>([])
     const [leaderboard, setLeaderboard] = useState<ParticipationLeaderboard | null>(null)
     const [me, setMe] = useState<Player | null>(null)
 
     const {getPlayerParticipations, getParticipationLeaders, getLoggedInUser} = usePlayerApi()
-    const timesLabel = (n: number) => (n === 1 ? 'kord' : 'korda')
+    const timesLabel = (n: number) => (n === 1 ? t('history.timesOne', { count: n }) : t('history.timesMany', { count: n }))
 
     useEffect(() => {
         const load = async () => {
@@ -127,7 +129,7 @@ export default function HistoryPage() {
         <Layout>
             <Box display="flex" flexDirection="column" alignItems="center" px={2} py={3} boxSizing="border-box">
                 <Typography variant="h4" fontWeight="bold">
-                    Minu osalemised
+                    {t('history.title')}
                 </Typography>
 
                 {/* Participation list FIRST */}
@@ -189,7 +191,7 @@ export default function HistoryPage() {
                                                         textAlign: {xs: 'left', sm: 'right'},
                                                     }}
                                                 >
-                                                    Jäi ära koroonaviiruse tõttu
+                                                    {t('history.cancelledCovid')}
                                                 </Typography>
                                             ) : !participated ? (
                                                 <Typography
@@ -200,7 +202,7 @@ export default function HistoryPage() {
                                                         textAlign: {xs: 'left', sm: 'right'},
                                                     }}
                                                 >
-                                                    Ei osalenud
+                                                    {t('history.notParticipated')}
                                                 </Typography>
                                             ) : (
                                                 <Box
@@ -222,7 +224,7 @@ export default function HistoryPage() {
                                                                 lineHeight: {xs: 1.2, sm: 1.9},
                                                             }}
                                                         >
-                                                            Koht: {r.place} ({fmtScore(r.score)})
+                                                            {t('history.placeScore', { place: r.place, score: fmtScore(r.score) })}
                                                         </Typography>
                                                     ))}
                                                 </Box>
@@ -238,14 +240,14 @@ export default function HistoryPage() {
                 </Box>
 
                 {/* Leaderboard SECOND */}
-                <Box width="100%" maxWidth={720} textAlign="left">
+                <Box width="100%" maxWidth={720} textAlign="left" marginTop={2}>
                     <Typography variant="h4" textAlign="center" fontWeight="bold" sx={{ fontSize: { xs: 22, sm: 28 }, marginBottom: 2 }}>
-                        Enim osalemisi
+                        {t('history.leaderboardTitle')}
                     </Typography>
 
                     {!leaderboard ? (
                         <Typography color="text.secondary" sx={{ fontSize: { xs: 13, sm: 14 } }}>
-                            Andmeid ei leitud.
+                            {t('history.noData')}
                         </Typography>
                     ) : (
                         <Box>

@@ -20,8 +20,10 @@ import {useCheckinApi} from "@/src/api/useCheckinApi"
 import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
 import {useAuth} from "@/src/contexts/AuthContext"
+import {useTranslation} from "react-i18next"
 
 export default function CheckInPage() {
+    const { t } = useTranslation("pages")
     const { checkIn, getMyCheckin, unregisterMe } = useCheckinApi()
     const { showToast } = useToast()
     const { isCheckinEnabled } = useConfigApi()
@@ -66,18 +68,18 @@ export default function CheckInPage() {
     const handleCheckIn = async () => {
         try {
             await checkIn()
-            showToast("Registreeritud!", "success")
+            showToast(t("checkin.toastRegistered"), "success")
             setCheckedIn(true)
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : ''
             const code = err instanceof AppError ? err.code : undefined
             if (message === "already_checked_in") {
                 setCheckedIn(true)
-                showToast("Mängija on juba loosimängu registreeritud!", "error")
+                showToast(t("checkin.toastAlreadyIn"), "error")
             } else if (code === "not_competition_participant") {
-                showToast("Sa ei osale võistlusel!", "error")
+                showToast(t("checkin.toastNotParticipant"), "error")
             } else {
-                showToast("Registreerimisel tekkis viga!", "error")
+                showToast(t("checkin.toastRegisterError"), "error")
             }
         } finally {
             setConfirmOpen(false)
@@ -89,9 +91,9 @@ export default function CheckInPage() {
         try {
             await unregisterMe()
             setCheckedIn(false)
-            showToast("Registreering tühistatud!", "success")
+            showToast(t("checkin.toastUnregistered"), "success")
         } catch (err) {
-            showToast("Registreeringu tühistamine ebaõnnestus!", "error")
+            showToast(t("checkin.toastUnregisterFailed"), "error")
         } finally {
             setUnregisterLoading(false)
         }
@@ -106,7 +108,7 @@ export default function CheckInPage() {
             <Box sx={{ width: '100%', maxWidth: '100%', px: 2, py: 3, boxSizing: 'border-box' }}>
 
             <Typography variant="h4" fontWeight="bold" textAlign="center">
-                    Loosimängu registreerimine
+                    {t("checkin.title")}
                 </Typography>
 
                 {configLoading ? (
@@ -117,13 +119,13 @@ export default function CheckInPage() {
                     <Box mt={4} display="flex" alignItems="center" justifyContent="center">
                         <LockIcon sx={{ fontSize: 24, color: "grey.500", mr: 1 }} />
                         <Typography variant="body1" color="textSecondary">
-                            Registreerumine ei ole veel avatud!
+                            {t("checkin.notOpen")}
                         </Typography>
                     </Box>
                 ) : checkedIn ? (
                     <Box mt={4}>
                         <Typography variant="h5" gutterBottom>
-                            Oled loosimisse registreeritud!
+                            {t("checkin.registeredTitle")}
                         </Typography>
 
                         <Box display="flex" justifyContent="center" sx={{mt:2}}>
@@ -133,7 +135,7 @@ export default function CheckInPage() {
                                 onClick={handleUnregister}
                                 disabled={unregisterLoading}
                             >
-                                {unregisterLoading ? <CircularProgress size={20} /> : "Tühista registreering"}
+                                {unregisterLoading ? <CircularProgress size={20} /> : t("checkin.unregister")}
                             </Button>
                         </Box>
                     </Box>
@@ -150,12 +152,12 @@ export default function CheckInPage() {
                                 "& .MuiAlert-icon": { color: "primary.contrastText" },
                             }}
                         >
-                            Auhinna saamiseks peab mängija olema loosimise hetkel kohal!
+                            {t("checkin.infoAlert")}
                         </Alert>
 
                         <Box display="flex" justifyContent="center" sx={{mt:4}}>
                             <Button variant="contained" color="primary" onClick={handleSubmit}>
-                                Registreeri
+                                {t("checkin.register")}
                             </Button>
                         </Box>
                     </Box>
@@ -164,23 +166,18 @@ export default function CheckInPage() {
 
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
                 <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    Registreeru loosimängu?
+                    {t("checkin.dialogTitle")}
                     <IconButton aria-label="close" onClick={() => setConfirmOpen(false)} sx={{ ml: 1 }}>
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent>
-                    <Typography>
-                        Kas oled kindel, et soovid end loosimängu registreerida?
-                        <br />
-                        <br />
-                        Kinnitan, et olen loosimise ajal kohal!
-                    </Typography>
+                    <Typography sx={{ whiteSpace: "pre-line" }}>{t("checkin.dialogBody")}</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setConfirmOpen(false)}>Katkesta</Button>
+                    <Button onClick={() => setConfirmOpen(false)}>{t("checkin.cancel")}</Button>
                     <Button onClick={handleCheckIn} variant="contained" color="primary">
-                        Kinnita
+                        {t("checkin.confirm")}
                     </Button>
                 </DialogActions>
             </Dialog>

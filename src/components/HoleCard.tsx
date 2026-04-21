@@ -3,6 +3,7 @@ import {Box, Typography} from '@mui/material'
 import Image from 'next/image'
 import {Hole} from "@/src/api/useCtpApi";
 import {useMemo} from "react";
+import {useTranslation} from "react-i18next";
 
 /** Right panel (hole map) background — shows around letterboxing when image exists. */
 const HOLE_PANEL_BG = '#9bd94e'
@@ -20,9 +21,10 @@ type Props = {
 }
 
 export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
+    const {t} = useTranslation('pages')
     const par = hole?.par ?? 3;
     const length = hole?.length;
-    const rules = hole?.rules || "Erireeglid puuduvad";
+    const rules = hole?.rules || t('holeCard.noSpecialRules');
 
     const cardImageSrc = useMemo((): string | null => {
         const img = hole?.card_img

@@ -22,6 +22,7 @@ import useFoodChoicesApi from '@/src/api/useFoodChoicesApi'
 import {PIZZA_OPTIONS, type PizzaChoiceId, pizzaIngredients, pizzaLabel,} from '@/src/constants/cateringPizzas'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useToast} from '@/src/contexts/ToastContext'
+import {useTranslation} from 'react-i18next'
 
 type SoupDraft = boolean | null
 
@@ -40,6 +41,7 @@ export default function CateringPage() {
 
     const {user} = useAuth()
     const {showToast} = useToast()
+    const {t} = useTranslation('pages')
     const {getCateringHoles} = useCtpApi()
     const {fetchCompetitionInfo} = useConfigApi()
     const {getFoodChoices, patchFoodChoices} = useFoodChoicesApi()
@@ -85,7 +87,7 @@ export default function CateringPage() {
             }
         } catch (e) {
             console.error(e)
-            showToast('Andmete laadimine ebaõnnestus', 'error')
+            showToast(t('catering.toastLoadFailed'), 'error')
         } finally {
             setLoading(false)
         }
@@ -116,25 +118,25 @@ export default function CateringPage() {
             setSavedFood({is_vege_food: data.is_vege_food, pizza: data.pizza})
             setSoupDraft(data.is_vege_food)
             setPizzaDraft((data.pizza as PizzaChoiceId) ?? null)
-            showToast('Valikud salvestatud', 'success')
+            showToast(t('catering.toastSaved'), 'success')
         } catch (e) {
             console.error(e)
-            showToast(e instanceof Error ? e.message : 'Salvestamine ebaõnnestus', 'error')
+            showToast(e instanceof Error ? e.message : t('catering.toastSaveFailed'), 'error')
         } finally {
             setSaving(false)
         }
     }
 
-    const soupLabel = (vege: boolean) => (vege ? 'Vege supp' : 'Lihaga supp')
+    const soupLabel = (vege: boolean) => (vege ? t('catering.vegeSoup') : t('catering.meatSoup'))
 
     return (
         <Layout>
             <Box sx={{width: '100%', px: 2, py: 3, boxSizing: 'border-box', maxWidth: 560, mx: 'auto'}}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center">
-                    Toitlustus
+                    {t('catering.title')}
                 </Typography>
                 <Typography variant="subtitle1" fontWeight={700} sx={{mt: 2.5, mb: 1, textAlign: 'center'}}>
-                    Söögivalikud
+                    {t('catering.choicesTitle')}
                 </Typography>
 
                 {loading && competitionId != null && Number.isFinite(competitionId) ? (
@@ -154,12 +156,12 @@ export default function CateringPage() {
                             }}>
                                 {noPlayerRow ? (
                                     <Typography variant="body2" color="text.secondary">
-                                        Sinu osalemist sellel võistlusel ei leitud — toiduvalikud pole saadaval.
+                                        {t('catering.notRegistered')}
                                     </Typography>
                                 ) : foodChoiceEnabled ? (
                                     <>
                                         <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                            Lõuna - Supp
+                                            {t('catering.lunchSoup')}
                                         </Typography>
 
                                         <FormControl component="fieldset" sx={{width: '100%', mb: 2}}>
@@ -180,7 +182,7 @@ export default function CateringPage() {
                                                             fontWeight={soupDraft === false ? 700 : 400}
                                                             sx={{lineHeight: 1.25}}
                                                         >
-                                                            Lihaga supp
+                                                            {t('catering.meatSoup')}
                                                         </Typography>
                                                     }
                                                     sx={{alignItems: 'center', ml: 0, mr: 0}}
@@ -195,7 +197,7 @@ export default function CateringPage() {
                                                             fontWeight={soupDraft === true ? 700 : 400}
                                                             sx={{lineHeight: 1.25}}
                                                         >
-                                                            Vege supp
+                                                            {t('catering.vegeSoup')}
                                                         </Typography>
                                                     }
                                                     sx={{alignItems: 'center', ml: 0, mr: 0}}
@@ -203,7 +205,7 @@ export default function CateringPage() {
                                             </RadioGroup>
                                         </FormControl>
                                         <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{mt: 1}}>
-                                            Õhtu - Pitsa
+                                            {t('catering.dinnerPizza')}
                                         </Typography>
 
                                         <FormControl component="fieldset" sx={{width: '100%'}}>
@@ -238,7 +240,7 @@ export default function CateringPage() {
                                                         />
                                                         <IconButton
                                                             size="small"
-                                                            aria-label={`${p.label} koostis`}
+                                                            aria-label={t('catering.ariaIngredients', {label: p.label})}
                                                             onClick={(e) => {
                                                                 e.preventDefault()
                                                                 e.stopPropagation()
@@ -262,29 +264,29 @@ export default function CateringPage() {
                                             disabled={!canSave}
                                             onClick={() => void handleSave()}
                                         >
-                                            {saving ? <CircularProgress size={22} color="inherit"/> : 'Salvesta'}
+                                            {saving ? <CircularProgress size={22} color="inherit"/> : t('catering.save')}
                                         </Button>
                                     </>
                                 ) : (
                                     <>
                                         <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                            Lõuna
+                                            {t('catering.lunch')}
                                         </Typography>
                                         <Typography variant="body2" sx={{mb: 1.5}}>
-                                            <strong>Supp:</strong>{' '}
+                                            <strong>{t('catering.soupLabel')}</strong>{' '}
                                             <Typography component="span" variant="body2"
                                                         fontWeight={hasSavedChoices ? 700 : 400}>
-                                                {hasSavedChoices ? soupLabel(savedFood!.is_vege_food) : 'Pole valitud'}
+                                                {hasSavedChoices ? soupLabel(savedFood!.is_vege_food) : t('catering.notChosen')}
                                             </Typography>
                                         </Typography>
                                         <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                                            Õhtu
+                                            {t('catering.dinner')}
                                         </Typography>
                                         <Typography variant="body2" sx={{mb: 1}}>
-                                            <strong>Pitsa:</strong>{' '}
+                                            <strong>{t('catering.pizzaLabel')}</strong>{' '}
                                             <Typography component="span" variant="body2"
                                                         fontWeight={hasSavedChoices ? 700 : 400}>
-                                                {hasSavedChoices ? pizzaLabel(savedFood!.pizza) : 'Pole valitud'}
+                                                {hasSavedChoices ? pizzaLabel(savedFood!.pizza) : t('catering.notChosen')}
                                             </Typography>
                                         </Typography>
                                         {hasSavedChoices && savedFood!.pizza ? (
@@ -295,11 +297,11 @@ export default function CateringPage() {
                                                 flexWrap: 'wrap'
                                             }}>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Õhtu — valitud pitsa koostis
+                                                    {t('catering.eveningIngredients')}
                                                 </Typography>
                                                 <IconButton
                                                     size="small"
-                                                    aria-label="Vaata valitud pitsa koostist"
+                                                    aria-label={t('catering.ariaViewIngredients')}
                                                     onClick={() =>
                                                         setIngredientsDialog({
                                                             title: pizzaLabel(savedFood!.pizza),
@@ -314,7 +316,7 @@ export default function CateringPage() {
                                         ) : null}
                                         <Typography variant="caption" color="text.secondary" display="block"
                                                     sx={{mt: 1}}>
-                                            Valikute muutmine on praegu suletud.
+                                            {t('catering.choicesClosed')}
                                         </Typography>
                                     </>
                                 )}
@@ -324,17 +326,15 @@ export default function CateringPage() {
                         <Box sx={{mt: competitionId != null && Number.isFinite(competitionId) ? 4 : 3}}>
 
                             <Typography variant="subtitle1" fontWeight={700} sx={{mt: 2.5, mb: 1, textAlign: 'center'}}>
-                                Toitlustuspunktid rajal
+                                {t('catering.pointsTitle')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{textAlign: 'center', mb:"1rem"}}>
-                                Toitlustuspunktid avatakse kell 11:00. Palun söö esimeses toitlustuspunktis, kuhu jõuad
-                                peale 11:00 — järgmises
-                                punktis ei pruugi Sulle toitu jätkuda!
+                                {t('catering.pointsHint')}
                             </Typography>
                             <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
                                 {holes.length === 0 ? (
                                     <Typography variant="body2" color="text.secondary" textAlign="center">
-                                        Toitlustuspunkte pole märgitud.
+                                        {t('catering.noPoints')}
                                     </Typography>
                                 ) : (
                                     holes.map((hole) => (
@@ -371,7 +371,7 @@ export default function CateringPage() {
                                                 </Typography>
                                             </Box>
                                             <Typography variant="body1" fontWeight={600} sx={{pl: 2}}>
-                                                Korv {hole.number}
+                                                {t('catering.basket', {n: hole.number})}
                                             </Typography>
                                         </Box>
                                     ))
@@ -396,7 +396,7 @@ export default function CateringPage() {
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{px: 3, pb: 2}}>
-                    <Button onClick={() => setIngredientsDialog(null)}>Sulge</Button>
+                    <Button onClick={() => setIngredientsDialog(null)}>{t('catering.dialogClose')}</Button>
                 </DialogActions>
             </Dialog>
         </Layout>

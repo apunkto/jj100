@@ -2,15 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, CircularProgress, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useMetrixApi, {MetrixPlayerStats} from '@/src/api/useMetrixApi'
-
-const BREAKDOWN_CATEGORIES = [
-    { key: 'eagles', color: '#f8c600', label: 'Eagle' },
-    { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie' },
-    { key: 'pars', color: '#ECECECFF', label: 'Par' },
-    { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey' },
-    { key: 'doubleBogeys', color: 'rgba(244,43,3,.26)', label: 'Double' },
-    { key: 'tripleOrWorse', color: 'rgba(244,43,3,.42)', label: 'Triple+' },
-] as const
+import {useTranslation} from 'react-i18next'
 
 function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -35,8 +27,22 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function PlayerStatsPage() {
     const { getMetrixPlayerStats } = useMetrixApi()
+    const { t } = useTranslation('pages')
     const [stats, setStats] = useState<MetrixPlayerStats | null>(null)
     const [loadingStats, setLoadingStats] = useState(false)
+
+    const breakdownCategories = useMemo(
+        () =>
+            [
+                { key: 'eagles' as const, color: '#f8c600', labelKey: 'stats.scoreEagle' as const },
+                { key: 'birdies' as const, color: 'rgba(62,195,0,.34)', labelKey: 'stats.scoreBirdie' as const },
+                { key: 'pars' as const, color: '#ECECECFF', labelKey: 'stats.scorePar' as const },
+                { key: 'bogeys' as const, color: 'rgba(244,43,3,.12)', labelKey: 'stats.scoreBogey' as const },
+                { key: 'doubleBogeys' as const, color: 'rgba(244,43,3,.26)', labelKey: 'stats.scoreDouble' as const },
+                { key: 'tripleOrWorse' as const, color: 'rgba(244,43,3,.42)', labelKey: 'stats.scoreTriple' as const },
+            ] as const,
+        [],
+    )
 
     const loadStats = useCallback(async () => {
         setLoadingStats(true)
@@ -58,14 +64,15 @@ export default function PlayerStatsPage() {
     const breakdown = useMemo(() => {
         const b = stats?.scoreBreakdown
         if (!b) return null
-        const categories = BREAKDOWN_CATEGORIES.map((c) => ({
+        const categories = breakdownCategories.map((c) => ({
             ...c,
+            label: t(c.labelKey),
             value: (b as Record<string, number>)[c.key] ?? 0,
         }))
         const total = categories.reduce((sum, c) => sum + c.value, 0)
         if (total === 0) return null
         return { categories, total }
-    }, [stats?.scoreBreakdown])
+    }, [stats?.scoreBreakdown, breakdownCategories, t])
 
     return (
         <Layout>
@@ -77,7 +84,7 @@ export default function PlayerStatsPage() {
                 }}
             >
                 <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-                    Minu statistika
+                    {t('stats.title')}
                 </Typography>
 
                 {loadingStats ? (
@@ -91,7 +98,7 @@ export default function PlayerStatsPage() {
                         textAlign="center"
                         sx={{ py: 6, px: 2 }}
                     >
-                        Sa ei osalenud sellel võistlusel.
+                        {t('stats.notPlayed')}
                     </Typography>
                 ) : (
                     <>
@@ -126,15 +133,15 @@ export default function PlayerStatsPage() {
                         </Box>
 
                         <Box sx={{ mb: 3 }}>
-                            <SectionTitle>Võistluse ülevaade</SectionTitle>
+                            <SectionTitle>{t('stats.overview')}</SectionTitle>
                             <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, px: 2, py: 0 }}>
-                                <StatRow label="Koht klassis" value={stats.player.orderNumber ?? '–'} />
+                                <StatRow label={t('stats.placeInClass')} value={stats.player.orderNumber ?? '–'} />
                                 <StatRow
-                                    label="Liidrist maas"
-                                    value={stats.deltaToClassLeader === null ? '–' : `${stats.deltaToClassLeader} viset`}
+                                    label={t('stats.behindLeader')}
+                                    value={stats.deltaToClassLeader === null ? '–' : `${stats.deltaToClassLeader} ${t('stats.throws')}`}
                                 />
                                 <StatRow
-                                    label="Läbitud rajad"
+                                    label={t('stats.holesPlayed')}
                                     value={
                                         <>
                                             {stats.holes.played}/{stats.holes.total}
@@ -143,7 +150,7 @@ export default function PlayerStatsPage() {
                                     }
                                 />
                                 <StatRow
-                                    label="OB radu"
+                                    label={t('stats.obHoles')}
                                     value={
                                         stats.holes.played > 0
                                             ? `${stats.obHoles} (${Math.round((stats.obHoles / stats.holes.played) * 100)}%)`
@@ -156,7 +163,7 @@ export default function PlayerStatsPage() {
                         {/* Score distribution */}
                         {breakdown && (
                             <Box sx={{ mb: 2 }}>
-                                <SectionTitle>Skoori jaotus</SectionTitle>
+                                <SectionTitle>{t('stats.scoreDistribution')}</SectionTitle>
                                 <Box
                                     sx={{
                                         height: 12,

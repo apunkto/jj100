@@ -1,8 +1,9 @@
-import React from 'react'
+import React, {useMemo} from 'react'
 import {Box, Card, CardContent, Chip, Typography,} from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import type {Prediction} from '@/src/api/usePredictionApi'
+import {useTranslation} from 'react-i18next'
 
 // Helper functions to calculate points
 function calculateNumericScore(predicted: number | null, actual: number | null, baseScore: number = 100): {points: number; maxPoints: number; pending: boolean} {
@@ -31,13 +32,7 @@ interface PredictionCardsProps {
 }
 
 export function PredictionCards({predictionData}: PredictionCardsProps) {
-    if (!predictionData) {
-        return (
-            <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-                Mängijal pole ennustust
-            </Typography>
-        )
-    }
+    const {t} = useTranslation('prediction')
 
     const formatSignedNumber = (val: number | boolean | null): string => {
         if (val === null || typeof val !== 'number') return '-'
@@ -47,92 +42,117 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
     const formatPlainNumber = (val: number | boolean | null): string =>
         val !== null && typeof val === 'number' ? String(val) : '-'
 
-    const categories: Array<{
-        label: string
-        predicted: number | boolean | null
-        actual: number | boolean | null
-        score: {points: number; maxPoints: number; pending: boolean}
-        formatValue: (val: number | boolean | null) => string | React.ReactNode
-        isNumeric: boolean
-    }> = []
+    const categories = useMemo(() => {
+        if (!predictionData) return []
+        type Cat = {
+            label: string
+            predicted: number | boolean | null
+            actual: number | boolean | null
+            score: {points: number; maxPoints: number; pending: boolean}
+            formatValue: (val: number | boolean | null) => string | React.ReactNode
+            isNumeric: boolean
+        }
+        const out: Cat[] = []
 
-    // Best overall score
-    if (predictionData.best_overall_score !== null) {
-        categories.push({
-            label: 'Parim üldtulemus',
-            predicted: predictionData.best_overall_score,
-            actual: predictionData.actual_results?.best_overall_score ?? null,
-            score: calculateNumericScore(predictionData.best_overall_score, predictionData.actual_results?.best_overall_score ?? null),
-            isNumeric: true,
-            formatValue: formatSignedNumber,
-        })
-    }
+        if (predictionData.best_overall_score !== null) {
+            out.push({
+                label: t('cards_cat_best_overall'),
+                predicted: predictionData.best_overall_score,
+                actual: predictionData.actual_results?.best_overall_score ?? null,
+                score: calculateNumericScore(
+                    predictionData.best_overall_score,
+                    predictionData.actual_results?.best_overall_score ?? null,
+                ),
+                isNumeric: true,
+                formatValue: formatSignedNumber,
+            })
+        }
 
-    // Best female score
-    if (predictionData.best_female_score !== null) {
-        categories.push({
-            label: 'Parim naismängija tulemus',
-            predicted: predictionData.best_female_score,
-            actual: predictionData.actual_results?.best_female_score ?? null,
-            score: calculateNumericScore(predictionData.best_female_score, predictionData.actual_results?.best_female_score ?? null),
-            isNumeric: true,
-            formatValue: formatSignedNumber,
-        })
-    }
+        if (predictionData.best_female_score !== null) {
+            out.push({
+                label: t('cards_cat_best_female'),
+                predicted: predictionData.best_female_score,
+                actual: predictionData.actual_results?.best_female_score ?? null,
+                score: calculateNumericScore(
+                    predictionData.best_female_score,
+                    predictionData.actual_results?.best_female_score ?? null,
+                ),
+                isNumeric: true,
+                formatValue: formatSignedNumber,
+            })
+        }
 
-    // Player own score
-    if (predictionData.player_own_score !== null) {
-        categories.push({
-            label: 'Mängija enda tulemus',
-            predicted: predictionData.player_own_score,
-            actual: predictionData.actual_results?.player_own_score ?? null,
-            score: calculateNumericScore(predictionData.player_own_score, predictionData.actual_results?.player_own_score ?? null),
-            isNumeric: true,
-            formatValue: formatSignedNumber,
-        })
-    }
+        if (predictionData.player_own_score !== null) {
+            out.push({
+                label: t('cards_cat_own'),
+                predicted: predictionData.player_own_score,
+                actual: predictionData.actual_results?.player_own_score ?? null,
+                score: calculateNumericScore(
+                    predictionData.player_own_score,
+                    predictionData.actual_results?.player_own_score ?? null,
+                ),
+                isNumeric: true,
+                formatValue: formatSignedNumber,
+            })
+        }
 
-    // Will rain
-    if (predictionData.will_rain != null || predictionData.actual_results?.will_rain != null) {
-        categories.push({
-            label: 'Sajab võistluse ajal',
-            predicted: predictionData.will_rain,
-            actual: predictionData.actual_results?.will_rain ?? null,
-            score: calculateBooleanScore(predictionData.will_rain, predictionData.actual_results?.will_rain ?? null),
-            isNumeric: false,
-            formatValue: (val) => {
-                if (val === null || val === undefined || typeof val !== 'boolean') return '-'
-                return val ? (
-                    <CheckIcon sx={{color: 'success.main', fontSize: 24}} />
-                ) : (
-                    <CloseIcon sx={{color: 'error.main', fontSize: 24}} />
-                )
-            },
-        })
-    }
+        if (predictionData.will_rain != null || predictionData.actual_results?.will_rain != null) {
+            out.push({
+                label: t('cards_cat_rain'),
+                predicted: predictionData.will_rain,
+                actual: predictionData.actual_results?.will_rain ?? null,
+                score: calculateBooleanScore(predictionData.will_rain, predictionData.actual_results?.will_rain ?? null),
+                isNumeric: false,
+                formatValue: (val) => {
+                    if (val === null || val === undefined || typeof val !== 'boolean') return '-'
+                    return val ? (
+                        <CheckIcon sx={{color: 'success.main', fontSize: 24}} />
+                    ) : (
+                        <CloseIcon sx={{color: 'error.main', fontSize: 24}} />
+                    )
+                },
+            })
+        }
 
-    // Hole in ones
-    if (predictionData.hole_in_ones_count !== null) {
-        categories.push({
-            label: 'Hole-in-one\'ide arv',
-            predicted: predictionData.hole_in_ones_count,
-            actual: predictionData.actual_results?.hole_in_ones_count ?? null,
-            score: calculateNumericScore(predictionData.hole_in_ones_count, predictionData.actual_results?.hole_in_ones_count ?? null, 100),
-            isNumeric: true,
-            formatValue: formatPlainNumber,
-        })
-    }
+        if (predictionData.hole_in_ones_count !== null) {
+            out.push({
+                label: t('cards_cat_hio'),
+                predicted: predictionData.hole_in_ones_count,
+                actual: predictionData.actual_results?.hole_in_ones_count ?? null,
+                score: calculateNumericScore(
+                    predictionData.hole_in_ones_count,
+                    predictionData.actual_results?.hole_in_ones_count ?? null,
+                    100,
+                ),
+                isNumeric: true,
+                formatValue: formatPlainNumber,
+            })
+        }
 
-    // Water discs
-    if (predictionData.water_discs_count !== null) {
-        categories.push({
-            label: 'Vette visanud mängijate arv',
-            predicted: predictionData.water_discs_count,
-            actual: predictionData.actual_results?.water_discs_count ?? null,
-            score: calculateNumericScore(predictionData.water_discs_count, predictionData.actual_results?.water_discs_count ?? null, 400),
-            isNumeric: true,
-            formatValue: formatPlainNumber,
-        })
+        if (predictionData.water_discs_count !== null) {
+            out.push({
+                label: t('cards_cat_water'),
+                predicted: predictionData.water_discs_count,
+                actual: predictionData.actual_results?.water_discs_count ?? null,
+                score: calculateNumericScore(
+                    predictionData.water_discs_count,
+                    predictionData.actual_results?.water_discs_count ?? null,
+                    400,
+                ),
+                isNumeric: true,
+                formatValue: formatPlainNumber,
+            })
+        }
+
+        return out
+    }, [predictionData, t])
+
+    if (!predictionData) {
+        return (
+            <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
+                {t('cards_noPrediction')}
+            </Typography>
+        )
     }
 
     return (
@@ -163,7 +183,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                             >
                                 <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                                        Ennustus
+                                        {t('cards_predicted')}
                                     </Typography>
                                     <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
                                         {!category.isNumeric ? (
@@ -186,7 +206,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
 
                                 <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                                        Tegelik
+                                        {t('cards_actual')}
                                     </Typography>
                                     <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
                                         {category.actual !== null && category.actual !== undefined ? (
@@ -232,7 +252,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                             }}
                                         >
                                             <Typography variant="caption" color="text.secondary" sx={{ mb: { xs: 0.5, sm: 0 } }}>
-                                                Punktid
+                                                {t('cards_points')}
                                             </Typography>
                                             <Typography
                                                 variant="body2"

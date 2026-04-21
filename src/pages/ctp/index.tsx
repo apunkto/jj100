@@ -5,8 +5,11 @@ import Link from 'next/link'
 import useCtpApi, {HoleWithCtp} from '@/src/api/useCtpApi'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import {useAuth} from '@/src/contexts/AuthContext'
+import {useTranslation} from 'react-i18next'
 
 export default function CtpListPage() {
+    const { t } = useTranslation('pages')
+    const { t: tc } = useTranslation('common')
     const [ctpHoles, setCtpHoles] = useState<HoleWithCtp[]>([])
     const [loading, setLoading] = useState(true)
     const { user } = useAuth()
@@ -26,10 +29,10 @@ export default function CtpListPage() {
         <Layout>
             <Box sx={{ width: '100%', px: 2, py: 3, boxSizing: 'border-box' }}>
                 <Typography variant="h4" fontWeight="bold" textAlign="center">
-                    CTP Rajad
+                    {t('ctpList.title')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 0.5 }}>
-                    Vajuta rajal et CTP tulemust sisestada
+                    {t('ctpList.subtitle')}
                 </Typography>
 
                 {loading ? (
@@ -110,7 +113,7 @@ export default function CtpListPage() {
                                             }}
                                         >
                                             <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                                                Korv {hole.number}
+                                                {t('ctpList.basket', { n: hole.number })}
                                             </Typography>
                                             {topThrow ? (
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'nowrap', minWidth: 0 }}>
@@ -121,7 +124,7 @@ export default function CtpListPage() {
                                                         noWrap
                                                         sx={{ minWidth: 0 }}
                                                     >
-                                                        {topThrow.player?.name ?? "Mängija"}
+                                                        {topThrow.player?.name ?? tc('player')}
                                                     </Typography>
                                                     <Chip
                                                         size="small"
@@ -131,7 +134,7 @@ export default function CtpListPage() {
                                                 </Box>
                                             ) : (
                                                 <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                                                    Tulemust pole
+                                                    {t('ctpList.noResult')}
                                                 </Typography>
                                             )}
                                         </Box>

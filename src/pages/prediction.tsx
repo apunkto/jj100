@@ -30,10 +30,12 @@ import {useAuth} from '@/src/contexts/AuthContext'
 import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from '@/src/api/useConfigApi'
 import usePredictionApi, {Prediction, PredictionData, PredictionLeaderboardResponse,} from '@/src/api/usePredictionApi'
+import {useTranslation} from 'react-i18next'
 
 export default function PredictionPage() {
     const {user, loading: authLoading} = useAuth()
     const {showToast} = useToast()
+    const {t} = useTranslation('prediction')
     const {isPredictionEnabled} = useConfigApi()
     const {getPrediction, createPrediction, updatePrediction, getLeaderboard, getPlayerPrediction} = usePredictionApi()
 
@@ -142,7 +144,7 @@ export default function PredictionPage() {
                 }
             } catch (err) {
                 console.error('Failed to fetch prediction data:', err)
-                showToast('Andmete laadimine ebaõnnestus', 'error')
+                showToast(t('toastLoadFailed'), 'error')
             } finally {
                 setLoading(false)
             }
@@ -166,38 +168,38 @@ export default function PredictionPage() {
 
         // Validate required score fields
         if (formData.best_overall_score === null || formData.best_overall_score === undefined) {
-            errors.best_overall_score = 'See väli on kohustuslik'
+            errors.best_overall_score = t('validation_required')
         } else if (!Number.isFinite(formData.best_overall_score)) {
-            errors.best_overall_score = 'Palun sisesta korrektne numbriline väärtus'
+            errors.best_overall_score = t('validation_invalidNumber')
         }
 
         if (formData.best_female_score === null || formData.best_female_score === undefined) {
-            errors.best_female_score = 'See väli on kohustuslik'
+            errors.best_female_score = t('validation_required')
         } else if (!Number.isFinite(formData.best_female_score)) {
-            errors.best_female_score = 'Palun sisesta korrektne numbriline väärtus'
+            errors.best_female_score = t('validation_invalidNumber')
         }
 
         if (formData.player_own_score === null || formData.player_own_score === undefined) {
-            errors.player_own_score = 'See väli on kohustuslik'
+            errors.player_own_score = t('validation_required')
         } else if (!Number.isFinite(formData.player_own_score)) {
-            errors.player_own_score = 'Palun sisesta korrektne numbriline väärtus'
+            errors.player_own_score = t('validation_invalidNumber')
         }
 
         // Validate required numeric fields
         if (formData.hole_in_ones_count === null || formData.hole_in_ones_count === undefined) {
-            errors.hole_in_ones_count = 'See väli on kohustuslik'
+            errors.hole_in_ones_count = t('validation_required')
         } else if (!Number.isFinite(formData.hole_in_ones_count) || isNaN(formData.hole_in_ones_count)) {
-            errors.hole_in_ones_count = 'Palun sisesta korrektne numbriline väärtus'
+            errors.hole_in_ones_count = t('validation_invalidNumber')
         } else if (formData.hole_in_ones_count < 0) {
-            errors.hole_in_ones_count = 'Väärtus peab olema positiivne arv'
+            errors.hole_in_ones_count = t('validation_positive')
         }
 
         if (formData.water_discs_count === null || formData.water_discs_count === undefined) {
-            errors.water_discs_count = 'See väli on kohustuslik'
+            errors.water_discs_count = t('validation_required')
         } else if (!Number.isFinite(formData.water_discs_count) || isNaN(formData.water_discs_count)) {
-            errors.water_discs_count = 'Palun sisesta korrektne numbriline väärtus'
+            errors.water_discs_count = t('validation_invalidNumber')
         } else if (formData.water_discs_count < 0) {
-            errors.water_discs_count = 'Väärtus peab olema positiivne arv'
+            errors.water_discs_count = t('validation_positive')
         }
 
         setFieldErrors(errors)
@@ -210,7 +212,7 @@ export default function PredictionPage() {
 
         // Validate all fields
         if (!validateForm()) {
-            showToast('Palun paranda vigased lahtrid', 'error')
+            showToast(t('toastFixFields'), 'error')
             return
         }
 
@@ -223,10 +225,10 @@ export default function PredictionPage() {
             }
             if (prediction) {
                 await updatePrediction(user.activeCompetitionId, submissionData)
-                showToast('Ennustus uuendatud!', 'success')
+                showToast(t('toastUpdated'), 'success')
             } else {
                 await createPrediction(user.activeCompetitionId, submissionData)
-                showToast('Ennustus salvestatud!', 'success')
+                showToast(t('toastSaved'), 'success')
             }
             setIsEditing(false)
             // Refresh data
@@ -240,9 +242,9 @@ export default function PredictionPage() {
             const code = err instanceof AppError ? err.code : undefined
             if (message.includes('not_competition_participant') || code === 'not_competition_participant') {
                 setIsParticipating(false)
-                showToast('Sa ei osale sellel võistlusel', 'error')
+                showToast(t('notParticipant'), 'error')
             } else {
-                showToast(message || 'Ennustuse salvestamine ebaõnnestus', 'error')
+                showToast(message || t('toastSaveFailed'), 'error')
             }
         } finally {
             setSubmitting(false)
@@ -325,7 +327,7 @@ export default function PredictionPage() {
                 <Box textAlign="center" mt={6}>
                     <CircularProgress />
                     <Typography variant="h6" mt={2}>
-                        Laadimine...
+                        {t('loading')}
                     </Typography>
                 </Box>
             </Layout>
@@ -337,10 +339,10 @@ export default function PredictionPage() {
             <Layout>
                 <Box px={2} py={3} textAlign="center" boxSizing="border-box">
                     <Typography variant="h4" fontWeight="bold" mb={2}>
-                        Ennustusmäng
+                        {t('title')}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                        Aktiivset võistlust ei ole valitud.
+                        {t('noCompetition')}
                     </Typography>
                 </Box>
             </Layout>
@@ -362,7 +364,7 @@ export default function PredictionPage() {
                 boxSizing="border-box"
             >
                 <Typography variant="h4" fontWeight="bold" textAlign="center" mb={1}>
-                    Ennustusmäng
+                    {t('title')}
                 </Typography>
 
                 {isNonParticipant ? (
@@ -373,7 +375,7 @@ export default function PredictionPage() {
                         />
                     ) : (
                         <Typography variant="body1" color="error">
-                            Sa ei osale sellel võistlusel
+                            {t('notParticipant')}
                         </Typography>
                     )
                 ) : isPredictionDisabled ? (
@@ -381,14 +383,14 @@ export default function PredictionPage() {
                         <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={2}>
                             <LockIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                             <Typography variant="body2" color="text.secondary">
-                                Ennustamine on lõppenud!
+                                {t('predictionEnded')}
                             </Typography>
                         </Box>
                         {prediction ? (
                             <>
                                 <Tabs value={resultsTab} onChange={(_, v) => setResultsTab(v)} sx={{ mb: 2 }}>
-                                    <Tab label="Edetabel" />
-                                    <Tab label="Sinu ennustused" />
+                                    <Tab label={t('tabLeaderboard')} />
+                                    <Tab label={t('tabYours')} />
                                 </Tabs>
                                 {resultsTab === 0 && (
                                     <PredictionLeaderboard
@@ -429,14 +431,14 @@ export default function PredictionPage() {
                                     }}
                                 >
                                     <InfoOutlinedIcon sx={{ fontSize: 20 }} />
-                                    <Typography variant="body2" fontWeight={600}>Vaata eelmist aastat</Typography>
+                                    <Typography variant="body2" fontWeight={600}>{t('viewLastYear')}</Typography>
                                 </Box>
                             </Box>
 
                             <Box display="flex" flexDirection="column" gap={3}>
                                 <ScoreInput
-                                    label="Parim üldtulemus"
-                                    description="Mis on võistluse parim tulemus par-iga võrreldes? Kui pakud alla par-i sisesta negatiivne väärtus."
+                                    label={t('bestOverallLabel')}
+                                    description={t('bestOverallDescription')}
                                     value={formData.best_overall_score}
                                     onChange={(value) => {
                                         setFormData({
@@ -458,8 +460,8 @@ export default function PredictionPage() {
                                 />
 
                                 <ScoreInput
-                                    label="Parim naismängija tulemus"
-                                    description="Mis on parima naismängija tulemus? Kui pakud alla par-i sisesta negatiivne väärtus."
+                                    label={t('bestFemaleLabel')}
+                                    description={t('bestFemaleDescription')}
                                     value={formData.best_female_score}
                                     onChange={(value) => {
                                         setFormData({
@@ -482,7 +484,7 @@ export default function PredictionPage() {
 
                                 <Box>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-                                        Kas võistluse ajal sajab vihma? Vähemalt 5min peab sadama.
+                                        {t('rainIntro')}
                                     </Typography>
                                     <FormControlLabel
                                         control={
@@ -496,13 +498,13 @@ export default function PredictionPage() {
                                                 }
                                             />
                                         }
-                                        label="Võistlusel sajab vihma"
+                                        label={t('rainLabel')}
                                     />
                                 </Box>
 
                                 <ScoreInput
-                                    label="Sinu enda tulemus"
-                                    description="Milline tuleb Sinu enda tulemus? Kui pakud alla par-i sisesta negatiivne väärtus."
+                                    label={t('ownScoreLabel')}
+                                    description={t('ownScoreDescription')}
                                     value={formData.player_own_score}
                                     onChange={(value) => {
                                         setFormData({
@@ -525,10 +527,10 @@ export default function PredictionPage() {
 
                                 <Box>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-                                        Mitu hole-in-one&apos;i visatakse võistluse ajal kokku?
+                                        {t('hioIntro')}
                                     </Typography>
                                     <TextField
-                                        label="Hole-in-one&apos;ide arv"
+                                        label={t('hioLabel')}
                                         type="number"
                                         value={formData.hole_in_ones_count ?? ''}
                                         onChange={(e) => {
@@ -561,10 +563,10 @@ export default function PredictionPage() {
 
                                 <Box>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-                                        Mitu mängijat viskab võistluse ajal järve? Loeme kõik märgitud PEN järve radadel.
+                                        {t('waterIntro')}
                                     </Typography>
                                     <TextField
-                                        label="Vette viskajate arv"
+                                        label={t('waterLabel')}
                                         type="number"
                                         value={formData.water_discs_count ?? ''}
                                         onChange={(e) => {
@@ -598,7 +600,7 @@ export default function PredictionPage() {
                                 <Box display="flex" gap={2} justifyContent="flex-end" mt={2}>
                                     {prediction && (
                                         <Button variant="outlined" onClick={handleCancel} disabled={submitting}>
-                                            Tühista
+                                            {t('cancel')}
                                         </Button>
                                     )}
                                     <Button
@@ -607,7 +609,7 @@ export default function PredictionPage() {
                                         onClick={handleSubmit}
                                         disabled={submitting}
                                     >
-                                        {submitting ? <CircularProgress size={20} /> : prediction ? 'Salvesta' : 'Saada'}
+                                        {submitting ? <CircularProgress size={20} /> : prediction ? t('save') : t('send')}
                                     </Button>
                                 </Box>
                             </Box>
@@ -615,7 +617,7 @@ export default function PredictionPage() {
                 ) : (
                         <Box sx={{ width: '100%' }}>
                             <Box display="flex" justifyContent="flex-end" mb={2}>
-                                <IconButton onClick={handleEdit} color="primary" aria-label="Muuda ennustust" size="small">
+                                <IconButton onClick={handleEdit} color="primary" aria-label={t('editAria')} size="small">
                                     <EditIcon />
                                 </IconButton>
                             </Box>
@@ -631,7 +633,7 @@ export default function PredictionPage() {
                     fullWidth
                 >
                     <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        2025 tulemused
+                        {t('previousYearTitle')}
                         <IconButton
                             aria-label="close"
                             onClick={() => setPreviousYearDialog(false)}
@@ -642,17 +644,19 @@ export default function PredictionPage() {
                     </DialogTitle>
                     <DialogContent>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
-                            {[
-                                { label: 'Osalejate arv', day1: '394', day2: '396' },
-                                { label: 'Parim üldtulemus', day1: '-39', day2: '-51' },
-                                { label: 'Parim naismängija tulemus', day1: '+3', day2: '+1' },
-                                { label: "Hole-in-one'ide arv", day1: '19', day2: '25' },
-                                { label: 'Vette viskajate arv', day1: '254', day2: '253' },
-                            ].map(({ label, day1, day2 }) => (
-                                <Card key={label} variant="outlined" sx={{ width: '100%' }}>
+                            {(
+                                [
+                                    {labelKey: 'pyParticipants' as const, day1: '394', day2: '396'},
+                                    {labelKey: 'pyBestOverall' as const, day1: '-39', day2: '-51'},
+                                    {labelKey: 'pyBestFemale' as const, day1: '+3', day2: '+1'},
+                                    {labelKey: 'pyHio' as const, day1: '19', day2: '25'},
+                                    {labelKey: 'pyWater' as const, day1: '254', day2: '253'},
+                                ] as const
+                            ).map(({labelKey, day1, day2}) => (
+                                <Card key={labelKey} variant="outlined" sx={{ width: '100%' }}>
                                     <CardContent sx={{ pb: '16px !important' }}>
                                         <Typography variant="subtitle2" fontWeight="bold" mb={1.5} color="text.secondary">
-                                            {label}
+                                            {t(labelKey)}
                                         </Typography>
                                         <Box display="flex" gap={1.5} alignItems="center">
                                             <Chip
@@ -695,10 +699,10 @@ export default function PredictionPage() {
                             }}
                         >
                             <Typography variant="caption" color="text.secondary">
-                                Legend:
+                                {t('legend')}
                             </Typography>
                             <Chip
-                                label="Esimene päev"
+                                label={t('day1')}
                                 variant="outlined"
                                 size="small"
                                 sx={{
@@ -709,7 +713,7 @@ export default function PredictionPage() {
                                 }}
                             />
                             <Chip
-                                label="Teine päev"
+                                label={t('day2')}
                                 variant="outlined"
                                 size="small"
                                 sx={{

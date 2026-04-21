@@ -1,6 +1,7 @@
 import React from 'react'
 import {Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,} from '@mui/material'
 import type {PredictionLeaderboardResponse} from '@/src/api/usePredictionApi'
+import {useTranslation} from 'react-i18next'
 
 interface PredictionLeaderboardProps {
     leaderboard: PredictionLeaderboardResponse | null
@@ -13,6 +14,8 @@ export function PredictionLeaderboard({
     onPlayerClick,
     containerSx,
 }: PredictionLeaderboardProps) {
+    const {t} = useTranslation('prediction')
+
     if (!leaderboard || leaderboard.top_10.length === 0) {
         return null
     }
@@ -29,9 +32,9 @@ export function PredictionLeaderboard({
                     <Table sx={{width: '100%'}}>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Koht</TableCell>
-                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>Mängija</TableCell>
-                                <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>Punktid</TableCell>
+                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>{t('lb_rank')}</TableCell>
+                                <TableCell sx={{fontWeight: 'bold', py: 1.5}}>{t('lb_player')}</TableCell>
+                                <TableCell align="right" sx={{fontWeight: 'bold', py: 1.5}}>{t('lb_points')}</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

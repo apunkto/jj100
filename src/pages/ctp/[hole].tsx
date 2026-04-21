@@ -20,8 +20,10 @@ import {useToast} from "@/src/contexts/ToastContext"
 import useConfigApi from "@/src/api/useConfigApi"
 import LockIcon from "@mui/icons-material/Lock"
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"
-import {formatEstonianDateTime} from "@/src/utils/dateUtils"
+import {formatLocalDateTime} from "@/src/utils/dateUtils"
 import {useAuth} from "@/src/contexts/AuthContext"
+import {useTranslation} from "react-i18next"
+import {useAppLocale} from "@/src/i18n/useAppLocale"
 
 export async function getStaticPaths() {
     const paths = Array.from({ length: 100 }, (_, i) => ({
@@ -70,6 +72,9 @@ export default function CtpHolePage({ hole }: { hole: string }) {
     const { isCtpEnabled } = useConfigApi()
     const { showToast } = useToast()
     const { user, loading: authLoading } = useAuth()
+    const { t } = useTranslation("pages")
+    const { t: tc } = useTranslation("common")
+    const appLocale = useAppLocale()
 
     const [holeInfo, setHoleInfo] = useState<Hole | null>(null)
     const [ctp, setCtp] = useState<CtpEntry[]>([])
@@ -164,15 +169,15 @@ export default function CtpHolePage({ hole }: { hole: string }) {
             setDistance("")
             setSelectedPoolMate(null)
             setConfirmForPoolMate(null)
-            showToast(targetId ? "Puulikaaslase CTP tulemus sisestatud!" : "CTP tulemus sisestatud!", "success")
+            showToast(targetId ? t("ctpHole.toastMateSuccess") : t("ctpHole.toastOwnSuccess"), "success")
         } catch (err: unknown) {
             const e = err as { code?: string; message?: string }
             const msg =
                 e?.code === "not_competition_participant"
-                    ? "Sa ei osale võistlusel!"
+                    ? t("ctpHole.toastNotParticipant")
                     : e?.code === "not_same_pool"
-                      ? "Saad sisestada CTP ainult sama raja mängijatele"
-                      : (e?.message ?? "CTP sisestamine ebaõnnestus!")
+                      ? t("ctpHole.toastSamePool")
+                      : (e?.message ?? t("ctpHole.toastSubmitFailed"))
             showToast(msg, "error")
         } finally {
             setConfirmOpen(false)
@@ -203,13 +208,13 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                             }}
                         >
                             <ArrowBackIcon sx={{ fontSize: 22 }} />
-                            CTP Rajad
+                            {t("ctpHole.back")}
                         </Box>
                     </Link>
                 </Box>
 
                 <Typography variant="h4" fontWeight="bold" textAlign="center">
-                    CTP Tulemus
+                    {t("ctpHole.title")}
                 </Typography>
 
                 {/* Hole header */}
@@ -237,19 +242,19 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                     </Box>
                 ) : !holeInfo ? (
                     <Typography color="text.secondary" textAlign="center" py={4}>
-                        Korvi {hole} ei leitud
+                        {t("ctpHole.holeNotFound", { n: hole })}
                     </Typography>
                 ) : noCtpGame ? (
                     <Box sx={{ ...cardSx, py: 3, textAlign: "center" }}>
                         <Typography color="text.secondary">
-                            Korvil {hole} ei toimu CTP mängu
+                            {t("ctpHole.noCtpGame", { n: hole })}
                         </Typography>
                     </Box>
                 ) : (
                     <>
                         {/* Current CTP result card */}
                         <Box sx={{ mb: 2.5 }}>
-                            <SectionTitle>Tulemus</SectionTitle>
+                            <SectionTitle>{t("ctpHole.resultSection")}</SectionTitle>
                             <Box sx={cardSx}>
                                 {bestThrow ? (
                                     <Box
@@ -274,7 +279,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 <EmojiEventsIcon sx={{ fontSize: 28 }} />
                                             </Box>
                                             <Typography variant="body1" fontWeight={600} noWrap>
-                                                {bestThrow.player?.name ?? "Mängija"}
+                                                {bestThrow.player?.name ?? tc("player")}
                                             </Typography>
                                         </Box>
                                         <Chip
@@ -285,7 +290,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                     </Box>
                                 ) : (
                                     <Typography variant="body1" color="text.secondary">
-                                        CTP tulemust pole veel sisestatud
+                                        {t("ctpHole.noResultYet")}
                                     </Typography>
                                 )}
                             </Box>
@@ -299,10 +304,10 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                 </Box>
                             ) : !hasSubmitted && !selectedPoolMate ? (
                                 <Box sx={{ mb: 2 }}>
-                                    <SectionTitle>Kas viskasid lähemale?</SectionTitle>
+                                    <SectionTitle>{t("ctpHole.closerQuestion")}</SectionTitle>
                                     <Box sx={{ ...cardSx, py: 2.5 }}>
                                         <TextField
-                                            label="Kaugus korvist (cm)"
+                                            label={t("ctpHole.distanceLabel")}
                                             type="number"
                                             fullWidth
                                             size="small"
@@ -314,9 +319,11 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                             helperText={
                                                 distance !== ""
                                                     ? !isValidDistance
-                                                        ? "CTP peab olema suurem kui 0 cm"
+                                                        ? t("ctpHole.distancePositive")
                                                         : showError
-                                                          ? `CTP peab olema väiksem kui ${bestThrow?.distance_cm ?? "..."} cm`
+                                                          ? t("ctpHole.distanceLessThan", {
+                                                                cm: String(bestThrow?.distance_cm ?? "..."),
+                                                            })
                                                           : ""
                                                     : ""
                                             }
@@ -330,7 +337,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                             onClick={handleSubmit}
                                             disabled={!isValidDistance || showError}
                                         >
-                                            Kinnita
+                                            {t("ctpHole.confirm")}
                                         </Button>
                                     </Box>
                                 </Box>
@@ -349,7 +356,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                 >
                                     <LockIcon sx={{ fontSize: 22, color: "grey.500" }} />
                                     <Typography variant="body2" color="text.secondary">
-                                        CTP sisestamine ei ole veel avatud
+                                        {t("ctpHole.entryClosed")}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -375,22 +382,17 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                             "&:hover": { textDecoration: "underline" },
                                         }}
                                     >
-                                        Sisesta puulikaaslase CTP
+                                        {t("ctpHole.poolMateLink")}
                                     </Typography>
                                 ) : (
                                     <Box sx={{ ...cardSx, py: 2.5 }}>
                                         <SectionTitle>
-                                            Sisesta{" "}
-                                            <Box
-                                                component="span"
-                                                sx={{ fontWeight: 600, color: "primary.main" }}
-                                            >
-                                                {selectedPoolMate.name ?? "mängija"}
-                                            </Box>{" "}
-                                            CTP
+                                            {t("ctpHole.poolMateTitle", {
+                                                name: selectedPoolMate.name ?? tc("player"),
+                                            })}
                                         </SectionTitle>
                                         <TextField
-                                            label="Kaugus korvist (cm)"
+                                            label={t("ctpHole.distanceLabel")}
                                             type="number"
                                             fullWidth
                                             size="small"
@@ -402,9 +404,11 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                             helperText={
                                                 distance !== ""
                                                     ? !isValidDistance
-                                                        ? "CTP peab olema suurem kui 0 cm"
+                                                        ? t("ctpHole.distancePositive")
                                                         : showError
-                                                          ? `CTP peab olema väiksem kui ${bestThrow?.distance_cm ?? "..."} cm`
+                                                          ? t("ctpHole.distanceLessThan", {
+                                                                cm: String(bestThrow?.distance_cm ?? "..."),
+                                                            })
                                                           : ""
                                                     : ""
                                             }
@@ -420,7 +424,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                     setDistance("")
                                                 }}
                                             >
-                                                Tühista
+                                                {t("ctpHole.cancel")}
                                             </Button>
                                             <Button
                                                 variant="contained"
@@ -429,7 +433,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 onClick={handleProxySubmit}
                                                 disabled={!isValidDistance || showError}
                                             >
-                                                Kinnita
+                                                {t("ctpHole.confirm")}
                                             </Button>
                                         </Box>
                                     </Box>
@@ -440,7 +444,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                         {/* CTP history */}
                         {ctp.length > 0 && (
                             <Box sx={{ mt: 3.5 }}>
-                                <SectionTitle>Ajalugu</SectionTitle>
+                                <SectionTitle>{t("ctpHole.history")}</SectionTitle>
                                 <Box sx={{ ...cardSx, width: "100%", py: 1 }}>
                                     {ctp.map((entry, idx) => (
                                         <Box
@@ -459,7 +463,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 fontWeight={500}
                                                 sx={{ display: "block", mb: 0.5 }}
                                             >
-                                                {idx + 1}. {entry.player?.name ?? "Mängija"}
+                                                {idx + 1}. {entry.player?.name ?? tc("player")}
                                             </Typography>
                                             <Box
                                                 sx={{
@@ -472,7 +476,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                                 }}
                                             >
                                                 <Typography variant="caption" color="text.secondary">
-                                                    {formatEstonianDateTime(entry.created_date)}
+                                                    {formatLocalDateTime(entry.created_date, appLocale)}
                                                 </Typography>
                                                 <Chip
                                                     size="small"
@@ -493,28 +497,24 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                 <DialogTitle
                     sx={{ m: 0, p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}
                 >
-                    Kinnita CTP tulemus
+                    {t("ctpHole.dialogConfirmTitle")}
                     <IconButton aria-label="close" onClick={closeConfirm} sx={{ ml: 1 }}>
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ pt: 0 }}>
                     <Typography>
-                        {confirmForPoolMate ? (
-                            <>
-                                Kas kinnitad, et <strong>{confirmForPoolMate.name ?? "mängija"}</strong> ketas on
-                                korvist <strong>{distance} cm</strong>?
-                            </>
-                        ) : (
-                            <>
-                                Kas kinnitad, et Sinu ketas on korvist <strong>{distance} cm</strong>?
-                            </>
-                        )}
+                        {confirmForPoolMate
+                            ? t("ctpHole.dialogMate", {
+                                  name: confirmForPoolMate.name ?? tc("player"),
+                                  distance: String(distance),
+                              })
+                            : t("ctpHole.dialogOwn", { distance: String(distance) })}
                     </Typography>
                     <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-                        <Button onClick={closeConfirm}>Katkesta</Button>
+                        <Button onClick={closeConfirm}>{t("ctpHole.cancel")}</Button>
                         <Button onClick={handleConfirmSubmit} variant="contained" color="primary">
-                            Kinnitan
+                            {t("ctpHole.iConfirm")}
                         </Button>
                     </Box>
                 </DialogContent>
@@ -524,14 +524,14 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                 <DialogTitle
                     sx={{ m: 0, p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}
                 >
-                    Vali puulikaaslane
+                    {t("ctpHole.pickMateTitle")}
                     <IconButton aria-label="close" onClick={() => setPoolMateSelectOpen(false)} sx={{ ml: 1 }}>
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ pt: 0 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Sisestades puulikaaslase CTP vastutad õigete andmete eest Sina!
+                        {t("ctpHole.pickMateBody")}
                     </Typography>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                         {poolMatesFiltered.map((pm) => {
@@ -553,7 +553,8 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                         opacity: alreadySubmitted ? 0.6 : 1,
                                     }}
                                 >
-                                    {pm.name ?? "Mängija"} {alreadySubmitted ? "– juba sisestatud" : ""}
+                                    {pm.name ?? tc("player")}{" "}
+                                    {alreadySubmitted ? t("ctpHole.alreadySubmitted") : ""}
                                 </Button>
                             )
                         })}
