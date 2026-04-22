@@ -51,7 +51,7 @@ export function TopPlayersByDivisionContent({
                                 <Typography
                                     fontSize="1.25rem"
                                     fontWeight="600"
-                                    sx={{ lineHeight: 1, m: 0, p: 0, display: 'flex', alignItems: 'center' }}
+                                    sx={{ lineHeight: "1.2rem", m: 0, p: 0, display: 'flex', alignItems: 'center' }}
                                 >
                                     {index === 0 ? (
                                         <Box component="span" mr={0.5} fontSize="1.5rem">
