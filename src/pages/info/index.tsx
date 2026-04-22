@@ -24,7 +24,7 @@ import usePlayerApi from '@/src/api/usePlayerApi'
 import useBillApi from '@/src/api/useBillApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import {generateBillPdf} from '@/src/utils/generateBillPdf'
-import {normalizeBillIban, normalizeBillInstructionId} from '@/src/utils/billInputNormalize'
+import {normalizeBillIban, normalizeBillPayerName} from '@/src/utils/billInputNormalize'
 import {useTranslation} from 'react-i18next'
 
 const cardSx = {
@@ -76,7 +76,7 @@ export default function InfoPage() {
     const [isParticipant, setIsParticipant] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [iban, setIban] = useState('')
-    const [instructionId, setInstructionId] = useState('')
+    const [payerName, setPayerName] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -101,25 +101,25 @@ export default function InfoPage() {
         setError(null)
 
         const normalizedIban = normalizeBillIban(iban)
-        const normalizedInstrId = normalizeBillInstructionId(instructionId)
+        const normalizedPayerName = normalizeBillPayerName(payerName)
 
         if (!normalizedIban) {
             setError(t('ibanRequired'))
             return
         }
-        if (!normalizedInstrId) {
-            setError(t('instructionRequired'))
+        if (!normalizedPayerName) {
+            setError(t('payerNameRequired'))
             return
         }
 
         setLoading(true)
         try {
-            const bill = await lookupBill(normalizedIban, normalizedInstrId)
+            const bill = await lookupBill(normalizedIban, normalizedPayerName)
             await generateBillPdf(bill)
             showToast(t('toastDownloaded'), 'success')
             setDialogOpen(false)
             setIban('')
-            setInstructionId('')
+            setPayerName('')
         } catch (err) {
             const code =
                 err instanceof Error && 'code' in err ? (err as Error & {code?: string}).code : undefined
@@ -269,10 +269,10 @@ export default function InfoPage() {
                         disabled={loading}
                     />
                     <TextField
-                        label={t('instructionLabel')}
+                        label={t('payerNameLabel')}
                         fullWidth
-                        value={instructionId}
-                        onChange={(e) => setInstructionId(e.target.value)}
+                        value={payerName}
+                        onChange={(e) => setPayerName(e.target.value)}
                         disabled={loading}
                         sx={{mt: 2}}
                     />

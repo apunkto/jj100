@@ -21,10 +21,10 @@ export type BillData = {
     signatory: string
 }
 
-async function lookupBill(iban: string, instructionId: string): Promise<BillData> {
+async function lookupBill(iban: string, payerName: string): Promise<BillData> {
     const res = await authedFetch(`${API_BASE}/bill/lookup`, {
         method: 'POST',
-        body: JSON.stringify({iban, instructionId}),
+        body: JSON.stringify({iban, payerName}),
     })
 
     const json = (await res.json()) as {

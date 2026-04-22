@@ -1,5 +1,5 @@
 {
-  "bill_missing_payment_details": "Please fill in the bank account number and payment reference number.",
-  "bill_transaction_not_found": "Payment not found. Check the account number and payment reference.",
+  "bill_missing_payment_details": "Please fill in the payer bank account number and payer name.",
+  "bill_transaction_not_found": "Payment not found. Check the IBAN and payer name as on the bank statement.",
   "bill_lookup_failed": "Could not create the invoice"
 }
