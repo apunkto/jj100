@@ -191,7 +191,7 @@ export default function HoleCard({number, isPriority, hole, maxWidth}: Props) {
                             whiteSpace: 'break-spaces',
                             fontSize: '3.25cqw',
                             fontWeight: 500,
-                            lineHeight: 1.4,
+                            lineHeight: "1.4rem",
                             color: alpha('#fff', 0.9),
                             overflow: 'hidden',
                             display: '-webkit-box',

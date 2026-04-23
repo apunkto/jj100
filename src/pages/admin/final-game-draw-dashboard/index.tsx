@@ -1,14 +1,18 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
-import {Box, Typography, Link as MuiLink} from '@mui/material'
-import SportsGolfIcon from '@mui/icons-material/SportsGolf'
-import CasinoOutlinedIcon from '@mui/icons-material/CasinoOutlined'
+import {Box, Link as MuiLink, Typography} from '@mui/material'
 import Confetti from 'react-dom-confetti'
+import Image from 'next/image'
 import NextLink from 'next/link'
+import type {FinalGameDrawResponse} from '@/src/api/useCheckinApi'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
-import type {FinalGameDrawResponse} from '@/src/api/useCheckinApi'
 
 const RECONNECT_DELAY_MS = 2000
+
+/** Match draw-dashboard LED wall (1000×600). */
+const LED_STAGE_W = 1000
+const LED_STAGE_H = 600
+const LED_SLOT_PX = Math.round((80 * LED_STAGE_H) / 375)
 
 type Phase = 'idle' | 'winner'
 
@@ -23,25 +27,13 @@ export default function FinalGameDrawDashboard() {
     const [displayName, setDisplayName] = useState('')
     const [confettiActive, setConfettiActive] = useState(false)
     const [drawKey, setDrawKey] = useState(0)
-    const [isSlotSpinning, setIsSlotSpinning] = useState(false)
-    const [frozenParticipantCount, setFrozenParticipantCount] = useState<number | null>(null)
     const unsubscribeRef = useRef<(() => void) | null>(null)
     const slotRef = useRef<SlotMachineHandle>(null)
     const lastWinnerRef = useRef<string | null>(null)
-    const currentParticipantCountRef = useRef<number>(0)
 
     const applyState = useCallback((raw: FinalGameDrawResponse) => {
         const drawActive = raw.winnerName != null && raw.finalGameParticipants.length < 10
-        const isNewWinner = lastWinnerRef.current !== raw.winnerName
 
-        if (drawActive && isNewWinner) {
-            setFrozenParticipantCount(currentParticipantCountRef.current)
-            setIsSlotSpinning(true)
-        }
-
-        if (raw.participantCount != null) {
-            currentParticipantCountRef.current = raw.participantCount
-        }
         setState(raw)
 
         if (drawActive) {
@@ -53,8 +45,6 @@ export default function FinalGameDrawDashboard() {
             lastWinnerRef.current = null
             setPhase('idle')
             setDisplayName('')
-            setIsSlotSpinning(false)
-            setFrozenParticipantCount(null)
         }
     }, [])
 
@@ -98,124 +88,144 @@ export default function FinalGameDrawDashboard() {
     const participants = state.finalGameParticipants ?? []
     const sortedParticipants = [...participants].sort((a, b) => a.order - b.order)
     const isComplete = sortedParticipants.length >= 10
-    const participantCount = state.participantCount ?? 0
 
     return (
         <Box
             sx={{
-                minHeight: '100vh',
-                height: '100vh',
+                width: LED_STAGE_W,
+                height: LED_STAGE_H,
+                maxWidth: '100vw',
                 maxHeight: '100dvh',
+                mx: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'start',
-                px: 2,
-                py: 2,
+                alignItems: 'stretch',
+                justifyContent: 'flex-start',
+                px: 0,
+                py: 0,
                 boxSizing: 'border-box',
-                background: phase === 'winner'
-                    ? 'linear-gradient(180deg, #faf6f0 0%, #f0eae2 50%, #e8e2da 100%)'
-                    : 'linear-gradient(180deg, #faf6f0 0%, #f2ede6 50%, #eae5de 100%)',
+                bgcolor: 'common.white',
                 position: 'relative',
                 overflow: 'hidden',
             }}
         >
-            {phase === 'winner' && !isComplete && (
-                <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Confetti
-                        active={confettiActive}
-                        config={{
-                            angle: 90,
-                            spread: 160,
-                            startVelocity: 40,
-                            elementCount: 220,
-                            dragFriction: 0.1,
-                            duration: 4500,
-                        }}
-                    />
-                </Box>
-            )}
-
             <Box
                 sx={{
                     width: '100%',
-                    maxWidth: 1200,
+                    height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    pt: 6,
-                    alignItems: 'center',
-                    justifyContent: 'start',
-                    gap: 4,
-                    flex: 1,
+                    alignItems: 'stretch',
+                    justifyContent: 'flex-start',
+                    gap: 0,
+                    boxSizing: 'border-box',
+                    overflow: 'hidden',
                     minHeight: 0,
-                    mx: 'auto',
                 }}
             >
-                {/* Title Section - Top */}
-                <Box sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <SportsGolfIcon sx={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'primary.main' }} />
+                <Box
+                    component="header"
+                    sx={{
+                        flexShrink: 0,
+                        width: '100%',
+                        bgcolor: 'primary.main',
+                        color: 'common.white',
+                        py: 1,
+                        px: 1.5,
+                        boxSizing: 'border-box',
+                    }}
+                >
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1.25,
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', width: 48, height: 42, flexShrink: 0 }}>
+                            <Image
+                                src="/logo2.webp"
+                                alt="JJ100"
+                                width={48}
+                                height={42}
+                                style={{ objectFit: 'contain' }}
+                                priority
+                            />
+                        </Box>
                         <Typography
                             component="h1"
-                            sx={{ fontSize: 'clamp(2rem, 5.5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.02em', color: '#1a1a1a', lineHeight: 1.15 }}
+                            sx={{
+                                fontSize: 26,
+                                fontWeight: 800,
+                                letterSpacing: '-0.02em',
+                                color: 'common.white',
+                                lineHeight: 1.22,
+                            }}
                         >
                             JJ100 Putimäng
                         </Typography>
                     </Box>
-                    <Typography sx={{ fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 700, color: '#1a1a1a', mt: 1 }}>
-                        Loosis osalejaid: {isSlotSpinning && frozenParticipantCount !== null ? frozenParticipantCount : participantCount}
-                    </Typography>
                 </Box>
 
-                {/* Content Section - Row layout for slot machine and participants */}
                 <Box
                     sx={{
+                        flex: 1,
+                        minHeight: 0,
                         width: '100%',
+                        bgcolor: 'common.white',
                         display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 3,
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        overflow: 'hidden',
+                        boxSizing: 'border-box',
                     }}
                 >
                     <Box
                         sx={{
                             flex: 1,
-                            textAlign: 'center',
-                            px: { xs: 2, sm: 4 },
-                            py: 3,
-                            borderRadius: 3,
-                            boxSizing: 'border-box',
-                            background: 'rgba(255, 252, 248, 0.98)',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                            border: '2px solid rgba(0,0,0,0.08)',
+                            minHeight: 0,
                             display: 'flex',
-                            flexDirection: 'column',
+                            alignItems: 'center',
                             justifyContent: 'center',
+                            overflow: 'hidden',
+                            position: 'relative',
                         }}
                     >
-                        {phase === 'winner' && displayName && (
-                            <Typography
-                                component="div"
+                        {phase === 'winner' && !isComplete && (
+                            <Box
                                 sx={{
-                                    fontSize: 'clamp(1rem, 2.5vw, 1.35rem)',
-                                    fontWeight: 800,
-                                    letterSpacing: '0.15em',
-                                    textTransform: 'uppercase',
-                                    color: 'primary.main',
-                                    mb: 2,
+                                    position: 'fixed',
+                                    inset: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    zIndex: 1300,
+                                    pointerEvents: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                 }}
                             >
-                                Võitja
-                            </Typography>
+                                <Confetti
+                                    active={confettiActive}
+                                    config={{
+                                        angle: 90,
+                                        spread: 160,
+                                        startVelocity: 40,
+                                        elementCount: 220,
+                                        dragFriction: 0.1,
+                                        duration: 4500,
+                                    }}
+                                />
+                            </Box>
                         )}
                         <SlotMachine
                             ref={slotRef}
                             key={drawKey}
                             names={state.participantNames ?? []}
+                            slotSizePx={LED_SLOT_PX}
                             onStopped={() => {
-                                setIsSlotSpinning(false)
-                                setFrozenParticipantCount(null)
                                 setConfettiActive(true)
                                 setTimeout(() => setConfettiActive(false), 500)
                             }}
@@ -224,60 +234,64 @@ export default function FinalGameDrawDashboard() {
 
                     <Box
                         sx={{
-                            width: 280,
-                            minWidth: 240,
-                            py: 3,
-                            px: 2,
-                            borderRadius: 3,
-                            background: 'rgba(255, 252, 248, 0.98)',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                            border: '2px solid rgba(0,0,0,0.08)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 1,
+                            flexShrink: 0,
+                            width: '100%',
+                            px: 1,
+                            py: 0.75,
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            boxSizing: 'border-box',
+                            textAlign: 'left',
                         }}
                     >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <CasinoOutlinedIcon sx={{ fontSize: '1.5rem', color: 'primary.main' }} />
-                            <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: '#1a1a1a' }}>
-                                Loositud
-                            </Typography>
-                        </Box>
+                        <Typography
+                            sx={{
+                                fontSize: 12,
+                                fontWeight: 800,
+                                color: 'primary.main',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                mb: 0.35,
+                            }}
+                        >
+                            Loositud
+                        </Typography>
                         {sortedParticipants.length === 0 ? (
-                            <Typography sx={{ color: 'text.secondary', fontStyle: 'italic' }}>Loositakse...</Typography>
+                            <Typography sx={{ color: 'text.secondary', fontSize: 12, fontStyle: 'italic' }}>Loositakse...</Typography>
                         ) : (
-                            sortedParticipants.map((p) => (
-                                <Typography
-                                    key={`${p.order}-${p.name}`}
-                                    sx={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', fontWeight: 600, color: '#1a1a1a' }}
-                                >
-                                    {p.order}. {p.name}
-                                </Typography>
-                            ))
+                            <Typography
+                                component="div"
+                                sx={{
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: '#1a1a1a',
+                                    lineHeight: 1.45,
+                                    wordBreak: 'break-word',
+                                    hyphens: 'auto',
+                                }}
+                            >
+                                {sortedParticipants.map((p) => `${p.order}. ${p.name}`).join(', ')}
+                            </Typography>
+                        )}
+                        {isComplete && (
+                            <Box sx={{ mt: 0.75 }}>
+                                <NextLink href="/admin/final-game-putting-dashboard" passHref legacyBehavior>
+                                    <MuiLink
+                                        sx={{
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            color: 'primary.main',
+                                            textDecoration: 'none',
+                                            '&:hover': { textDecoration: 'underline' },
+                                        }}
+                                    >
+                                        Putimäng →
+                                    </MuiLink>
+                                </NextLink>
+                            </Box>
                         )}
                     </Box>
                 </Box>
-
-                {/* Link to putting game dashboard - only show when 10 players drawn */}
-                {isComplete && (
-                    <Box sx={{ mt: 2 }}>
-                        <NextLink href="/admin/final-game-putting-dashboard" passHref legacyBehavior>
-                            <MuiLink
-                                sx={{
-                                    fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                                    fontWeight: 600,
-                                    color: 'primary.main',
-                                    textDecoration: 'none',
-                                    '&:hover': {
-                                        textDecoration: 'underline',
-                                    },
-                                }}
-                            >
-                                Putimäng →
-                            </MuiLink>
-                        </NextLink>
-                    </Box>
-                )}
             </Box>
         </Box>
     )

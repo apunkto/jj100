@@ -157,7 +157,7 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
                         fontWeight: 600,
                         color: 'text.primary',
                         letterSpacing: '0.01em',
-                        lineHeight: 1.35,
+                        lineHeight: "1.35rem",
                         mb: showParHint ? 0.5 : 1.25,
                     }}
                 >
@@ -174,7 +174,7 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
                     variant="caption"
                     color="text.secondary"
                     component="p"
-                    sx={{m: 0, mb: 1, lineHeight: 1.45, maxWidth: '100%'}}
+                    sx={{m: 0, mb: 1, lineHeight: "1.45rem", maxWidth: '100%'}}
                 >
                     {t('scoreVsParHint')}
                 </Typography>

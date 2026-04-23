@@ -18,7 +18,7 @@ const theme = createTheme({
         h4: {
             fontSize: '22px',           // default (xs)
             fontWeight: 700,
-            lineHeight: 1.2,
+            lineHeight: "1.5rem",
             '@media (min-width:600px)': {
                 fontSize: '28px',         // sm and up
             },

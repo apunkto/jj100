@@ -7,6 +7,18 @@ import {alpha, Box, Typography} from '@mui/material'
 import useCtpApi, {Hole, HoleWithCtp} from '@/src/api/useCtpApi'
 import HoleCard from '@/src/components/HoleCard'
 
+/** P5 / wall display: minimum readable type outside HoleCard (explicit px). */
+const P5 = {
+    caption: '25px',
+    statValue: '44px',
+    sectionTitle: '25px',
+    distCount: '30px',
+    distLabel: '25px',
+    distPct: '25px',
+    barHeight: 36,
+    rowMinHeight: 52,
+} as const
+
 const scoreCategories = [
     { key: 'eagles', color: '#f8c600', label: 'Eagle' },
     { key: 'birdies', color: 'rgba(62,195,0,.70)', label: 'Birdie' },
@@ -22,65 +34,69 @@ function getOrdinal(n: number): string {
     return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
 
+function statCardSx(tint: string, border: string) {
+    return {
+        px: 2.5,
+        py: 2,
+        borderRadius: 2,
+        bgcolor: tint,
+        border: '1px solid',
+        borderColor: border,
+        minWidth: 0,
+        flex: '1 1 160px',
+        maxWidth: 280,
+    } as const
+}
+
 function StatsSection({ hole }: { hole: Hole }) {
     const avgDiff = hole.average_diff ?? 0
     const obPercent = hole.ob_percent ?? 0
     const diffColor = avgDiff <= 0 ? '#2e7d32' : avgDiff <= 0.5 ? '#ed6c02' : '#d32f2f'
 
     return (
-        <Box display="flex" flexDirection="column" gap={2} alignItems="center">
-            <Box display="flex" flexWrap="wrap" gap={2} justifyContent="center">
-                <Box
-                    sx={{
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 2,
-                        bgcolor: alpha('#1565c0', 0.12),
-                        border: '1px solid',
-                        borderColor: alpha('#1565c0', 0.3),
-                    }}
-                >
-                    <Typography fontSize="0.85rem" fontWeight={600} color="text.secondary" sx={{ opacity: 0.9 }}>
+        <Box display="flex" flexDirection="column" gap={2} alignItems="stretch" width="100%">
+            <Box display="flex" flexWrap="wrap" gap={2} justifyContent="stretch" sx={{ width: '100%' }}>
+                <Box sx={statCardSx(alpha('#1565c0', 0.12), alpha('#1565c0', 0.3))}>
+                    <Typography
+                        fontWeight={600}
+                        color="text.secondary"
+                        sx={{ fontSize: P5.caption, lineHeight: 1.2, opacity: 0.92, mb: 0.5 }}
+                    >
                         Difficulty
                     </Typography>
-                    <Typography fontSize="1.75rem" fontWeight={700} color="primary.main">
+                    <Typography fontWeight={700} color="primary.main" sx={{ fontSize: P5.statValue, lineHeight: 1.05 }}>
                         {getOrdinal(hole.rank)}
                     </Typography>
                 </Box>
-                <Box
-                    sx={{
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 2,
-                        bgcolor: alpha(diffColor, 0.12),
-                        border: '1px solid',
-                        borderColor: alpha(diffColor, 0.35),
-                    }}
-                >
-                    <Typography fontSize="0.85rem" fontWeight={600} color="text.secondary" sx={{ opacity: 0.9 }}>
+                <Box sx={statCardSx(alpha(diffColor, 0.12), alpha(diffColor, 0.35))}>
+                    <Typography
+                        fontWeight={600}
+                        color="text.secondary"
+                        sx={{ fontSize: P5.caption, lineHeight: 1.2, opacity: 0.92, mb: 0.5 }}
+                    >
                         Avg to par
                     </Typography>
-                    <Typography fontSize="1.75rem" fontWeight={700} sx={{ color: diffColor }}>
-                        {avgDiff > 0 ? '+' : ''}{avgDiff.toFixed(1)}
+                    <Typography fontWeight={700} sx={{ fontSize: P5.statValue, lineHeight: 1.05, color: diffColor }}>
+                        {avgDiff > 0 ? '+' : ''}
+                        {avgDiff.toFixed(1)}
                     </Typography>
                 </Box>
                 <Box
-                    sx={{
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: 2,
-                        bgcolor: obPercent > 20 ? alpha('#d32f2f', 0.1) : alpha('#757575', 0.08),
-                        border: '1px solid',
-                        borderColor: obPercent > 20 ? alpha('#d32f2f', 0.35) : alpha('#757575', 0.2),
-                    }}
+                    sx={statCardSx(
+                        obPercent > 20 ? alpha('#d32f2f', 0.1) : alpha('#757575', 0.08),
+                        obPercent > 20 ? alpha('#d32f2f', 0.35) : alpha('#757575', 0.2)
+                    )}
                 >
-                    <Typography fontSize="0.85rem" fontWeight={600} color="text.secondary" sx={{ opacity: 0.9 }}>
+                    <Typography
+                        fontWeight={600}
+                        color="text.secondary"
+                        sx={{ fontSize: P5.caption, lineHeight: 1.2, opacity: 0.92, mb: 0.5 }}
+                    >
                         Went OB
                     </Typography>
                     <Typography
-                        fontSize="1.75rem"
                         fontWeight={700}
-                        sx={{ color: obPercent > 20 ? '#d32f2f' : 'text.secondary' }}
+                        sx={{ fontSize: P5.statValue, lineHeight: 1.05, color: obPercent > 20 ? '#d32f2f' : 'text.secondary' }}
                     >
                         {Math.round(obPercent)}%
                     </Typography>
@@ -106,50 +122,76 @@ function ScoreDistributionChart({ hole }: { hole: Hole }) {
     return (
         <Box
             sx={{
-                mt: 3,
-                p: 2.5,
+                mt: 2,
+                p: 2,
                 borderRadius: 2,
                 bgcolor: alpha('#000', 0.03),
                 border: '1px solid',
                 borderColor: alpha('#000', 0.06),
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
             }}
         >
             <Typography
-                fontSize="0.9rem"
-                fontWeight={600}
+                fontWeight={700}
                 color="text.secondary"
-                mb={1.5}
+                mb={1.25}
                 textTransform="uppercase"
-                letterSpacing={0.5}
+                letterSpacing={1}
+                sx={{ fontSize: P5.sectionTitle, lineHeight: 1.2 }}
             >
                 Score distribution
             </Typography>
-            <Box display="flex" flexDirection="column" gap={1.25}>
+            <Box
+                display="flex"
+                flexDirection="column"
+                gap={1.5}
+                sx={{ flex: 1, minHeight: 0, justifyContent: 'center', overflowY: 'auto' }}
+            >
                 {categoryValues.map(({ key, label, color, value }) => {
                     const pct = (value / total) * 100
                     const widthPercent = Math.max(pct, 2) // min 2% so tiny values still show a sliver
 
                     return (
-                        <Box key={key} display="flex" alignItems="center" gap={2} minHeight={36}>
-                            <Box display="flex" alignItems="center" width={120} flexShrink={0}>
-                                <Typography
-                                    fontWeight={700}
-                                    fontSize="1.5rem"
-                                    width={36}
-                                    textAlign="right"
-                                    color="text.primary"
-                                >
-                                    {value}
-                                </Typography>
-                                <Typography ml={1} fontSize="1.35rem" fontWeight={500} color="text.secondary" noWrap>
-                                    {label}
-                                </Typography>
-                            </Box>
+                        <Box
+                            key={key}
+                            display="flex"
+                            alignItems="center"
+                            gap={2}
+                            sx={{ minHeight: P5.rowMinHeight }}
+                        >
+                            <Typography
+                                fontWeight={700}
+                                textAlign="right"
+                                color="text.primary"
+                                sx={{
+                                    fontSize: P5.distCount,
+                                    lineHeight: 1,
+                                    width: 44,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                {value}
+                            </Typography>
+                            <Typography
+                                fontWeight={600}
+                                color="text.secondary"
+                                sx={{
+                                    fontSize: P5.distLabel,
+                                    lineHeight: 1.2,
+                                    flex: '0 1 200px',
+                                    minWidth: 0,
+                                }}
+                            >
+                                {label}
+                            </Typography>
                             <Box
                                 flex={1}
-                                minWidth={0}
-                                height={28}
-                                borderRadius={1.5}
+                                minWidth={80}
+                                height={P5.barHeight}
+                                borderRadius={2}
                                 overflow="hidden"
                                 sx={{
                                     bgcolor: alpha('#000', 0.06),
@@ -158,7 +200,7 @@ function ScoreDistributionChart({ hole }: { hole: Hole }) {
                             >
                                 <Box
                                     height="100%"
-                                    borderRadius={1.5}
+                                    borderRadius={2}
                                     sx={{
                                         backgroundColor: color,
                                         width: `${widthPercent}%`,
@@ -168,12 +210,15 @@ function ScoreDistributionChart({ hole }: { hole: Hole }) {
                                 />
                             </Box>
                             <Typography
-                                fontSize="1rem"
-                                fontWeight={600}
+                                fontWeight={700}
                                 color="text.secondary"
-                                width={44}
-                                flexShrink={0}
                                 textAlign="right"
+                                sx={{
+                                    fontSize: P5.distPct,
+                                    lineHeight: 1,
+                                    minWidth: 64,
+                                    flexShrink: 0,
+                                }}
                             >
                                 {Math.round(pct)}%
                             </Typography>
@@ -222,7 +267,7 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
     if (loading && topHoles.length === 0) {
         return (
             <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography>Laen...</Typography>
+                <Typography sx={{ fontSize: P5.caption }}>Laen...</Typography>
             </Box>
         )
     }
@@ -230,13 +275,15 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
     if (error && topHoles.length === 0) {
         return (
             <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography color="error">{error}</Typography>
+                <Typography color="error" sx={{ fontSize: P5.caption }}>
+                    {error}
+                </Typography>
             </Box>
         )
     }
 
     return (
-        <Box sx={{ px: 6, py: 4, height: '100vh', boxSizing: 'border-box' }}>
+        <Box sx={{ px: 3, py: 2, height: '100vh', maxHeight: '100dvh', boxSizing: 'border-box', overflow: 'hidden' }}>
             <Swiper
                 key={`${topHoles.join(',')}-${isLooping}`}
                 modules={[Autoplay]}
@@ -245,21 +292,30 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
                 loop={isLooping}
                 spaceBetween={30}
                 slidesPerView={1}
+                style={{ height: '100%' }}
             >
                 {topHoles.map((holeNumber, holeIdx) => {
                     const holeData = holeInfo[holeNumber]?.hole
                     if (!holeData) return null
                     return (
-                        <SwiperSlide key={holeNumber}>
+                        <SwiperSlide key={holeNumber} style={{ height: '100%', boxSizing: 'border-box' }}>
                             <Box
                                 display="flex"
-                                justifyContent="center"
+                                justifyContent="flex-start"
                                 alignItems="stretch"
-                                gap={6}
+                                gap={3}
                                 flexWrap="nowrap"
                                 height="100%"
+                                sx={{ minHeight: 0, maxHeight: '100%' }}
                             >
-                                <Box height="100%" width={470} display="flex" alignItems="center">
+                                <Box
+                                    height="100%"
+                                    width={425}
+                                    flexShrink={0}
+                                    display="flex"
+                                    alignItems="center"
+                                    sx={{ minHeight: 0 }}
+                                >
                                     <HoleCard
                                         number={holeNumber}
                                         hole={holeData}
@@ -269,12 +325,14 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
                                 </Box>
 
                                 <Box
-                                    maxWidth={600}
-                                    width={500}
-                                    height={670}
+                                    flex="1 1 0%"
+                                    minWidth={0}
+                                    minHeight={0}
+                                    height="100%"
                                     display="flex"
                                     flexDirection="column"
                                     justifyContent="flex-start"
+                                    sx={{ overflow: 'hidden' }}
                                 >
                                     <StatsSection hole={holeData} />
                                     <ScoreDistributionChart hole={holeData} />

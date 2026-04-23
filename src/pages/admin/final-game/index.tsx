@@ -26,8 +26,8 @@ import AdminLayout from '@/src/components/AdminLayout'
 
 export default function FinalGameDrawPage() {
     const {
-        getCheckins,
         getPuttingGameState,
+        getFinalGameDrawState,
         startPuttingGame,
         resetPuttingGame,
         recordPuttingResult,
@@ -43,6 +43,8 @@ export default function FinalGameDrawPage() {
 
     const [finalGameCount, setFinalGameCount] = useState(0)
     const [finalGameParticipants, setFinalGameParticipants] = useState<FinalGameParticipant[]>([])
+    /** Check-ins eligible for final-game draw (not yet in `players`); from `final-game-draw-state`, not putting `/state`. */
+    const [eligiblePoolCount, setEligiblePoolCount] = useState(0)
     const [removeConfirm, setRemoveConfirm] = useState<FinalGameParticipant | null>(null)
     const [resetConfirm, setResetConfirm] = useState(false)
     const [puttingGame, setPuttingGame] = useState<PuttingGameState | null>(null)
@@ -61,8 +63,12 @@ export default function FinalGameDrawPage() {
 
     const fetchData = async () => {
         try {
-            const puttingGameState = await getPuttingGameState()
+            const [puttingGameState, drawState] = await Promise.all([
+                getPuttingGameState(),
+                getFinalGameDrawState().catch(() => null),
+            ])
             applyPuttingState(puttingGameState ?? null)
+            setEligiblePoolCount(drawState?.participantCount ?? 0)
             return puttingGameState
         } catch (err) {
             console.error('Failed to fetch:', err)
@@ -95,7 +101,7 @@ export default function FinalGameDrawPage() {
 
     const startDraw = async () => {
         if (!isAdmin) return
-        if (finalGameParticipants.length === 0 || finalGameCount >= 10) return
+        if (eligiblePoolCount === 0 || finalGameCount >= 10) return
 
         setWinner(null)
         setCurrentName('')
@@ -178,7 +184,7 @@ export default function FinalGameDrawPage() {
                                 Loosis osalejaid
                             </Typography>
                             <Typography variant="h4" fontWeight="700">
-                                {finalGameParticipants.length }
+                                {eligiblePoolCount}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" mt={1}>
                                 Valitud: {finalGameCount} / 10
@@ -190,7 +196,7 @@ export default function FinalGameDrawPage() {
                                 variant="contained"
                                 color="primary"
                                 onClick={startDraw}
-                                disabled={finalGameParticipants.length  === 0 || finalGameCount >= 10 || !!(currentName && winner)}
+                                disabled={eligiblePoolCount === 0 || finalGameCount >= 10 || !!(currentName && winner)}
                                 fullWidth
                             >
                                 {finalGameCount >= 10 ? '10 mängijat valitud' : 'Loosime'}
@@ -317,41 +323,61 @@ export default function FinalGameDrawPage() {
                                         ? <CheckIcon sx={{fontSize: 18, color: 'success.main', ml: 0.5}} aria-hidden/>
                                         : <CloseIcon sx={{fontSize: 18, color: 'error.main', ml: 0.5}} aria-hidden/>
                                     : null
+                                const canRemove = puttingGame == null || puttingGame?.status === 'not_started'
                                 return (
                                     <ListItem
                                         key={p.finalParticipantId}
-                                        sx={{px: 0, py: 0.5}}
-                                        secondaryAction={
-                                            (puttingGame == null || puttingGame?.status === 'not_started') ? (
-                                                <IconButton
-                                                    edge="end"
-                                                    size="small"
-                                                    onClick={() => setRemoveConfirm(p)}
-                                                    aria-label="Eemalda"
-                                                >
-                                                    <DeleteOutlineIcon fontSize="small"/>
-                                                </IconButton>
-                                            ) : undefined
-                                        }
+                                        disablePadding
+                                        sx={{
+                                            px: 0,
+                                            py: 0.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            // Avoid `secondaryAction` (absolute); flex keeps delete visible on first paint after SSE/fetch
+                                        }}
                                     >
                                         <ListItemText
+                                            sx={{ flex: '1 1 auto', minWidth: 0, my: 0 }}
                                             primary={
                                                 <Box
                                                     component="span"
                                                     sx={{
                                                         display: 'inline-flex',
                                                         alignItems: 'center',
+                                                        minWidth: 0,
                                                         ...(p.status === 'out' && {
                                                             textDecoration: 'line-through',
-                                                            color: 'text.secondary'
+                                                            color: 'text.secondary',
                                                         }),
                                                     }}
                                                 >
-                                                    {`${p.order}. ${p.name}`}
+                                                    <Typography
+                                                        component="span"
+                                                        variant="body2"
+                                                        sx={{
+                                                            fontWeight: 600,
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        {`${p.order}. ${p.name}`}
+                                                    </Typography>
                                                     {resultIcon}
                                                 </Box>
                                             }
                                         />
+                                        {canRemove ? (
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => setRemoveConfirm(p)}
+                                                aria-label="Eemalda"
+                                                sx={{ flexShrink: 0 }}
+                                            >
+                                                <DeleteOutlineIcon fontSize="small" />
+                                            </IconButton>
+                                        ) : null}
                                     </ListItem>
                                 )
                             })}

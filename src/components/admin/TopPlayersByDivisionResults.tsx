@@ -119,7 +119,7 @@ export function TopPlayersByDivisionResults({
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        lineHeight: 1,
+                                        lineHeight: "2rem",
                                         m: 0,
                                         p: 0,
                                     }}

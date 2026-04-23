@@ -196,7 +196,7 @@ export default function CateringPage() {
                                                             component="span"
                                                             variant="body2"
                                                             fontWeight={soupDraft === false ? 700 : 400}
-                                                            sx={{lineHeight: 1.25}}
+                                                            sx={{lineHeight: "1.25rem"}}
                                                         >
                                                             {t('catering.meatSoup')}
                                                         </Typography>
@@ -211,7 +211,7 @@ export default function CateringPage() {
                                                             component="span"
                                                             variant="body2"
                                                             fontWeight={soupDraft === true ? 700 : 400}
-                                                            sx={{lineHeight: 1.25}}
+                                                            sx={{lineHeight: "1.25rem"}}
                                                         >
                                                             {t('catering.vegeSoup')}
                                                         </Typography>
@@ -247,7 +247,7 @@ export default function CateringPage() {
                                                                     component="span"
                                                                     variant="body2"
                                                                     fontWeight={pizzaDraft === id ? 700 : 400}
-                                                                    sx={{lineHeight: 1.25}}
+                                                                    sx={{lineHeight: "1.25rem"}}
                                                                 >
                                                                     {pizzaLabel(id)}
                                                                 </Typography>

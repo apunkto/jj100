@@ -210,7 +210,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                                 {item.value}
                             </Typography>
                         </Box>
-                        <Box mt={1} sx={{ fontSize: 27, fontWeight: 500, lineHeight: 1.2 }}>
+                        <Box mt={1} sx={{ fontSize: 27, fontWeight: 500, lineHeight: "1.75rem" }}>
                             {item.sub.replace(/\s*\(.*\)/, '')}
                             <br />
                             <span style={{ fontSize: 25 }}>{item.sub.match(/\(.*\)/)?.[0] ?? ''}</span>

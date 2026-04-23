@@ -31,7 +31,7 @@ function NamesCommaList({
         <Typography
             sx={{
                 fontSize: {xs: 12, sm: 13},
-                lineHeight: 1.35,
+                lineHeight: "1.35rem",
                 wordBreak: 'break-word',
                 whiteSpace: 'normal',
             }}

@@ -1,12 +1,27 @@
 import React, {forwardRef, useCallback, useImperativeHandle, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
 
-// Tuned for large LED ~1200x800; can be overridden via props if needed
-const REEL_SLOT_SIZE_PX = 140
-const REEL_WIDTH_MULTIPLIER = 1.9
-const REEL_VISIBLE_ROWS = 3
+// Defaults tuned for large LED ~1200x800; actual size should be driven by container (narrow walls / P8).
+export const SLOT_MACHINE_LAYOUT = {
+    defaultSlotSizePx: 140,
+    reelWidthMultiplier: 1.9,
+    visibleRows: 3,
+    /** Horizontal gap between reels; keep in sync with `reelGapPx` prop default */
+    reelGapPx: 16,
+} as const
+
+const REEL_SLOT_SIZE_PX = SLOT_MACHINE_LAYOUT.defaultSlotSizePx
+const REEL_WIDTH_MULTIPLIER = SLOT_MACHINE_LAYOUT.reelWidthMultiplier
+const REEL_VISIBLE_ROWS = SLOT_MACHINE_LAYOUT.visibleRows
 const REEL_SPIN_ITEMS_BEFORE_WINNER = 40
 const REEL_EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)'
+/** Max wrapped lines per reel cell (ellipsis only if still longer). */
+const REEL_NAME_MAX_LINES = 3
+
+/** Thicker frame on coarse-pitch LED; keep in sync with `slotMachineReelOuterHeightPx`. */
+function reelFrameBorderPx(slotSizePx: number): number {
+    return Math.max(3, Math.round(slotSizePx / 38))
+}
 
 /** Default idle behaviour: random names in random slots. Empty pool = show nothing (no "?"). */
 function buildRandomStrip(names: string[], length: number): string[] {
@@ -75,19 +90,30 @@ function SingleReel({
         return () => clearTimeout(t)
     }, [stopIndex, durationMs, startSpinning, slotSizePx])
 
-    const viewportHeight = slotSizePx * REEL_VISIBLE_ROWS
+    const borderW = reelFrameBorderPx(slotSizePx)
+    /** Border is drawn inside border-box; rows total 3×slot so outer height must include vertical borders or the bottom row clips. */
+    const viewportContentHeight = slotSizePx * REEL_VISIBLE_ROWS
+    const viewportOuterHeight = viewportContentHeight + 2 * borderW
     const stripHeight = strip.length * slotSizePx
+    /** Wider leading so wrapped names read at P8 pitch */
+    const lineHeightUnitless = 1.34
+    const fontPx = Math.min(
+        26,
+        Math.max(10, Math.round(slotSizePx * 0.2)),
+        Math.max(10, Math.floor((slotSizePx - 8) / (REEL_NAME_MAX_LINES * lineHeightUnitless)))
+    )
 
     return (
         <Box
             sx={{
                 overflow: 'hidden',
-                height: viewportHeight,
+                height: viewportOuterHeight,
                 width: slotSizePx * REEL_WIDTH_MULTIPLIER,
                 minWidth: slotSizePx * 1.5,
+                boxSizing: 'border-box',
                 borderRadius: 2,
                 background: 'linear-gradient(180deg, #ebe8e4 0%, #e0dcd6 100%)',
-                border: '3px solid #5a5550',
+                border: `${borderW}px solid #5a5550`,
                 boxShadow: '0 3px 12px rgba(0,0,0,0.12)',
             }}
         >
@@ -109,20 +135,25 @@ function SingleReel({
                             justifyContent: 'center',
                             px: 1,
                             boxSizing: 'border-box',
+                            overflow: 'hidden',
                         }}
                     >
                         <Typography
                             sx={{
-                                fontSize: 'clamp(1.15rem, 2.2vw, 1.75rem)',
+                                fontSize: `${fontPx}px`,
                                 fontWeight: 800,
                                 textAlign: 'center',
                                 color: '#1a1a1a',
-                                lineHeight: 1.2,
+                                lineHeight: lineHeightUnitless,
                                 display: '-webkit-box',
-                                WebkitLineClamp: 2,
+                                WebkitLineClamp: REEL_NAME_MAX_LINES,
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
                                 wordBreak: 'break-word',
+                                overflowWrap: 'anywhere',
+                                width: '100%',
+                                maxHeight: slotSizePx - 4,
+                                boxSizing: 'border-box',
                             }}
                         >
                             {name}
@@ -132,6 +163,48 @@ function SingleReel({
             </Box>
         </Box>
     )
+}
+
+/** Pixel height of one reel viewport (border-box outer), matching `SingleReel`. */
+export function slotMachineReelOuterHeightPx(slotSizePx: number): number {
+    const b = reelFrameBorderPx(slotSizePx)
+    return slotSizePx * SLOT_MACHINE_LAYOUT.visibleRows + 2 * b
+}
+
+/** Largest slot row size so `slotMachineReelOuterHeightPx(s) <= containerHeight`. */
+function maxSlotFitHeight(containerHeight: number): number {
+    const h = Math.max(0, containerHeight)
+    if (h < 24) return 12
+    const absoluteMin = 12
+    for (let cand = Math.min(200, Math.floor(h)); cand >= absoluteMin; cand--) {
+        if (slotMachineReelOuterHeightPx(cand) <= h - 2) {
+            return cand
+        }
+    }
+    for (let cand = absoluteMin - 1; cand >= 1; cand--) {
+        if (slotMachineReelOuterHeightPx(cand) <= h - 2) {
+            return cand
+        }
+    }
+    return absoluteMin
+}
+
+/** Fit three reels inside a box without overflow; also caps by height (three visible rows + borders). */
+export function computeSlotSizePx(
+    containerWidth: number,
+    containerHeight: number,
+    opts?: { max?: number; min?: number; reelGapPx?: number }
+): number {
+    const reelGapPx = opts?.reelGapPx ?? SLOT_MACHINE_LAYOUT.reelGapPx
+    const max = opts?.max ?? SLOT_MACHINE_LAYOUT.defaultSlotSizePx
+    const min = opts?.min ?? 12
+    const w = Math.max(0, containerWidth)
+    const h = Math.max(0, containerHeight)
+    const byWidth = Math.floor((w - 2 * reelGapPx) / (3 * SLOT_MACHINE_LAYOUT.reelWidthMultiplier))
+    const byHeight = maxSlotFitHeight(h)
+    const candidates = [byWidth, byHeight].filter((v) => Number.isFinite(v) && v > 0)
+    const fit = candidates.length > 0 ? Math.min(...candidates) : min
+    return Math.min(max, Math.max(min, fit))
 }
 
 export type SlotMachineHandle = {
@@ -146,10 +219,12 @@ export type SlotMachineProps = {
     onStopped?: () => void
     /** Slot cell size in px (default 140). */
     slotSizePx?: number
+    /** Gap between reels in px; must match layout math when sizing from container width. */
+    reelGapPx?: number
 }
 
 const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function SlotMachine(
-    { names, onStopped, slotSizePx = REEL_SLOT_SIZE_PX },
+    { names, onStopped, slotSizePx = REEL_SLOT_SIZE_PX, reelGapPx = SLOT_MACHINE_LAYOUT.reelGapPx },
     ref
 ) {
     const [phase, setPhase] = useState<'idle' | 'spinning'>('idle')
@@ -205,19 +280,25 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
 
     const startSpinning = phase === 'spinning'
     const key = spinKey
+    const reelBorderW = reelFrameBorderPx(slotSizePx)
+    /** Middle row starts after top border + one cell (same as SingleReel). */
+    const paylineTop = reelBorderW + slotSizePx
+    const paylineBorderPx = Math.max(4, Math.round(slotSizePx / 22))
 
     return (
         <Box
             sx={{
                 position: 'relative',
                 display: 'flex',
-                gap: 2,
+                gap: `${reelGapPx}px`,
                 justifyContent: 'center',
                 flexWrap: 'nowrap',
                 mx: 'auto',
+                maxWidth: '100%',
+                maxHeight: '100%',
             }}
         >
-            <Box sx={{ position: 'relative', display: 'flex', gap: 2 }}>
+            <Box sx={{ position: 'relative', display: 'flex', gap: `${reelGapPx}px`, maxWidth: '100%', maxHeight: '100%' }}>
                 <SingleReel
                     key={`${key}-0`}
                     strip={strips[0]!.strip}
@@ -248,12 +329,12 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
                 <Box
                     sx={{
                         position: 'absolute',
-                        top: slotSizePx,
+                        top: paylineTop,
                         left: 0,
                         right: 0,
                         height: slotSizePx,
-                        border: '4px solid',
-                        borderColor: 'error.main',
+                        border: `${paylineBorderPx}px solid`,
+                        borderColor: 'primary.main',
                         borderRadius: 2,
                         pointerEvents: 'none',
                         boxSizing: 'border-box',

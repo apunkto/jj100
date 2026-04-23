@@ -46,7 +46,7 @@ const predictionQuestionHeadingSx = {
     fontWeight: 600,
     color: 'text.primary',
     letterSpacing: '0.01em',
-    lineHeight: 1.35,
+    lineHeight: "1.35rem",
     mb: 0.25,
 } as const
 
@@ -471,7 +471,7 @@ export default function PredictionPage() {
                                 variant="body2"
                                 color="text.secondary"
                                 textAlign="center"
-                                sx={{mb: 1.5, fontSize: '0.8125rem', lineHeight: 1.35}}
+                                sx={{mb: 1.5, fontSize: '0.8125rem', lineHeight: "1.35rem"}}
                             >
                                 {t('pageIntro')}
                             </Typography>
@@ -605,7 +605,7 @@ export default function PredictionPage() {
                                                 value="wet"
                                                 control={<Radio size="small" sx={{p: 0.5, alignSelf: 'center'}} />}
                                                 label={
-                                                    <Typography variant="body2" sx={{lineHeight: 1.35}}>
+                                                    <Typography variant="body2" sx={{lineHeight: "1.35rem"}}>
                                                         {t('rainChoiceWet')}
                                                     </Typography>
                                                 }
@@ -621,7 +621,7 @@ export default function PredictionPage() {
                                                 value="dry"
                                                 control={<Radio size="small" sx={{p: 0.5, alignSelf: 'center'}} />}
                                                 label={
-                                                    <Typography variant="body2" sx={{lineHeight: 1.35}}>
+                                                    <Typography variant="body2" sx={{lineHeight: "1.35rem"}}>
                                                         {t('rainChoiceDry')}
                                                     </Typography>
                                                 }
@@ -685,7 +685,7 @@ export default function PredictionPage() {
                                         variant="caption"
                                         color="text.secondary"
                                         component="p"
-                                        sx={{m: 0, mb: 1, lineHeight: 1.45, maxWidth: '100%'}}
+                                        sx={{m: 0, mb: 1, lineHeight: "1.45rem", maxWidth: '100%'}}
                                     >
                                         {t('waterDetailHint')}
                                     </Typography>

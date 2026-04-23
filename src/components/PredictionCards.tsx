@@ -13,7 +13,7 @@ export const predictionResultsColumnHeaderSx = {
     textTransform: 'uppercase' as const,
     color: 'text.secondary',
     textAlign: 'center' as const,
-    lineHeight: 1.2,
+    lineHeight: "1.2rem",
 } as const
 
 /** Numeric values in prediction result cards / 2025 dialog */
@@ -34,7 +34,7 @@ export const predictionResultCardTitleSx = {
     fontWeight: 700,
     color: 'text.primary',
     letterSpacing: '0.01em',
-    lineHeight: 1.35,
+    lineHeight: "1.35rem",
     pr: 1,
 } as const
 
@@ -172,7 +172,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                             ) : (
                                 <CloseIcon sx={{color: 'error.main', fontSize: 22}} />
                             )}
-                            <Typography variant="caption" color="text.secondary" sx={{fontWeight: 600, lineHeight: 1.2}}>
+                            <Typography variant="caption" color="text.secondary" sx={{fontWeight: 600, lineHeight: "1.2rem"}}>
                                 {val ? t('cards_rain_yes') : t('cards_rain_no')}
                             </Typography>
                         </Box>
