@@ -5,7 +5,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import type {Prediction} from '@/src/api/usePredictionApi'
 import {useTranslation} from 'react-i18next'
 
-const columnHeaderSx = {
+/** Table column headers — shared with previous-year dialog */
+export const predictionResultsColumnHeaderSx = {
     fontSize: '0.6875rem',
     fontWeight: 700,
     letterSpacing: '0.08em',
@@ -13,10 +14,7 @@ const columnHeaderSx = {
     color: 'text.secondary',
     textAlign: 'center' as const,
     lineHeight: 1.2,
-}
-
-/** Shared with previous-year dialog table headers */
-export const predictionResultsColumnHeaderSx = columnHeaderSx
+} as const
 
 /** Numeric values in prediction result cards / 2025 dialog */
 export const predictionResultsNumericValueSx = {
@@ -24,6 +22,20 @@ export const predictionResultsNumericValueSx = {
     color: 'text.primary',
     fontVariantNumeric: 'tabular-nums' as const,
     letterSpacing: '-0.02em',
+} as const
+
+export const predictionResultCardContentSx = {
+    p: 2.25,
+    pb: '18px !important',
+    '&:last-child': {pb: '18px !important'},
+} as const
+
+export const predictionResultCardTitleSx = {
+    fontWeight: 700,
+    color: 'text.primary',
+    letterSpacing: '0.01em',
+    lineHeight: 1.35,
+    pr: 1,
 } as const
 
 // Helper functions to calculate points
@@ -232,18 +244,8 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                 overflow: 'hidden',
                             }}
                         >
-                            <CardContent sx={{p: 2.25, pb: '18px !important', '&:last-child': {pb: '18px !important'}}}>
-                                <Typography
-                                    component="h3"
-                                    variant="subtitle1"
-                                    sx={{
-                                        fontWeight: 700,
-                                        color: 'text.primary',
-                                        letterSpacing: '0.01em',
-                                        lineHeight: 1.35,
-                                        pr: 1,
-                                    }}
-                                >
+                            <CardContent sx={predictionResultCardContentSx}>
+                                <Typography component="h3" variant="subtitle1" sx={predictionResultCardTitleSx}>
                                     {category.label}
                                 </Typography>
                                 <Divider sx={{my: 1.5}} />

@@ -26,9 +26,11 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LockIcon from '@mui/icons-material/Lock'
 import EditIcon from '@mui/icons-material/Edit'
 import CloseIcon from '@mui/icons-material/Close'
-import {predictionFormTextFieldSx, ScoreInput} from '../components/ScoreInput'
+import {predictionFormSectionPaperSx, predictionFormTextFieldSx, ScoreInput,} from '../components/ScoreInput'
 import {
     PredictionCards,
+    predictionResultCardContentSx,
+    predictionResultCardTitleSx,
     predictionResultsColumnHeaderSx,
     predictionResultsNumericValueSx,
 } from '../components/PredictionCards'
@@ -39,14 +41,6 @@ import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from '@/src/api/useConfigApi'
 import usePredictionApi, {Prediction, PredictionData, PredictionLeaderboardResponse,} from '@/src/api/usePredictionApi'
 import {useTranslation} from 'react-i18next'
-
-const predictionFormSectionSx = {
-    p: 2,
-    borderRadius: 2,
-    border: 1,
-    borderColor: 'divider',
-    bgcolor: 'action.hover',
-} as const
 
 const predictionQuestionHeadingSx = {
     fontWeight: 600,
@@ -578,7 +572,7 @@ export default function PredictionPage() {
                                     helperText={fieldErrors.player_own_score}
                                 />
 
-                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionPaperSx}>
                                     <NumberedQuestionHeading n={4}>{t('rainIntro')}</NumberedQuestionHeading>
                                     <FormControl
                                         component="fieldset"
@@ -645,7 +639,7 @@ export default function PredictionPage() {
                                     </FormControl>
                                 </Paper>
 
-                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionPaperSx}>
                                     <NumberedQuestionHeading n={5} mb={1.25}>
                                         {t('hioIntro')}
                                     </NumberedQuestionHeading>
@@ -683,7 +677,7 @@ export default function PredictionPage() {
                                     />
                                 </Paper>
 
-                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionPaperSx}>
                                     <NumberedQuestionHeading n={6} mb={0.5}>
                                         {t('waterIntro')}
                                     </NumberedQuestionHeading>
@@ -805,17 +799,8 @@ export default function PredictionPage() {
                                         overflow: 'hidden',
                                     }}
                                 >
-                                    <CardContent sx={{p: 2.25, pb: '18px !important', '&:last-child': {pb: '18px !important'}}}>
-                                        <Typography
-                                            component="h3"
-                                            variant="subtitle1"
-                                            sx={{
-                                                fontWeight: 700,
-                                                color: 'text.primary',
-                                                letterSpacing: '0.01em',
-                                                lineHeight: 1.35,
-                                            }}
-                                        >
+                                    <CardContent sx={predictionResultCardContentSx}>
+                                        <Typography component="h3" variant="subtitle1" sx={predictionResultCardTitleSx}>
                                             {t(labelKey)}
                                         </Typography>
                                         <Divider sx={{my: 1.5}} />

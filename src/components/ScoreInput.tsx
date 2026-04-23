@@ -3,6 +3,15 @@ import {Box, Paper, type SxProps, TextField, type Theme, Typography} from '@mui/
 import {useTranslation} from 'react-i18next'
 
 /** On `action.hover` section cards, fields must read as active (not disabled gray). */
+/** Section wrapper for each prediction form field */
+export const predictionFormSectionPaperSx = {
+    p: 2,
+    borderRadius: 2,
+    border: 1,
+    borderColor: 'divider',
+    bgcolor: 'action.hover',
+} as const
+
 export const predictionFormTextFieldSx: SxProps<Theme> = {
     '& .MuiOutlinedInput-root': {
         bgcolor: 'background.paper',
@@ -138,16 +147,8 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
         setHasBlurred(true)
     }
 
-    const sectionSx = {
-        p: 2,
-        borderRadius: 2,
-        border: 1,
-        borderColor: 'divider',
-        bgcolor: 'action.hover',
-    } as const
-
     return (
-        <Paper variant="outlined" component="section" elevation={0} sx={sectionSx}>
+        <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionPaperSx}>
             {description ? (
                 <Typography
                     component="h3"
