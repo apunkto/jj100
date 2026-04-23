@@ -54,6 +54,8 @@
   "cards_predicted": "Ennustus",
   "cards_actual": "Tegelik",
   "cards_points": "Punktid",
+  "cards_rain_yes": "Jah",
+  "cards_rain_no": "Ei",
   "lb_rank": "Koht",
   "lb_player": "Mängija",
   "lb_points": "Punktid"

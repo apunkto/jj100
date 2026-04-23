@@ -1,24 +1,29 @@
 import React, {useMemo} from 'react'
-import {Box, Card, CardContent, Chip, Typography,} from '@mui/material'
+import {Box, Card, CardContent, Divider, LinearProgress, Typography} from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import type {Prediction} from '@/src/api/usePredictionApi'
 import {useTranslation} from 'react-i18next'
 
-/** Primary column (e.g. predicted / day 1) — keep in sync with previous-year dialog */
-export const predictionCardChipPrimarySx = {
-    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-    color: 'primary.main',
-    fontWeight: 'bold',
-    borderColor: 'primary.light',
-} as const
+const columnHeaderSx = {
+    fontSize: '0.6875rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: 'text.secondary',
+    textAlign: 'center' as const,
+    lineHeight: 1.2,
+}
 
-/** Secondary column (e.g. actual / day 2) */
-export const predictionCardChipSecondarySx = {
-    backgroundColor: 'rgba(156, 39, 176, 0.08)',
-    color: 'secondary.main',
-    fontWeight: 'bold',
-    borderColor: 'secondary.light',
+/** Shared with previous-year dialog table headers */
+export const predictionResultsColumnHeaderSx = columnHeaderSx
+
+/** Numeric values in prediction result cards / 2025 dialog */
+export const predictionResultsNumericValueSx = {
+    fontWeight: 600,
+    color: 'text.primary',
+    fontVariantNumeric: 'tabular-nums' as const,
+    letterSpacing: '-0.02em',
 } as const
 
 // Helper functions to calculate points
@@ -41,6 +46,20 @@ function calculateBooleanScore(predicted: boolean | null, actual: boolean | null
         return {points: 0, maxPoints: 15, pending: true}
     }
     return {points: predicted === actual ? 15 : 0, maxPoints: 15, pending: false}
+}
+
+function pointsBarColor(pending: boolean, pct: number): 'text.secondary' | 'success.main' | 'warning.main' | 'error.main' {
+    if (pending) return 'text.secondary'
+    if (pct > 0.9) return 'success.main'
+    if (pct >= 0.75) return 'warning.main'
+    return 'error.main'
+}
+
+function cardAccentColor(pending: boolean, maxPoints: number, pct: number): string {
+    if (pending || maxPoints <= 0) return 'divider'
+    if (pct > 0.9) return 'success.main'
+    if (pct >= 0.75) return 'warning.main'
+    return 'error.main'
 }
 
 interface PredictionCardsProps {
@@ -120,11 +139,31 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                 score: calculateBooleanScore(predictionData.will_rain, predictionData.actual_results?.will_rain ?? null),
                 isNumeric: false,
                 formatValue: (val) => {
-                    if (val === null || val === undefined || typeof val !== 'boolean') return '-'
-                    return val ? (
-                        <CheckIcon sx={{color: 'success.main', fontSize: 24}} />
-                    ) : (
-                        <CloseIcon sx={{color: 'error.main', fontSize: 24}} />
+                    if (val === null || val === undefined) {
+                        return (
+                            <Typography variant="body2" color="text.secondary" sx={{py: 0.5}}>
+                                –
+                            </Typography>
+                        )
+                    }
+                    if (typeof val !== 'boolean') {
+                        return (
+                            <Typography variant="body2" color="text.secondary">
+                                –
+                            </Typography>
+                        )
+                    }
+                    return (
+                        <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.35, py: 0.25}}>
+                            {val ? (
+                                <CheckIcon sx={{color: 'success.main', fontSize: 22}} />
+                            ) : (
+                                <CloseIcon sx={{color: 'error.main', fontSize: 22}} />
+                            )}
+                            <Typography variant="caption" color="text.secondary" sx={{fontWeight: 600, lineHeight: 1.2}}>
+                                {val ? t('cards_rain_yes') : t('cards_rain_no')}
+                            </Typography>
+                        </Box>
                     )
                 },
             })
@@ -172,109 +211,145 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
     }
 
     return (
-        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2}}>
-            {categories.map((category, index) => (
-                <Box key={index} sx={{width: {xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33.333% - 22px)'}}}>
-                    <Card
-                        variant="outlined"
-                        sx={{
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                        }}
-                    >
-                        <CardContent sx={{flexGrow: 1, pb: '16px !important'}}>
-                            <Typography variant="subtitle2" fontWeight="bold" mb={1.5} color="text.secondary">
-                                {category.label}
-                            </Typography>
+        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+            {categories.map((category, index) => {
+                const {points, maxPoints, pending} = category.score
+                const pct = maxPoints > 0 ? points / maxPoints : 0
+                const barColor = pointsBarColor(pending, pct)
+                const accent = cardAccentColor(pending, maxPoints, pct)
 
-                            <Box
-                                sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: { xs: '1fr 1fr 1fr', sm: '1fr 1fr' },
-                                    gridTemplateRows: { xs: 'auto', sm: 'auto auto' },
-                                    gap: 1.5,
-                                    alignItems: 'flex-start',
-                                }}
-                            >
-                                <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                return (
+                    <Box key={index} sx={{width: '100%'}}>
+                        <Card
+                            variant="outlined"
+                            elevation={0}
+                            sx={{
+                                borderRadius: 2,
+                                borderLeftWidth: 4,
+                                borderLeftStyle: 'solid',
+                                borderLeftColor: accent,
+                                boxShadow: (theme) => theme.shadows[1],
+                                overflow: 'hidden',
+                            }}
+                        >
+                            <CardContent sx={{p: 2.25, pb: '18px !important', '&:last-child': {pb: '18px !important'}}}>
+                                <Typography
+                                    component="h3"
+                                    variant="subtitle1"
+                                    sx={{
+                                        fontWeight: 700,
+                                        color: 'text.primary',
+                                        letterSpacing: '0.01em',
+                                        lineHeight: 1.35,
+                                        pr: 1,
+                                    }}
+                                >
+                                    {category.label}
+                                </Typography>
+                                <Divider sx={{my: 1.5}} />
+
+                                <Box
+                                    sx={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                                        columnGap: {xs: 1, sm: 2},
+                                        rowGap: 1.25,
+                                        alignItems: 'start',
+                                    }}
+                                >
+                                    <Typography sx={{...predictionResultsColumnHeaderSx, gridColumn: 1}}>
                                         {t('cards_predicted')}
                                     </Typography>
-                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                    <Typography sx={{...predictionResultsColumnHeaderSx, gridColumn: 2}}>
+                                        {t('cards_actual')}
+                                    </Typography>
+                                    <Typography sx={{...predictionResultsColumnHeaderSx, gridColumn: 3}}>
+                                        {t('cards_points')}
+                                    </Typography>
+
+                                    <Box
+                                        sx={{
+                                            gridColumn: 1,
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            minHeight: 40,
+                                        }}
+                                    >
                                         {!category.isNumeric ? (
                                             category.formatValue(category.predicted)
                                         ) : (
-                                            <Chip
-                                                label={category.formatValue(category.predicted)}
-                                                variant="outlined"
-                                                size="small"
-                                                sx={predictionCardChipPrimarySx}
-                                            />
+                                            <Typography variant="h6" component="span" sx={predictionResultsNumericValueSx}>
+                                                {category.formatValue(category.predicted) as string}
+                                            </Typography>
                                         )}
                                     </Box>
-                                </Box>
 
-                                <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                                        {t('cards_actual')}
-                                    </Typography>
-                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                    <Box
+                                        sx={{
+                                            gridColumn: 2,
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            minHeight: 40,
+                                        }}
+                                    >
                                         {category.actual !== null && category.actual !== undefined ? (
                                             !category.isNumeric ? (
                                                 category.formatValue(category.actual)
                                             ) : (
-                                                <Chip
-                                                    label={category.formatValue(category.actual)}
-                                                    variant="outlined"
-                                                    size="small"
-                                                    sx={predictionCardChipSecondarySx}
-                                                />
+                                                <Typography variant="h6" component="span" sx={predictionResultsNumericValueSx}>
+                                                    {category.formatValue(category.actual) as string}
+                                                </Typography>
                                             )
                                         ) : (
-                                            <Typography variant="body2" color="text.secondary">
-                                                -
+                                            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                                –
                                             </Typography>
                                         )}
                                     </Box>
-                                </Box>
 
-                                {category.score.maxPoints > 0 && (() => {
-                                    const { points, maxPoints, pending } = category.score
-                                    const pct = points / maxPoints
-                                    const pointsColor = pending ? 'text.secondary' : pct > 0.9 ? 'success.main' : pct >= 0.75 ? 'warning.main' : 'error.main'
-                                    return (
-                                        <Box
-                                            sx={{
-                                                gridColumn: { xs: 3, sm: '1 / -1' },
-                                                gridRow: { sm: 2 },
-                                                pt: { sm: 1.5 },
-                                                borderTop: { xs: 'none', sm: '1px solid' },
-                                                borderColor: 'divider',
-                                                display: 'flex',
-                                                flexDirection: { xs: 'column', sm: 'row' },
-                                                alignItems: { xs: 'center', sm: 'center' },
-                                                justifyContent: { sm: 'space-between' },
-                                            }}
-                                        >
-                                            <Typography variant="caption" color="text.secondary" sx={{ mb: { xs: 0.5, sm: 0 } }}>
-                                                {t('cards_points')}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                fontWeight="bold"
-                                                color={pointsColor}
-                                            >
-                                                {pending ? `- / ${maxPoints}` : `${points} / ${maxPoints}`}
-                                            </Typography>
-                                        </Box>
-                                    )
-                                })()}
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Box>
-            ))}
+                                    <Box
+                                        sx={{
+                                            gridColumn: 3,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            minHeight: 40,
+                                            width: '100%',
+                                            px: 0.5,
+                                        }}
+                                    >
+                                        {category.score.maxPoints > 0 ? (
+                                            <>
+                                                <Typography variant="body2" fontWeight="bold" color={barColor} sx={{mb: 0.75}}>
+                                                    {pending ? `– / ${maxPoints}` : `${points} / ${maxPoints}`}
+                                                </Typography>
+                                                <LinearProgress
+                                                    variant="determinate"
+                                                    value={pending ? 0 : Math.min(100, (points / maxPoints) * 100)}
+                                                    sx={{
+                                                        width: '100%',
+                                                        maxWidth: 120,
+                                                        height: 6,
+                                                        borderRadius: 999,
+                                                        bgcolor: 'action.selected',
+                                                        '& .MuiLinearProgress-bar': {
+                                                            borderRadius: 999,
+                                                            bgcolor: barColor,
+                                                        },
+                                                    }}
+                                                />
+                                            </>
+                                        ) : null}
+                                    </Box>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Box>
+                )
+            })}
         </Box>
     )
 }

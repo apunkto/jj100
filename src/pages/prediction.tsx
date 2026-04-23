@@ -5,11 +5,11 @@ import {
     Button,
     Card,
     CardContent,
-    Chip,
     CircularProgress,
     Dialog,
     DialogContent,
     DialogTitle,
+    Divider,
     FormControl,
     FormControlLabel,
     FormHelperText,
@@ -28,9 +28,9 @@ import EditIcon from '@mui/icons-material/Edit'
 import CloseIcon from '@mui/icons-material/Close'
 import {predictionFormTextFieldSx, ScoreInput} from '../components/ScoreInput'
 import {
-    predictionCardChipPrimarySx,
-    predictionCardChipSecondarySx,
     PredictionCards,
+    predictionResultsColumnHeaderSx,
+    predictionResultsNumericValueSx,
 } from '../components/PredictionCards'
 import {PredictionLeaderboard} from '../components/PredictionLeaderboard'
 import Layout from '@/src/components/Layout'
@@ -747,18 +747,18 @@ export default function PredictionPage() {
                             </Box>
                     </Box>
                 ) : (
-                        <Box sx={{ width: '100%' }}>
-                            <Box display="flex" justifyContent="flex-end" mb={2}>
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    size="small"
-                                    onClick={handleEdit}
-                                    startIcon={<EditIcon />}
-                                >
-                                    {t('editPrediction')}
-                                </Button>
-                            </Box>
+                        <Box sx={{width: '100%', maxWidth: 520, mx: 'auto'}}>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                size="medium"
+                                fullWidth
+                                onClick={handleEdit}
+                                startIcon={<EditIcon />}
+                                sx={{mb: 2.5}}
+                            >
+                                {t('editPrediction')}
+                            </Button>
                             <PredictionCards predictionData={prediction} />
                         </Box>
                     )}
@@ -791,44 +791,74 @@ export default function PredictionPage() {
                                     {labelKey: 'pyWater' as const, day1: '254', day2: '253'},
                                 ] as const
                             ).map(({labelKey, day1, day2}) => (
-                                <Card key={labelKey} variant="outlined" sx={{width: '100%'}}>
-                                    <CardContent sx={{flexGrow: 1, pb: '16px !important'}}>
-                                        <Typography variant="subtitle2" fontWeight="bold" mb={1.5} color="text.secondary">
+                                <Card
+                                    key={labelKey}
+                                    variant="outlined"
+                                    elevation={0}
+                                    sx={{
+                                        width: '100%',
+                                        borderRadius: 2,
+                                        borderLeftWidth: 4,
+                                        borderLeftStyle: 'solid',
+                                        borderLeftColor: 'primary.main',
+                                        boxShadow: (theme) => theme.shadows[1],
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    <CardContent sx={{p: 2.25, pb: '18px !important', '&:last-child': {pb: '18px !important'}}}>
+                                        <Typography
+                                            component="h3"
+                                            variant="subtitle1"
+                                            sx={{
+                                                fontWeight: 700,
+                                                color: 'text.primary',
+                                                letterSpacing: '0.01em',
+                                                lineHeight: 1.35,
+                                            }}
+                                        >
                                             {t(labelKey)}
                                         </Typography>
+                                        <Divider sx={{my: 1.5}} />
                                         <Box
                                             sx={{
                                                 display: 'grid',
-                                                gridTemplateColumns: '1fr 1fr',
-                                                gap: 1.5,
-                                                alignItems: 'flex-start',
+                                                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                                                columnGap: {xs: 1, sm: 2},
+                                                rowGap: 1.25,
+                                                alignItems: 'start',
                                             }}
                                         >
-                                            <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                                                    {t('day1')}
+                                            <Typography sx={{...predictionResultsColumnHeaderSx, gridColumn: 1}}>
+                                                {t('day1')}
+                                            </Typography>
+                                            <Typography sx={{...predictionResultsColumnHeaderSx, gridColumn: 2}}>
+                                                {t('day2')}
+                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    gridColumn: 1,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    minHeight: 40,
+                                                }}
+                                            >
+                                                <Typography variant="h6" component="span" sx={predictionResultsNumericValueSx}>
+                                                    {day1}
                                                 </Typography>
-                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                                    <Chip
-                                                        label={day1}
-                                                        variant="outlined"
-                                                        size="small"
-                                                        sx={predictionCardChipPrimarySx}
-                                                    />
-                                                </Box>
                                             </Box>
-                                            <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                                                    {t('day2')}
+                                            <Box
+                                                sx={{
+                                                    gridColumn: 2,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    minHeight: 40,
+                                                }}
+                                            >
+                                                <Typography variant="h6" component="span" sx={predictionResultsNumericValueSx}>
+                                                    {day2}
                                                 </Typography>
-                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                                    <Chip
-                                                        label={day2}
-                                                        variant="outlined"
-                                                        size="small"
-                                                        sx={predictionCardChipSecondarySx}
-                                                    />
-                                                </Box>
                                             </Box>
                                         </Box>
                                     </CardContent>

@@ -54,6 +54,8 @@
   "cards_predicted": "Prediction",
   "cards_actual": "Actual",
   "cards_points": "Points",
+  "cards_rain_yes": "Yes",
+  "cards_rain_no": "No",
   "lb_rank": "Rank",
   "lb_player": "Player",
   "lb_points": "Points"
