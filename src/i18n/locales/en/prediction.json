@@ -1,5 +1,6 @@
 {
   "title": "Prediction game",
+  "pageIntro": "Predict your competition day results",
   "loading": "Loading...",
   "noCompetition": "No active competition is selected.",
   "notParticipant": "You are not playing in this competition",

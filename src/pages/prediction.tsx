@@ -414,6 +414,9 @@ export default function PredictionPage() {
                     </>
                 ) : showForm ? (
                         <Box sx={{ mb: 3 }}>
+                            <Typography variant="body1" color="text.secondary" textAlign="center" sx={{mb: 2}}>
+                                {t('pageIntro')}
+                            </Typography>
                             <Box display="flex" alignItems="center" justifyContent="flex-end" mb={3}>
                                 <Box
                                     component="button"

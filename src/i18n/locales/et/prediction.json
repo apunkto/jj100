@@ -1,5 +1,6 @@
 {
   "title": "Ennustusmäng",
+  "pageIntro": "Ennusta oma võistluspäeva tulemusi",
   "loading": "Laadimine...",
   "noCompetition": "Aktiivset võistlust ei ole valitud.",
   "notParticipant": "Sa ei osale sellel võistlusel",
