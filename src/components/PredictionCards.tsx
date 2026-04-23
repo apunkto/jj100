@@ -5,6 +5,22 @@ import CloseIcon from '@mui/icons-material/Close'
 import type {Prediction} from '@/src/api/usePredictionApi'
 import {useTranslation} from 'react-i18next'
 
+/** Primary column (e.g. predicted / day 1) — keep in sync with previous-year dialog */
+export const predictionCardChipPrimarySx = {
+    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+    color: 'primary.main',
+    fontWeight: 'bold',
+    borderColor: 'primary.light',
+} as const
+
+/** Secondary column (e.g. actual / day 2) */
+export const predictionCardChipSecondarySx = {
+    backgroundColor: 'rgba(156, 39, 176, 0.08)',
+    color: 'secondary.main',
+    fontWeight: 'bold',
+    borderColor: 'secondary.light',
+} as const
+
 // Helper functions to calculate points
 function calculateNumericScore(predicted: number | null, actual: number | null, baseScore: number = 100): {points: number; maxPoints: number; pending: boolean} {
     if (predicted === null || predicted === undefined) {
@@ -193,12 +209,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                                 label={category.formatValue(category.predicted)}
                                                 variant="outlined"
                                                 size="small"
-                                                sx={{
-                                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                                    color: 'primary.main',
-                                                    fontWeight: 'bold',
-                                                    borderColor: 'primary.light',
-                                                }}
+                                                sx={predictionCardChipPrimarySx}
                                             />
                                         )}
                                     </Box>
@@ -217,12 +228,7 @@ export function PredictionCards({predictionData}: PredictionCardsProps) {
                                                     label={category.formatValue(category.actual)}
                                                     variant="outlined"
                                                     size="small"
-                                                    sx={{
-                                                        backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                                                        color: 'secondary.main',
-                                                        fontWeight: 'bold',
-                                                        borderColor: 'secondary.light',
-                                                    }}
+                                                    sx={predictionCardChipSecondarySx}
                                                 />
                                             )
                                         ) : (

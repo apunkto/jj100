@@ -10,10 +10,13 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
+    FormControl,
     FormControlLabel,
+    FormHelperText,
     IconButton,
     Paper,
-    Switch,
+    Radio,
+    RadioGroup,
     Tab,
     Tabs,
     TextField,
@@ -23,8 +26,12 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LockIcon from '@mui/icons-material/Lock'
 import EditIcon from '@mui/icons-material/Edit'
 import CloseIcon from '@mui/icons-material/Close'
-import {ScoreInput} from '../components/ScoreInput'
-import {PredictionCards} from '../components/PredictionCards'
+import {predictionFormTextFieldSx, ScoreInput} from '../components/ScoreInput'
+import {
+    predictionCardChipPrimarySx,
+    predictionCardChipSecondarySx,
+    PredictionCards,
+} from '../components/PredictionCards'
 import {PredictionLeaderboard} from '../components/PredictionLeaderboard'
 import Layout from '@/src/components/Layout'
 import {useAuth} from '@/src/contexts/AuthContext'
@@ -115,6 +122,7 @@ export default function PredictionPage() {
     const [fieldErrors, setFieldErrors] = useState<{
         best_overall_score?: string
         best_female_score?: string
+        will_rain?: string
         player_own_score?: string
         hole_in_ones_count?: string
         water_discs_count?: string
@@ -122,12 +130,14 @@ export default function PredictionPage() {
     const [touchedFields, setTouchedFields] = useState<{
         best_overall_score: boolean
         best_female_score: boolean
+        will_rain: boolean
         player_own_score: boolean
         hole_in_ones_count: boolean
         water_discs_count: boolean
     }>({
         best_overall_score: false,
         best_female_score: false,
+        will_rain: false,
         player_own_score: false,
         hole_in_ones_count: false,
         water_discs_count: false,
@@ -205,9 +215,14 @@ export default function PredictionPage() {
         const touched: typeof touchedFields = {
             best_overall_score: true,
             best_female_score: true,
+            will_rain: true,
             player_own_score: true,
             hole_in_ones_count: true,
             water_discs_count: true,
+        }
+
+        if (formData.will_rain === null || formData.will_rain === undefined) {
+            errors.will_rain = t('validation_required')
         }
 
         // Validate required score fields
@@ -262,10 +277,9 @@ export default function PredictionPage() {
 
         try {
             setSubmitting(true)
-            // Ensure will_rain is boolean (convert null to false)
             const submissionData = {
                 ...formData,
-                will_rain: formData.will_rain ?? false,
+                will_rain: formData.will_rain as boolean,
             }
             if (prediction) {
                 await updatePrediction(user.activeCompetitionId, submissionData)
@@ -327,6 +341,7 @@ export default function PredictionPage() {
         setTouchedFields({
             best_overall_score: false,
             best_female_score: false,
+            will_rain: false,
             player_own_score: false,
             hole_in_ones_count: false,
             water_discs_count: false,
@@ -490,6 +505,7 @@ export default function PredictionPage() {
                             <Box display="flex" flexDirection="column" gap={2}>
                                 <ScoreInput
                                     questionNumber={1}
+                                    showParHint
                                     label={t('bestOverallLabel')}
                                     description={t('bestOverallDescription')}
                                     value={formData.best_overall_score}
@@ -514,6 +530,7 @@ export default function PredictionPage() {
 
                                 <ScoreInput
                                     questionNumber={2}
+                                    showParHint
                                     label={t('bestFemaleLabel')}
                                     description={t('bestFemaleDescription')}
                                     value={formData.best_female_score}
@@ -536,32 +553,9 @@ export default function PredictionPage() {
                                     helperText={fieldErrors.best_female_score}
                                 />
 
-                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
-                                    <NumberedQuestionHeading n={3}>{t('rainIntro')}</NumberedQuestionHeading>
-                                    <FormControlLabel
-                                        sx={{m: 0, mt: 1.25, display: 'flex', alignItems: 'center'}}
-                                        control={
-                                            <Switch
-                                                checked={formData.will_rain ?? false}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        will_rain: e.target.checked,
-                                                    })
-                                                }
-                                                size="small"
-                                            />
-                                        }
-                                        label={
-                                            <Typography variant="body2" fontWeight={500} component="span">
-                                                {t('rainLabel')}
-                                            </Typography>
-                                        }
-                                    />
-                                </Paper>
-
                                 <ScoreInput
-                                    questionNumber={4}
+                                    questionNumber={3}
+                                    showParHint
                                     label={t('ownScoreLabel')}
                                     description={t('ownScoreDescription')}
                                     value={formData.player_own_score}
@@ -583,6 +577,73 @@ export default function PredictionPage() {
                                     error={!!fieldErrors.player_own_score}
                                     helperText={fieldErrors.player_own_score}
                                 />
+
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                    <NumberedQuestionHeading n={4}>{t('rainIntro')}</NumberedQuestionHeading>
+                                    <FormControl
+                                        component="fieldset"
+                                        variant="standard"
+                                        error={!!fieldErrors.will_rain}
+                                        sx={{mt: 1.25, width: '100%', m: 0}}
+                                    >
+                                        <RadioGroup
+                                            aria-label={t('rainIntro')}
+                                            name="will_rain"
+                                            value={
+                                                formData.will_rain === null || formData.will_rain === undefined
+                                                    ? ''
+                                                    : formData.will_rain
+                                                      ? 'wet'
+                                                      : 'dry'
+                                            }
+                                            onChange={(e) => {
+                                                const v = e.target.value
+                                                setFormData({
+                                                    ...formData,
+                                                    will_rain: v === 'wet' ? true : v === 'dry' ? false : null,
+                                                })
+                                                if (fieldErrors.will_rain) {
+                                                    setFieldErrors({...fieldErrors, will_rain: undefined})
+                                                }
+                                            }}
+                                        >
+                                            <FormControlLabel
+                                                value="wet"
+                                                control={<Radio size="small" sx={{p: 0.5, alignSelf: 'center'}} />}
+                                                label={
+                                                    <Typography variant="body2" sx={{lineHeight: 1.35}}>
+                                                        {t('rainChoiceWet')}
+                                                    </Typography>
+                                                }
+                                                sx={{
+                                                    ml: 0,
+                                                    mr: 0,
+                                                    mb: 0.75,
+                                                    alignItems: 'center',
+                                                    gap: 0.75,
+                                                }}
+                                            />
+                                            <FormControlLabel
+                                                value="dry"
+                                                control={<Radio size="small" sx={{p: 0.5, alignSelf: 'center'}} />}
+                                                label={
+                                                    <Typography variant="body2" sx={{lineHeight: 1.35}}>
+                                                        {t('rainChoiceDry')}
+                                                    </Typography>
+                                                }
+                                                sx={{
+                                                    ml: 0,
+                                                    mr: 0,
+                                                    alignItems: 'center',
+                                                    gap: 0.75,
+                                                }}
+                                            />
+                                        </RadioGroup>
+                                        {fieldErrors.will_rain ? (
+                                            <FormHelperText sx={{mx: 0}}>{fieldErrors.will_rain}</FormHelperText>
+                                        ) : null}
+                                    </FormControl>
+                                </Paper>
 
                                 <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
                                     <NumberedQuestionHeading n={5} mb={1.25}>
@@ -618,13 +679,22 @@ export default function PredictionPage() {
                                         helperText={fieldErrors.hole_in_ones_count || undefined}
                                         placeholder="0"
                                         slotProps={{ htmlInput: { min: 0 } }}
+                                        sx={predictionFormTextFieldSx}
                                     />
                                 </Paper>
 
                                 <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
-                                    <NumberedQuestionHeading n={6} mb={1.25}>
+                                    <NumberedQuestionHeading n={6} mb={0.5}>
                                         {t('waterIntro')}
                                     </NumberedQuestionHeading>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        component="p"
+                                        sx={{m: 0, mb: 1, lineHeight: 1.45, maxWidth: '100%'}}
+                                    >
+                                        {t('waterDetailHint')}
+                                    </Typography>
                                     <TextField
                                         label={t('waterLabel')}
                                         type="number"
@@ -655,6 +725,7 @@ export default function PredictionPage() {
                                         helperText={fieldErrors.water_discs_count || undefined}
                                         placeholder="0"
                                         slotProps={{ htmlInput: { min: 0 } }}
+                                        sx={predictionFormTextFieldSx}
                                     />
                                 </Paper>
 
@@ -678,9 +749,15 @@ export default function PredictionPage() {
                 ) : (
                         <Box sx={{ width: '100%' }}>
                             <Box display="flex" justifyContent="flex-end" mb={2}>
-                                <IconButton onClick={handleEdit} color="primary" aria-label={t('editAria')} size="small">
-                                    <EditIcon />
-                                </IconButton>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    size="small"
+                                    onClick={handleEdit}
+                                    startIcon={<EditIcon />}
+                                >
+                                    {t('editPrediction')}
+                                </Button>
                             </Box>
                             <PredictionCards predictionData={prediction} />
                         </Box>
@@ -704,7 +781,7 @@ export default function PredictionPage() {
                         </IconButton>
                     </DialogTitle>
                     <DialogContent>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, pt: 1}}>
                             {(
                                 [
                                     {labelKey: 'pyParticipants' as const, day1: '394', day2: '396'},
@@ -714,76 +791,49 @@ export default function PredictionPage() {
                                     {labelKey: 'pyWater' as const, day1: '254', day2: '253'},
                                 ] as const
                             ).map(({labelKey, day1, day2}) => (
-                                <Card key={labelKey} variant="outlined" sx={{ width: '100%' }}>
-                                    <CardContent sx={{ pb: '16px !important' }}>
+                                <Card key={labelKey} variant="outlined" sx={{width: '100%'}}>
+                                    <CardContent sx={{flexGrow: 1, pb: '16px !important'}}>
                                         <Typography variant="subtitle2" fontWeight="bold" mb={1.5} color="text.secondary">
                                             {t(labelKey)}
                                         </Typography>
-                                        <Box display="flex" gap={1.5} alignItems="center">
-                                            <Chip
-                                                label={day1}
-                                                variant="outlined"
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                                    color: 'primary.main',
-                                                    fontWeight: 'bold',
-                                                    borderColor: 'primary.light',
-                                                }}
-                                            />
-                                            <Chip
-                                                label={day2}
-                                                variant="outlined"
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                                                    color: 'secondary.main',
-                                                    fontWeight: 'bold',
-                                                    borderColor: 'secondary.light',
-                                                }}
-                                            />
+                                        <Box
+                                            sx={{
+                                                display: 'grid',
+                                                gridTemplateColumns: '1fr 1fr',
+                                                gap: 1.5,
+                                                alignItems: 'flex-start',
+                                            }}
+                                        >
+                                            <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                                                    {t('day1')}
+                                                </Typography>
+                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                    <Chip
+                                                        label={day1}
+                                                        variant="outlined"
+                                                        size="small"
+                                                        sx={predictionCardChipPrimarySx}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                            <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                                                    {t('day2')}
+                                                </Typography>
+                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                    <Chip
+                                                        label={day2}
+                                                        variant="outlined"
+                                                        size="small"
+                                                        sx={predictionCardChipSecondarySx}
+                                                    />
+                                                </Box>
+                                            </Box>
                                         </Box>
                                     </CardContent>
                                 </Card>
                             ))}
-                        </Box>
-                        <Box
-                            sx={{
-                                mt: 2,
-                                pt: 2,
-                                borderTop: '1px solid',
-                                borderColor: 'divider',
-                                display: 'flex',
-                                gap: 2,
-                                flexWrap: 'wrap',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <Typography variant="caption" color="text.secondary">
-                                {t('legend')}
-                            </Typography>
-                            <Chip
-                                label={t('day1')}
-                                variant="outlined"
-                                size="small"
-                                sx={{
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                    color: 'primary.main',
-                                    fontWeight: 'bold',
-                                    borderColor: 'primary.light',
-                                }}
-                            />
-                            <Chip
-                                label={t('day2')}
-                                variant="outlined"
-                                size="small"
-                                sx={{
-                                    backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                                    color: 'secondary.main',
-                                    fontWeight: 'bold',
-                                    borderColor: 'secondary.light',
-                                }}
-                            />
                         </Box>
                     </DialogContent>
                 </Dialog>
