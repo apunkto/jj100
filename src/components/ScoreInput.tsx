@@ -1,8 +1,11 @@
 import React, {useEffect, useState} from 'react'
-import {Box, TextField, Typography} from '@mui/material'
+import {Box, Paper, TextField, Typography} from '@mui/material'
+import {useTranslation} from 'react-i18next'
 
 interface ScoreInputProps {
     label: string
+    /** 1-based step number shown before the question text */
+    questionNumber?: number
     description?: string
     value: number | null | undefined
     onChange: (value: number | null) => void
@@ -23,6 +26,7 @@ interface ScoreInputProps {
  */
 export const ScoreInput: React.FC<ScoreInputProps> = ({
     label,
+    questionNumber,
     description,
     value,
     onChange,
@@ -32,6 +36,7 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
     helperText: externalHelperText,
     touched = false,
 }) => {
+    const {t} = useTranslation('prediction')
     // Internal state to allow intermediate input values like "-"
     const [inputValue, setInputValue] = useState<string>('')
     const [hasBlurred, setHasBlurred] = useState(false)
@@ -53,28 +58,27 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
 
     // Validation logic
     const isEmpty = inputValue.trim() === '' || inputValue.trim() === '-'
-    const hasInvalidInput = inputValue.trim() !== '' && 
-                           inputValue.trim() !== '-' && 
-                           !isValidNumericInput(inputValue.trim())
-    
+    const hasInvalidInput =
+        inputValue.trim() !== '' && inputValue.trim() !== '-' && !isValidNumericInput(inputValue.trim())
+
     // Show error if touched (forced) or blurred, and field is invalid
     const shouldShowError = touched || hasBlurred
     const showError = (shouldShowError && ((required && isEmpty) || hasInvalidInput)) || externalError
-    const errorMessage = hasInvalidInput 
-        ? 'Palun sisesta korrektne numbriline väärtus'
+    const errorMessage = hasInvalidInput
+        ? t('validation_invalidNumber')
         : required && isEmpty && shouldShowError
-        ? 'See väli on kohustuslik'
-        : externalHelperText || ''
+          ? t('validation_required')
+          : externalHelperText || ''
 
     function isValidNumericInput(input: string): boolean {
         if (input === '' || input === '-') return true // Allow intermediate states
-        
+
         // Remove leading + if present
         let parseValue = input
         if (parseValue.startsWith('+')) {
             parseValue = parseValue.substring(1)
         }
-        
+
         // Check if it's a valid number
         const numValue = Number(parseValue)
         return Number.isFinite(numValue) && !isNaN(numValue)
@@ -118,13 +122,36 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
         setHasBlurred(true)
     }
 
+    const sectionSx = {
+        p: 2,
+        borderRadius: 2,
+        border: 1,
+        borderColor: 'divider',
+        bgcolor: 'action.hover',
+    } as const
+
     return (
-        <Box>
-            {description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Paper variant="outlined" component="section" elevation={0} sx={sectionSx}>
+            {description ? (
+                <Typography
+                    component="h3"
+                    variant="subtitle1"
+                    sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        letterSpacing: '0.01em',
+                        lineHeight: 1.35,
+                        mb: 1.25,
+                    }}
+                >
+                    {questionNumber != null ? (
+                        <Box component="span" sx={{color: 'primary.main', fontWeight: 700, mr: 0.75}}>
+                            {questionNumber}.
+                        </Box>
+                    ) : null}
                     {description}
                 </Typography>
-            )}
+            ) : null}
             <TextField
                 label={label}
                 type="text"
@@ -134,8 +161,11 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({
                 fullWidth={fullWidth}
                 required={required}
                 error={showError}
-                helperText={showError ? errorMessage : ''}
+                helperText={showError ? errorMessage : undefined}
+                size="small"
+                placeholder={t('scoreInputPlaceholder')}
+                variant="outlined"
             />
-        </Box>
+        </Paper>
     )
 }

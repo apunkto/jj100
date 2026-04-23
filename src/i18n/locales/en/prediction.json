@@ -38,6 +38,7 @@
   "toastUpdated": "Prediction updated!",
   "toastSaved": "Prediction saved!",
   "toastSaveFailed": "Failed to save prediction",
+  "scoreInputPlaceholder": "e.g. −3, +2, or 0",
   "validation_required": "This field is required",
   "validation_invalidNumber": "Please enter a valid number",
   "validation_positive": "The value must be a positive number",

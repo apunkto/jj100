@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {type ReactNode, useEffect, useState} from 'react'
 import {AppError} from '@/src/utils/AppError'
 import {
     Box,
@@ -12,6 +12,7 @@ import {
     DialogTitle,
     FormControlLabel,
     IconButton,
+    Paper,
     Switch,
     Tab,
     Tabs,
@@ -31,6 +32,49 @@ import {useToast} from '@/src/contexts/ToastContext'
 import useConfigApi from '@/src/api/useConfigApi'
 import usePredictionApi, {Prediction, PredictionData, PredictionLeaderboardResponse,} from '@/src/api/usePredictionApi'
 import {useTranslation} from 'react-i18next'
+
+const predictionFormSectionSx = {
+    p: 2,
+    borderRadius: 2,
+    border: 1,
+    borderColor: 'divider',
+    bgcolor: 'action.hover',
+} as const
+
+const predictionQuestionHeadingSx = {
+    fontWeight: 600,
+    color: 'text.primary',
+    letterSpacing: '0.01em',
+    lineHeight: 1.35,
+    mb: 0.25,
+} as const
+
+function NumberedQuestionHeading({
+    n,
+    children,
+    mb,
+}: {
+    n: number
+    children: ReactNode
+    /** Override default bottom margin from `predictionQuestionHeadingSx` */
+    mb?: number
+}) {
+    return (
+        <Typography
+            component="h3"
+            variant="subtitle1"
+            sx={{
+                ...predictionQuestionHeadingSx,
+                ...(mb != null ? {mb} : {}),
+            }}
+        >
+            <Box component="span" sx={{color: 'primary.main', fontWeight: 700, mr: 0.75}}>
+                {n}.
+            </Box>
+            {children}
+        </Typography>
+    )
+}
 
 export default function PredictionPage() {
     const {user, loading: authLoading} = useAuth()
@@ -443,8 +487,9 @@ export default function PredictionPage() {
                                 </Box>
                             </Box>
 
-                            <Box display="flex" flexDirection="column" gap={3}>
+                            <Box display="flex" flexDirection="column" gap={2}>
                                 <ScoreInput
+                                    questionNumber={1}
                                     label={t('bestOverallLabel')}
                                     description={t('bestOverallDescription')}
                                     value={formData.best_overall_score}
@@ -468,6 +513,7 @@ export default function PredictionPage() {
                                 />
 
                                 <ScoreInput
+                                    questionNumber={2}
                                     label={t('bestFemaleLabel')}
                                     description={t('bestFemaleDescription')}
                                     value={formData.best_female_score}
@@ -490,11 +536,10 @@ export default function PredictionPage() {
                                     helperText={fieldErrors.best_female_score}
                                 />
 
-                                <Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-                                        {t('rainIntro')}
-                                    </Typography>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                    <NumberedQuestionHeading n={3}>{t('rainIntro')}</NumberedQuestionHeading>
                                     <FormControlLabel
+                                        sx={{m: 0, mt: 1.25, display: 'flex', alignItems: 'center'}}
                                         control={
                                             <Switch
                                                 checked={formData.will_rain ?? false}
@@ -504,13 +549,19 @@ export default function PredictionPage() {
                                                         will_rain: e.target.checked,
                                                     })
                                                 }
+                                                size="small"
                                             />
                                         }
-                                        label={t('rainLabel')}
+                                        label={
+                                            <Typography variant="body2" fontWeight={500} component="span">
+                                                {t('rainLabel')}
+                                            </Typography>
+                                        }
                                     />
-                                </Box>
+                                </Paper>
 
                                 <ScoreInput
+                                    questionNumber={4}
                                     label={t('ownScoreLabel')}
                                     description={t('ownScoreDescription')}
                                     value={formData.player_own_score}
@@ -533,10 +584,10 @@ export default function PredictionPage() {
                                     helperText={fieldErrors.player_own_score}
                                 />
 
-                                <Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                    <NumberedQuestionHeading n={5} mb={1.25}>
                                         {t('hioIntro')}
-                                    </Typography>
+                                    </NumberedQuestionHeading>
                                     <TextField
                                         label={t('hioLabel')}
                                         type="number"
@@ -547,7 +598,6 @@ export default function PredictionPage() {
                                                 ...formData,
                                                 hole_in_ones_count: value ? Number(value) : null,
                                             })
-                                            // Clear error when user starts typing
                                             if (fieldErrors.hole_in_ones_count) {
                                                 setFieldErrors({
                                                     ...fieldErrors,
@@ -563,16 +613,18 @@ export default function PredictionPage() {
                                         }}
                                         fullWidth
                                         required
+                                        size="small"
                                         error={!!fieldErrors.hole_in_ones_count}
-                                        helperText={fieldErrors.hole_in_ones_count || ''}
+                                        helperText={fieldErrors.hole_in_ones_count || undefined}
+                                        placeholder="0"
                                         slotProps={{ htmlInput: { min: 0 } }}
                                     />
-                                </Box>
+                                </Paper>
 
-                                <Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+                                <Paper variant="outlined" component="section" elevation={0} sx={predictionFormSectionSx}>
+                                    <NumberedQuestionHeading n={6} mb={1.25}>
                                         {t('waterIntro')}
-                                    </Typography>
+                                    </NumberedQuestionHeading>
                                     <TextField
                                         label={t('waterLabel')}
                                         type="number"
@@ -583,7 +635,6 @@ export default function PredictionPage() {
                                                 ...formData,
                                                 water_discs_count: value ? Number(value) : null,
                                             })
-                                            // Clear error when user starts typing
                                             if (fieldErrors.water_discs_count) {
                                                 setFieldErrors({
                                                     ...fieldErrors,
@@ -599,11 +650,13 @@ export default function PredictionPage() {
                                         }}
                                         fullWidth
                                         required
+                                        size="small"
                                         error={!!fieldErrors.water_discs_count}
-                                        helperText={fieldErrors.water_discs_count || ''}
+                                        helperText={fieldErrors.water_discs_count || undefined}
+                                        placeholder="0"
                                         slotProps={{ htmlInput: { min: 0 } }}
                                     />
-                                </Box>
+                                </Paper>
 
                                 <Box display="flex" gap={2} justifyContent="flex-end" mt={2}>
                                     {prediction && (
