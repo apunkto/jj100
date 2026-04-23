@@ -1,6 +1,6 @@
 {
   "title": "Prediction game",
-  "pageIntro": "Predict your competition day results",
+  "pageIntro": "Predict your competition day results. If you play on both days, make a separate prediction for each day!",
   "loading": "Loading...",
   "noCompetition": "No active competition is selected.",
   "notParticipant": "You are not playing in this competition",
