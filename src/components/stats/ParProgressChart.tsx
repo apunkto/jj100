@@ -21,6 +21,31 @@ function buildIntegerXTicks(maxHole: number): number[] {
     return [...new Set(ticks)].sort((a, b) => a - b)
 }
 
+/** Evenly spaced integer ticks (fixed step 1 / 2 / 5 / …) so labels are predictable. */
+function buildUniformYTicks(yMin: number, yMax: number): number[] {
+    if (!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin > yMax) return []
+    const span = yMax - yMin
+    if (span === 0) return [yMin]
+    const maxTicks = 8
+    const stepCandidates = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+    let step = 1
+    for (const s of stepCandidates) {
+        if (span / s <= maxTicks) {
+            step = s
+            break
+        }
+        step = s
+    }
+    if (span / step > maxTicks) {
+        step = Math.pow(10, Math.ceil(Math.log10(span / maxTicks)))
+    }
+    const start = Math.floor(yMin / step) * step
+    const end = Math.ceil(yMax / step) * step
+    const ticks: number[] = []
+    for (let v = start; v <= end; v += step) ticks.push(v)
+    return ticks
+}
+
 export function StatsParProgressChart({ data, xAxisLabel }: StatsParProgressChartProps) {
     const theme = useTheme()
     const axis = theme.palette.text.secondary
@@ -37,6 +62,9 @@ export function StatsParProgressChart({ data, xAxisLabel }: StatsParProgressChar
 
     const maxHole = data.length > 0 ? data[data.length - 1]!.hole : 1
     const xTicks = React.useMemo(() => buildIntegerXTicks(maxHole), [maxHole])
+    const yTicks = React.useMemo(() => buildUniformYTicks(yDomainMin, yDomainMax), [yDomainMin, yDomainMax])
+    const yDomainForAxis: [number, number] =
+        yTicks.length >= 2 ? [yTicks[0]!, yTicks[yTicks.length - 1]!] : [yDomainMin, yDomainMax]
 
     if (data.length === 0) return null
 
@@ -56,7 +84,8 @@ export function StatsParProgressChart({ data, xAxisLabel }: StatsParProgressChar
                         label={{ value: xAxisLabel, position: 'insideBottom', offset: -2, fill: axis, fontSize: 11 }}
                     />
                     <YAxis
-                        domain={[yDomainMin, yDomainMax]}
+                        domain={yDomainForAxis}
+                        ticks={yTicks}
                         reversed
                         allowDecimals={false}
                         stroke={axis}
