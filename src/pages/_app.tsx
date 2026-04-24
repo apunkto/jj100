@@ -20,7 +20,7 @@ export default function App({Component, pageProps}: AppProps) {
                 <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png"/>
                 <link rel="manifest" href="/site.webmanifest"/>
                 <link rel="shortcut icon" href="/favicon.ico"/>
-                <meta name="theme-color" content="#000000"/>
+                <meta name="theme-color" content="#313690"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="mobile-web-app-capable" content="yes"/>
             </Head>
