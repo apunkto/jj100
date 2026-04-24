@@ -58,7 +58,8 @@
     "scoreTriple": "Triple+",
     "progress": "Progress",
     "progressToParChart": "Skoori muutus ajas",
-    "chartHoleAxis": "Mängitud radu"
+    "chartHoleAxis": "Mängitud radu",
+    "showPoolmates": "Näita puulikaaslasi"
   },
   "results": {
     "title": "Tulemused",

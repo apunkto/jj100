@@ -58,7 +58,8 @@
     "scoreTriple": "Triple+",
     "progress": "Progress",
     "progressToParChart": "Score progress over time",
-    "chartHoleAxis": "Holes played"
+    "chartHoleAxis": "Holes played",
+    "showPoolmates": "Show poolmates"
   },
   "results": {
     "title": "Results",

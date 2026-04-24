@@ -56,6 +56,17 @@ type PreLoginPayload = {
 
 type StatsPayload = MetrixPlayerStats;
 
+export type PoolParProgressPlayerPayload = {
+    userId: string;
+    name: string;
+    isSelf: boolean;
+    points: { hole: number; toPar: number }[];
+};
+
+export type PoolParProgressPayload = {
+    players: PoolParProgressPlayerPayload[];
+};
+
 export type DashboardPlayerResult = {
     UserID: number;
     Name: string;
@@ -95,6 +106,16 @@ const getMetrixPlayerStats = async (): Promise<MetrixPlayerStats> => {
 
     const result = (await res.json()) as ApiResponse<StatsPayload>;
     if (!result.success) throw new Error('Backend returned error fetching metrix player stats');
+
+    return result.data;
+};
+
+const getMetrixPoolParProgress = async (): Promise<PoolParProgressPayload> => {
+    const res = await authedFetch(`${API_BASE}/metrix/player/pool-par-progress`);
+    if (!res.ok) throw new Error('Failed to fetch pool par progress');
+
+    const result = (await res.json()) as ApiResponse<PoolParProgressPayload>;
+    if (!result.success) throw new Error('Backend returned error fetching pool par progress');
 
     return result.data;
 };
@@ -183,6 +204,7 @@ const getUserCurrentHoleNumber = async (): Promise<number | null> => {
 export default function useMetrixApi() {
     return {
         getMetrixPlayerStats,
+        getMetrixPoolParProgress,
         getTopPlayersByDivision,
         getMyDivisionResult,
         getCompetitionStats,

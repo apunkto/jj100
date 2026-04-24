@@ -1,8 +1,9 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import dynamic from 'next/dynamic'
-import {Box, CircularProgress, Typography} from '@mui/material'
+import {Box, CircularProgress, FormControlLabel, Switch, Typography, useTheme} from '@mui/material'
 import Layout from '@/src/components/Layout'
-import useMetrixApi, {MetrixPlayerStats} from '@/src/api/useMetrixApi'
+import useMetrixApi, {MetrixPlayerStats, PoolParProgressPayload} from '@/src/api/useMetrixApi'
+import type {ParProgressSeries} from '@/src/components/stats/ParProgressChart'
 import {useTranslation} from 'react-i18next'
 
 const StatsParProgressChartLazy = dynamic(
@@ -67,11 +68,18 @@ function diffToBreakdownColor(diff: number): string {
     return SCORE_CATEGORY_COLORS.tripleOrWorse
 }
 
+/** After theme primary: red → green → yellow → brown (max 5 in a pool). */
+const POOL_CHART_COLORS = ['#D32F2F', '#2E7D32', '#F9A825', '#5D4037'] as const
+
 export default function PlayerStatsPage() {
-    const { getMetrixPlayerStats } = useMetrixApi()
+    const theme = useTheme()
+    const { getMetrixPlayerStats, getMetrixPoolParProgress } = useMetrixApi()
     const { t } = useTranslation('pages')
     const [stats, setStats] = useState<MetrixPlayerStats | null>(null)
     const [loadingStats, setLoadingStats] = useState(false)
+    const [showPoolmates, setShowPoolmates] = useState(false)
+    const [poolProgress, setPoolProgress] = useState<PoolParProgressPayload | null>(null)
+    const [loadingPool, setLoadingPool] = useState(false)
 
     const breakdownCategories = useMemo(
         () =>
@@ -102,6 +110,29 @@ export default function PlayerStatsPage() {
     useEffect(() => {
         loadStats()
     }, [loadStats])
+
+    useEffect(() => {
+        if (!showPoolmates || !stats) {
+            setPoolProgress(null)
+            setLoadingPool(false)
+            return
+        }
+        let cancelled = false
+        setLoadingPool(true)
+        getMetrixPoolParProgress()
+            .then((data) => {
+                if (!cancelled) setPoolProgress(data)
+            })
+            .catch(() => {
+                if (!cancelled) setPoolProgress(null)
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingPool(false)
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [showPoolmates, stats, getMetrixPoolParProgress])
 
     const breakdown = useMemo(() => {
         const b = stats?.scoreBreakdown
@@ -140,6 +171,27 @@ export default function PlayerStatsPage() {
         }
         return out
     }, [progressOrderedDiffs])
+
+    const parChartSeries: ParProgressSeries[] = useMemo(() => {
+        const primary = theme.palette.primary.main
+        if (showPoolmates && poolProgress?.players?.length) {
+            return poolProgress.players.map((p, i) => ({
+                id: `u${p.userId}`,
+                name: p.name,
+                color: i === 0 ? primary : POOL_CHART_COLORS[(i - 1) % POOL_CHART_COLORS.length]!,
+                points: p.points,
+            }))
+        }
+        if (!stats) return []
+        return [
+            {
+                id: 'self',
+                name: stats.player.name,
+                color: primary,
+                points: parProgressChartData,
+            },
+        ]
+    }, [showPoolmates, poolProgress, stats, parProgressChartData, theme.palette.primary.main])
 
     return (
         <Layout>
@@ -310,13 +362,48 @@ export default function PlayerStatsPage() {
                                 </Box>
                                 {parProgressChartData.length > 0 && (
                                     <>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 0.5 }}>
-                                            {t('stats.progressToParChart')}
-                                        </Typography>
-                                        <Box sx={{ width: '100%', minHeight: 220, mt: 0.5 }}>
+                                        <Box
+                                            sx={{
+                                                mt: 2,
+                                                mb: 0.5,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                gap: 1,
+                                                flexWrap: 'wrap',
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                                sx={{ flex: '1 1 140px', minWidth: 0 }}
+                                            >
+                                                {t('stats.progressToParChart')}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+                                                {loadingPool && <CircularProgress size={18} thickness={5} />}
+                                                <FormControlLabel
+                                                    control={
+                                                        <Switch
+                                                            checked={showPoolmates}
+                                                            onChange={(_, c) => setShowPoolmates(c)}
+                                                            size="small"
+                                                        />
+                                                    }
+                                                    label={
+                                                        <Typography variant="body2" component="span">
+                                                            {t('stats.showPoolmates')}
+                                                        </Typography>
+                                                    }
+                                                    sx={{ mr: 0, ml: 0 }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                        <Box sx={{ width: '100%', minHeight: { xs: 272, sm: 220 }, mt: 0.5 }}>
                                             <StatsParProgressChartLazy
-                                                data={parProgressChartData}
+                                                series={parChartSeries}
                                                 xAxisLabel={t('stats.chartHoleAxis')}
+                                                showLegend={showPoolmates && parChartSeries.length > 1}
                                             />
                                         </Box>
                                     </>
