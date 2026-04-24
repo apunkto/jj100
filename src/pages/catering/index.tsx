@@ -107,7 +107,7 @@ export default function CateringPage() {
         } finally {
             setLoading(false)
         }
-    }, [competitionId, getCateringHoles, fetchCompetitionInfo, getFoodChoices, showToast])
+    }, [competitionId, getCateringHoles, fetchCompetitionInfo, getFoodChoices, showToast, t])
 
     // Only re-fetch when competition changes — not when toast/API wrapper identities change after save.
     useEffect(() => {
