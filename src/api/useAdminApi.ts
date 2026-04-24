@@ -1,6 +1,22 @@
 import {authedFetch} from "@/src/api/authedFetch"
 import {API_BASE} from "@/src/api/config"
 
+export type PaceOfPlayTopPool = {
+    pool_number: number
+    current_hole: number
+    holes_ahead_empty: number
+    pools_waiting_same_hole: number
+    pools_waiting_previous_hole: number
+    pools_waiting_total: number
+    player_count: number
+    updated_date?: string | null
+}
+
+export type PaceOfPlayPoolPlayer = {
+    user_id: string
+    name: string | null
+}
+
 export type AdminCompetition = {
     id: number
     name: string | null
@@ -62,7 +78,32 @@ const updateCompetitionStatus = async (
     competitionId: number,
     status: 'waiting' | 'started' | 'finished'
 ): Promise<void> => {
-    patchCompetitionField(competitionId, 'status', { status }, 'Failed to update competition status')
+    await patchCompetitionField(competitionId, 'status', { status }, 'Failed to update competition status')
+}
+
+const getPaceOfPlayTop = async (competitionId: number): Promise<PaceOfPlayTopPool[]> => {
+    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/pace-of-play`)
+    if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(err.error || 'Failed to fetch pace of play')
+    }
+    const json = (await res.json()) as { success: boolean; data: PaceOfPlayTopPool[] }
+    return json.data ?? []
+}
+
+const getPaceOfPlayPoolPlayers = async (
+    competitionId: number,
+    poolNumber: number
+): Promise<PaceOfPlayPoolPlayer[]> => {
+    const res = await authedFetch(
+        `${API_BASE}/admin/competition/${competitionId}/pace-of-play/pool/${poolNumber}`
+    )
+    if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(err.error || 'Failed to fetch pool players')
+    }
+    const json = (await res.json()) as { success: boolean; data: PaceOfPlayPoolPlayer[] }
+    return json.data ?? []
 }
 
 export default function useAdminApi() {
@@ -75,5 +116,7 @@ export default function useAdminApi() {
         updateFoodChoiceEnabled,
         updateDidRainEnabled,
         updateCompetitionStatus,
+        getPaceOfPlayTop,
+        getPaceOfPlayPoolPlayers,
     }
 }

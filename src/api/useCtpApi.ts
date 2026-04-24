@@ -48,6 +48,9 @@ export type Hole = {
     rules_en?: string | null
     is_food: boolean
     card_img?: string | null
+    ctp_sponsor?: string | null
+    ctp_sponsor_logo?: string | null
+    ctp_sponsor_url?: string | null
     user_result?: string | null
     user_has_penalty?: boolean
 }

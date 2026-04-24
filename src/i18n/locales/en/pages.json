@@ -125,7 +125,8 @@
     "toastMateSuccess": "Card-mate CTP saved!",
     "toastNotParticipant": "You are not in this competition!",
     "toastSamePool": "You can only enter CTP for players on the same layout",
-    "toastSubmitFailed": "CTP entry failed!"
+    "toastSubmitFailed": "CTP entry failed!",
+    "sponsoredBy": "Sponsored by"
   },
   "feedback": {
     "title": "Feedback",

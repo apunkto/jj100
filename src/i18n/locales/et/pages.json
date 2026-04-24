@@ -125,7 +125,8 @@
     "toastMateSuccess": "Puulikaaslase CTP tulemus sisestatud!",
     "toastNotParticipant": "Sa ei osale võistlusel!",
     "toastSamePool": "Saad sisestada CTP ainult sama raja mängijatele",
-    "toastSubmitFailed": "CTP sisestamine ebaõnnestus!"
+    "toastSubmitFailed": "CTP sisestamine ebaõnnestus!",
+    "sponsoredBy": "Sponsoreerib"
   },
   "feedback": {
     "title": "Tagasiside",

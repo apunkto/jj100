@@ -109,6 +109,12 @@ export default function CtpHolePage({ hole }: { hole: string }) {
         return poolMates.filter((pm) => pm.user_id !== uid)
     }, [poolMates, user?.metrixUserId])
 
+    const ctpSponsorHref = useMemo(() => {
+        const raw = holeInfo?.ctp_sponsor_url?.trim() ?? ""
+        if (!raw.startsWith("http://") && !raw.startsWith("https://")) return ""
+        return raw
+    }, [holeInfo?.ctp_sponsor_url])
+
     useEffect(() => {
         const fetchData = async () => {
             if (!user?.activeCompetitionId) return
@@ -235,6 +241,57 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                         </Typography>
                     </Box>
                 </Box>
+
+                {/* Sponsor banner (only when sponsor is set); whole box links when ctp_sponsor_url is http(s) */}
+                {!loading && holeInfo?.ctp_sponsor && (
+                    <Box
+                        component={ctpSponsorHref ? "a" : "div"}
+                        {...(ctpSponsorHref
+                            ? {
+                                  href: ctpSponsorHref,
+                                  target: "_blank",
+                                  rel: "noopener noreferrer",
+                              }
+                            : {})}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 1.5,
+                            mb: 3,
+                            px: 2,
+                            py: 1.5,
+                            borderRadius: 2,
+                            bgcolor: "grey.50",
+                            ...(ctpSponsorHref
+                                ? {
+                                      textDecoration: "none",
+                                      color: "inherit",
+                                      cursor: "pointer",
+                                      transition: "background-color 0.15s ease",
+                                      "&:hover": { bgcolor: "grey.100" },
+                                  }
+                                : {}),
+                        }}
+                    >
+                        {holeInfo.ctp_sponsor_logo && (
+                            <Box
+                                component="img"
+                                src={holeInfo.ctp_sponsor_logo}
+                                alt={holeInfo.ctp_sponsor}
+                                sx={{ height: 50, maxWidth: 100, objectFit: "contain", flexShrink: 0 }}
+                            />
+                        )}
+                        <Box sx={{ textAlign: holeInfo.ctp_sponsor_logo ? "left" : "center" }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                                {t("ctpHole.sponsoredBy")}
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+                                {holeInfo.ctp_sponsor}
+                            </Typography>
+                        </Box>
+                    </Box>
+                )}
 
                 {loading ? (
                     <Box display="flex" justifyContent="center" py={6}>

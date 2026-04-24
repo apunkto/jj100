@@ -23,6 +23,7 @@ import Image from 'next/image'
 import SettingsIcon from '@mui/icons-material/Settings'
 import CasinoIcon from '@mui/icons-material/Casino'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
+import TimerIcon from '@mui/icons-material/Timer'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
@@ -35,6 +36,7 @@ import {decodeHtmlEntities} from '@/src/utils/textUtils'
 
 const adminMenuItems = [
     { href: '/admin', label: 'Seaded', icon: <SettingsIcon /> },
+    { href: '/admin/pace-of-play', label: 'Mängu tempo', icon: <TimerIcon /> },
     { href: '/admin/draw', label: 'Loosiauhinnad', icon: <CasinoIcon /> },
     { href: '/admin/draw-dashboard', label: 'Loosi ekraan', icon: <CasinoIcon />, newTab: true },
     { href: '/admin/final-game', label: 'Putimäng', icon: <SportsGolfIcon /> },

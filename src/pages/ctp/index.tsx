@@ -138,6 +138,21 @@ export default function CtpListPage() {
                                                 </Typography>
                                             )}
                                         </Box>
+                                        {hole.ctp_sponsor_logo ? (
+                                            <Box
+                                                component="img"
+                                                src={hole.ctp_sponsor_logo}
+                                                alt=""
+                                                aria-hidden
+                                                sx={{
+                                                    flexShrink: 0,
+                                                    height: 28,
+                                                    maxWidth: 72,
+                                                    objectFit: 'contain',
+                                                    ml: 1,
+                                                }}
+                                            />
+                                        ) : null}
                                         <Box
                                             sx={{
                                                 flexShrink: 0,
