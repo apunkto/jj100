@@ -56,7 +56,9 @@
     "scoreBogey": "Bogey",
     "scoreDouble": "Double",
     "scoreTriple": "Triple+",
-    "progress": "Progress"
+    "progress": "Progress",
+    "progressToParChart": "Score progress over time",
+    "chartHoleAxis": "Holes played"
   },
   "results": {
     "title": "Results",

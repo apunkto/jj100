@@ -1,8 +1,14 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import dynamic from 'next/dynamic'
 import {Box, CircularProgress, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useMetrixApi, {MetrixPlayerStats} from '@/src/api/useMetrixApi'
 import {useTranslation} from 'react-i18next'
+
+const StatsParProgressChartLazy = dynamic(
+    () => import('@/src/components/stats/ParProgressChart').then((m) => m.StatsParProgressChart),
+    { ssr: false, loading: () => <Box sx={{ height: 220 }} /> },
+)
 
 function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -115,6 +121,25 @@ export default function PlayerStatsPage() {
         const diffs = stats.holeDiffs ?? []
         return orderHoleDiffsForStartGroup(diffs, stats.holes.total, stats.startGroup)
     }, [stats?.holeDiffs, stats?.holes.total, stats?.startGroup])
+
+    const progressPlayedDiffsOnly = useMemo(
+        () => progressOrderedDiffs.filter((d): d is number => d !== null),
+        [progressOrderedDiffs],
+    )
+
+    /** One point per scored hole (playing order); x = 1..played, y = cumulative vs par. */
+    const parProgressChartData = useMemo(() => {
+        let cum = 0
+        let played = 0
+        const out: { hole: number; toPar: number }[] = []
+        for (const d of progressOrderedDiffs) {
+            if (d === null) continue
+            cum += d
+            played += 1
+            out.push({ hole: played, toPar: cum })
+        }
+        return out
+    }, [progressOrderedDiffs])
 
     return (
         <Layout>
@@ -256,7 +281,7 @@ export default function PlayerStatsPage() {
                             </Box>
                         )}
 
-                        {progressOrderedDiffs.length > 0 && (
+                        {progressPlayedDiffsOnly.length > 0 && (
                             <Box sx={{ mt: 3, mb: 2 }} aria-label={t('stats.progress')}>
                                 <SectionTitle>{t('stats.progress')}</SectionTitle>
                                 <Box
@@ -268,33 +293,34 @@ export default function PlayerStatsPage() {
                                         width: '100%',
                                     }}
                                 >
-                                    {progressOrderedDiffs.map((diff, idx) => {
-                                        const played = diff !== null
-                                        return (
-                                            <Box
-                                                key={idx}
-                                                sx={{
-                                                    width: '100%',
-                                                    maxWidth: 14,
-                                                    aspectRatio: '1',
-                                                    justifySelf: 'center',
-                                                    borderRadius: '50%',
-                                                    boxSizing: 'border-box',
-                                                    ...(played
-                                                        ? {
-                                                              bgcolor: diffToBreakdownColor(diff as number),
-                                                              border: '1px solid transparent',
-                                                          }
-                                                        : {
-                                                              bgcolor: 'transparent',
-                                                              border: '1px solid',
-                                                              borderColor: 'divider',
-                                                          }),
-                                                }}
-                                            />
-                                        )
-                                    })}
+                                    {progressPlayedDiffsOnly.map((diff, idx) => (
+                                        <Box
+                                            key={idx}
+                                            sx={{
+                                                width: '100%',
+                                                maxWidth: 14,
+                                                aspectRatio: '1',
+                                                justifySelf: 'center',
+                                                borderRadius: '50%',
+                                                boxSizing: 'border-box',
+                                                bgcolor: diffToBreakdownColor(diff),
+                                            }}
+                                        />
+                                    ))}
                                 </Box>
+                                {parProgressChartData.length > 0 && (
+                                    <>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 0.5 }}>
+                                            {t('stats.progressToParChart')}
+                                        </Typography>
+                                        <Box sx={{ width: '100%', minHeight: 220, mt: 0.5 }}>
+                                            <StatsParProgressChartLazy
+                                                data={parProgressChartData}
+                                                xAxisLabel={t('stats.chartHoleAxis')}
+                                            />
+                                        </Box>
+                                    </>
+                                )}
                             </Box>
                         )}
                     </>

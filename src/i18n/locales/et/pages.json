@@ -56,7 +56,9 @@
     "scoreBogey": "Bogey",
     "scoreDouble": "Double",
     "scoreTriple": "Triple+",
-    "progress": "Progress"
+    "progress": "Progress",
+    "progressToParChart": "Skoori muutus ajas",
+    "chartHoleAxis": "Mängitud radu"
   },
   "results": {
     "title": "Tulemused",

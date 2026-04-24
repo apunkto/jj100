@@ -29,6 +29,7 @@
     "react-dom-confetti": "^0.2.0",
     "react-hook-form": "^7.56.1",
     "react-i18next": "^17.0.4",
+    "recharts": "^2.15.4",
     "swiper": "^11.2.6"
   },
   "devDependencies": {
