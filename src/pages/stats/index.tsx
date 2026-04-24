@@ -257,7 +257,7 @@ export default function PlayerStatsPage() {
                         )}
 
                         {progressOrderedDiffs.length > 0 && (
-                            <Box sx={{ mt: 1.5, mb: 2 }} aria-label={t('stats.progress')}>
+                            <Box sx={{ mt: 3, mb: 2 }} aria-label={t('stats.progress')}>
                                 <SectionTitle>{t('stats.progress')}</SectionTitle>
                                 <Box
                                     sx={{
