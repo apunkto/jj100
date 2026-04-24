@@ -4,11 +4,14 @@ import {Autoplay, Keyboard} from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/autoplay'
 import {Box, Typography} from '@mui/material'
+import {ThemeProvider} from '@mui/material/styles'
+import theme, {dashboardLedDarkTheme} from '@/lib/theme'
 import {useRouter} from 'next/router'
 import TopHolesSlide from '@/src/components/dashboard/TopHolesSlide'
 import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
 import {TopPlayersByDivisionContent} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
 import StatsSlide from '@/src/components/dashboard/StatsSlide'
+import PredictionResultsSlide from '@/src/components/dashboard/PredictionResultsSlide'
 import {useTranslation} from 'react-i18next'
 
 export default function Dashboard() {
@@ -21,37 +24,47 @@ export default function Dashboard() {
             : null
 
     const isLooping = router.isReady ? router.query.loop !== 'off' : true
+    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const activeTheme = darkMode ? dashboardLedDarkTheme : theme
 
     if (!router.isReady || competitionId == null || !Number.isFinite(competitionId)) {
         return (
-            <Box
-                sx={{
-                    height: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'column',
-                    gap: 2,
-                }}
-            >
-                {!router.isReady ? (
-                    <Typography>{t('dashboard.loading')}</Typography>
-                ) : (
-                    <>
-                        <Typography variant="h5" color="error">
-                            {t('dashboard.competitionRequired')}
-                        </Typography>
-                        <Typography>
-                            {t('dashboard.openWithId')}
-                        </Typography>
-                    </>
-                )}
-            </Box>
+            <ThemeProvider theme={activeTheme}>
+                <Box
+                    sx={{
+                        minHeight: '100vh',
+                        bgcolor: 'background.default',
+                        color: 'text.primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        gap: 2,
+                        px: 2,
+                    }}
+                >
+                    {!router.isReady ? (
+                        <Typography>{t('dashboard.loading')}</Typography>
+                    ) : (
+                        <>
+                            <Typography variant="h5" color="error">
+                                {t('dashboard.competitionRequired')}
+                            </Typography>
+                            <Typography textAlign="center">{t('dashboard.openWithId')}</Typography>
+                            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{maxWidth: 520}}>
+                                {t('dashboard.darkModeHint')}
+                            </Typography>
+                        </>
+                    )}
+                </Box>
+            </ThemeProvider>
         )
     }
 
     return (
-        <DashboardSwiper competitionId={competitionId} isLooping={isLooping} />
+        <ThemeProvider theme={activeTheme}>
+            <DashboardSwiper competitionId={competitionId} isLooping={isLooping} />
+        </ThemeProvider>
     )
 }
 
@@ -62,6 +75,16 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
     const divisionEntries = Object.entries(topPlayersByDivision)
 
     return (
+        <Box
+            sx={{
+                height: '100vh',
+                maxHeight: '100dvh',
+                width: '100%',
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                boxSizing: 'border-box',
+            }}
+        >
         <Swiper
             key={isLooping ? 'loop' : 'no-loop'}
             onSwiper={(swiper) => { swiperRef.current = swiper }}
@@ -71,7 +94,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
             spaceBetween={50}
             slidesPerView={1}
             autoplay={isLooping ? { delay: 60000, disableOnInteraction: false } : false}
-            style={{ height: '100vh' }}
+            style={{ height: '100%', width: '100%' }}
         >
             <SwiperSlide>
                 <TopHolesSlide competitionId={competitionId} isLooping={isLooping} />
@@ -81,10 +104,13 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     <Box
                         sx={{
                             p: 6,
-                            height: '100vh',
+                            height: '100%',
+                            minHeight: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            bgcolor: 'background.default',
+                            color: 'text.primary',
                         }}
                     >
                         <Typography>{t('dashboard.loading')}</Typography>
@@ -95,10 +121,13 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     <Box
                         sx={{
                             p: 6,
-                            height: '100vh',
+                            height: '100%',
+                            minHeight: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            bgcolor: 'background.default',
+                            color: 'text.primary',
                         }}
                     >
                         <Typography color="error">{error}</Typography>
@@ -109,10 +138,13 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     <Box
                         sx={{
                             p: 6,
-                            height: '100vh',
+                            height: '100%',
+                            minHeight: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            bgcolor: 'background.default',
+                            color: 'text.primary',
                         }}
                     >
                         <Typography>{t('dashboard.noDivisions')}</Typography>
@@ -125,9 +157,18 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     </SwiperSlide>
                 ))
             )}
+            <SwiperSlide key="prediction-results">
+                <PredictionResultsSlide
+                    competitionId={competitionId}
+                    title={t('dashboard.predictionTitle')}
+                    loadingLabel={t('dashboard.loading')}
+                    emptyLabel={t('dashboard.predictionNoData')}
+                />
+            </SwiperSlide>
             <SwiperSlide>
                 <StatsSlide competitionId={competitionId} />
             </SwiperSlide>
         </Swiper>
+        </Box>
     )
 }

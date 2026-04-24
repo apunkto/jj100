@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
+import {ThemeProvider} from '@mui/material/styles'
+import theme, {dashboardLedDarkTheme} from '@/lib/theme'
 import Confetti from 'react-dom-confetti'
 import Image from 'next/image'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
@@ -8,6 +10,10 @@ import {useRouter} from 'next/router'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
 
 const RECONNECT_DELAY_MS = 2000
+
+/** Brand header bar — fixed so nested LED dark theme does not soften `primary.main`. */
+const DRAW_HEADER_BG = '#313690'
+const DRAW_HEADER_FG = '#ffffff'
 
 /** Physical LED wall — fixed layout only (no runtime measuring). 1000×600. */
 const LED_STAGE_W = 1000
@@ -65,6 +71,8 @@ export default function DrawDashboardPage() {
     const {getDrawState, subscribeToDrawState, getCheckins} = useCheckinApi()
     const {user, loading} = useAuth()
     const router = useRouter()
+    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const activeTheme = darkMode ? dashboardLedDarkTheme : theme
 
     const [state, setState] = useState<DrawState>({ participantCount: 0 })
     const [phase, setPhase] = useState<Phase>('idle')
@@ -131,9 +139,20 @@ export default function DrawDashboardPage() {
 
     if (loading || !user) {
         return (
-            <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
-                <Typography variant="h3">Laadimine...</Typography>
-            </Box>
+            <ThemeProvider theme={activeTheme}>
+                <Box
+                    sx={{
+                        minHeight: '100vh',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'background.default',
+                        color: 'text.primary',
+                    }}
+                >
+                    <Typography variant="h3">Laadimine...</Typography>
+                </Box>
+            </ThemeProvider>
         )
     }
 
@@ -142,137 +161,139 @@ export default function DrawDashboardPage() {
     }
 
     return (
-        <Box
-            sx={{
-                width: LED_STAGE_W,
-                height: LED_STAGE_H,
-                maxWidth: '100vw',
-                maxHeight: '100dvh',
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                justifyContent: 'flex-start',
-                px: 0,
-                py: 0,
-                boxSizing: 'border-box',
-                bgcolor: 'common.white',
-                position: 'relative',
-                overflow: 'hidden',
-            }}
-        >
+        <ThemeProvider theme={activeTheme}>
             <Box
                 sx={{
-                    width: '100%',
-                    height: '100%',
+                    width: LED_STAGE_W,
+                    height: LED_STAGE_H,
+                    maxWidth: '100vw',
+                    maxHeight: '100dvh',
+                    mx: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'stretch',
                     justifyContent: 'flex-start',
-                    gap: 0,
+                    px: 0,
+                    py: 0,
                     boxSizing: 'border-box',
+                    bgcolor: 'background.default',
+                    position: 'relative',
                     overflow: 'hidden',
-                    minHeight: 0,
                 }}
             >
                 <Box
-                    component="header"
                     sx={{
-                        flexShrink: 0,
                         width: '100%',
-                        bgcolor: 'primary.main',
-                        color: 'common.white',
-                        py: 1,
-                        px: 1.5,
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        justifyContent: 'flex-start',
+                        gap: 0,
                         boxSizing: 'border-box',
+                        overflow: 'hidden',
+                        minHeight: 0,
                     }}
                 >
                     <Box
+                        component="header"
                         sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 1.25,
-                            flexWrap: 'wrap',
+                            flexShrink: 0,
+                            width: '100%',
+                            bgcolor: DRAW_HEADER_BG,
+                            color: DRAW_HEADER_FG,
+                            py: 1,
+                            px: 1.5,
+                            boxSizing: 'border-box',
                         }}
                     >
-                        <Box sx={{ position: 'relative', width: 48, height: 42, flexShrink: 0 }}>
-                            <Image
-                                src="/logo2.webp"
-                                alt="JJ100"
-                                width={48}
-                                height={42}
-                                style={{ objectFit: 'contain' }}
-                                priority
-                            />
-                        </Box>
-                        <Typography
-                            component="h1"
-                            sx={{
-                                fontSize: 26,
-                                fontWeight: 800,
-                                letterSpacing: '-0.02em',
-                                color: 'common.white',
-                                lineHeight: 1.22,
-                            }}
-                        >
-                            JJ100 Loosisauhinnad
-                        </Typography>
-                    </Box>
-                </Box>
-
-                <Box
-                    sx={{
-                        flex: 1,
-                        minHeight: 0,
-                        width: '100%',
-                        bgcolor: 'common.white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        boxSizing: 'border-box',
-                    }}
-                >
-                    {phase === 'winner' && (
                         <Box
                             sx={{
-                                position: 'fixed',
-                                inset: 0,
-                                width: '100%',
-                                height: '100%',
-                                zIndex: 1300,
-                                pointerEvents: 'none',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                gap: 1.25,
+                                flexWrap: 'wrap',
                             }}
                         >
-                            <Confetti
-                                active={confettiActive}
-                                config={{
-                                    angle: 90,
-                                    spread: 160,
-                                    startVelocity: 40,
-                                    elementCount: 220,
-                                    dragFriction: 0.1,
-                                    duration: 4500,
+                            <Box sx={{ position: 'relative', width: 48, height: 42, flexShrink: 0 }}>
+                                <Image
+                                    src="/logo2.webp"
+                                    alt="JJ100"
+                                    width={48}
+                                    height={42}
+                                    style={{ objectFit: 'contain' }}
+                                    priority
+                                />
+                            </Box>
+                            <Typography
+                                component="h1"
+                                sx={{
+                                    fontSize: 26,
+                                    fontWeight: 800,
+                                    letterSpacing: '-0.02em',
+                                    color: DRAW_HEADER_FG,
+                                    lineHeight: 1.22,
                                 }}
-                            />
+                            >
+                                JJ100 Loosisauhinnad
+                            </Typography>
                         </Box>
-                    )}
-                    <SlotMachine
-                        ref={slotRef}
-                        key={drawKey}
-                        names={state.participantNames ?? []}
-                        slotSizePx={LED_SLOT_PX}
-                        onStopped={() => {
-                            setConfettiActive(true)
-                            setTimeout(() => setConfettiActive(false), 500)
+                    </Box>
+
+                    <Box
+                        sx={{
+                            flex: 1,
+                            minHeight: 0,
+                            width: '100%',
+                            bgcolor: 'background.default',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                            boxSizing: 'border-box',
                         }}
-                    />
+                    >
+                        {phase === 'winner' && (
+                            <Box
+                                sx={{
+                                    position: 'fixed',
+                                    inset: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    zIndex: 1300,
+                                    pointerEvents: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Confetti
+                                    active={confettiActive}
+                                    config={{
+                                        angle: 90,
+                                        spread: 160,
+                                        startVelocity: 40,
+                                        elementCount: 220,
+                                        dragFriction: 0.1,
+                                        duration: 4500,
+                                    }}
+                                />
+                            </Box>
+                        )}
+                        <SlotMachine
+                            ref={slotRef}
+                            key={drawKey}
+                            names={state.participantNames ?? []}
+                            slotSizePx={LED_SLOT_PX}
+                            onStopped={() => {
+                                setConfettiActive(true)
+                                setTimeout(() => setConfettiActive(false), 500)
+                            }}
+                        />
+                    </Box>
                 </Box>
             </Box>
-        </Box>
+        </ThemeProvider>
     )
 }

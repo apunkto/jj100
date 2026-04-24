@@ -157,10 +157,16 @@
   "holeCard": {
     "noSpecialRules": "No special rules"
   },
+  "leaderboard": {
+    "openWithId": "Open with a competition ID: /leaderboard?competitionId=123"
+  },
   "dashboard": {
     "loading": "Loading...",
     "competitionRequired": "Competition required",
     "openWithId": "Open the dashboard with a competition ID: /dashboard?competitionId=123",
-    "noDivisions": "No divisions yet"
+    "darkModeHint": "Add &darkMode=true for high-contrast dark slides (outdoor LED).",
+    "noDivisions": "No divisions yet",
+    "predictionTitle": "Top predictions",
+    "predictionNoData": "No prediction results yet, or predictions are not enabled for this competition."
   }
 }

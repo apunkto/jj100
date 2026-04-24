@@ -1,9 +1,16 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
+import {ThemeProvider} from '@mui/material/styles'
+import theme, {dashboardLedDarkTheme} from '@/lib/theme'
 import Image from 'next/image'
+import {useRouter} from 'next/router'
 import {PuttingGameState, useCheckinApi} from '@/src/api/useCheckinApi'
 
 const RECONNECT_DELAY_MS = 2000
+
+/** Brand header — same in light and nested LED dark theme (see draw-dashboard). */
+const DRAW_HEADER_BG = '#313690'
+const DRAW_HEADER_FG = '#ffffff'
 const MAX_DISPLAYED_LEVELS = 20
 /** Match draw / final-game-draw LED wall (1000×600). */
 const LED_STAGE_W = 1000
@@ -21,6 +28,10 @@ const nameToResultsGapPx = s(8)
 const nameColMaxPx = s(360)
 
 export default function PuttingGameDashboard() {
+    const router = useRouter()
+    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+
     const {subscribeToFinalGamePuttingState, getFinalGamePuttingState} = useCheckinApi()
 
     const [puttingGame, setPuttingGame] = useState<PuttingGameState | null>(null)
@@ -142,7 +153,7 @@ export default function PuttingGameDashboard() {
                     sx={{
                         fontSize: s(13),
                         fontWeight: 600,
-                        color: '#1a1a1a',
+                        color: 'text.primary',
                         lineHeight: 1.45,
                         pl: `${s(16)}px`,
                         pr: `${s(8)}px`,
@@ -190,7 +201,7 @@ export default function PuttingGameDashboard() {
                             sx={{
                                 fontSize: isPuttingFinished ? s(17) : s(16),
                                 fontWeight: p.status === 'active' ? 700 : 500,
-                                color: p.status === 'active' ? '#1a1a1a' : 'text.secondary',
+                                color: p.status === 'active' ? 'text.primary' : 'text.secondary',
                                 textDecoration: p.status === 'out' ? 'line-through' : 'none',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -243,167 +254,169 @@ export default function PuttingGameDashboard() {
     }
 
     return (
-        <Box
-            sx={{
-                width: LED_STAGE_W,
-                height: LED_STAGE_H,
-                maxWidth: '100vw',
-                maxHeight: '100dvh',
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                justifyContent: 'flex-start',
-                px: 0,
-                py: 0,
-                boxSizing: 'border-box',
-                bgcolor: 'common.white',
-                position: 'relative',
-                overflow: 'hidden',
-            }}
-        >
+        <ThemeProvider theme={activeTheme}>
             <Box
                 sx={{
-                    width: '100%',
-                    height: '100%',
+                    width: LED_STAGE_W,
+                    height: LED_STAGE_H,
+                    maxWidth: '100vw',
+                    maxHeight: '100dvh',
+                    mx: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'stretch',
                     justifyContent: 'flex-start',
-                    gap: 0,
+                    px: 0,
+                    py: 0,
                     boxSizing: 'border-box',
+                    bgcolor: 'background.default',
+                    position: 'relative',
                     overflow: 'hidden',
-                    minHeight: 0,
                 }}
             >
                 <Box
-                    component="header"
                     sx={{
-                        flexShrink: 0,
                         width: '100%',
-                        bgcolor: 'primary.main',
-                        color: 'common.white',
-                        py: 0.25,
-                        px: 1.5,
-                        boxSizing: 'border-box',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 1,
-                            flexWrap: 'wrap',
-                        }}
-                    >
-                        <Box sx={{position: 'relative', width: s(44), height: s(38), flexShrink: 0}}>
-                            <Image
-                                src="/logo2.webp"
-                                alt="JJ100"
-                                width={s(44)}
-                                height={s(38)}
-                                style={{objectFit: 'contain'}}
-                                priority
-                            />
-                        </Box>
-                        <Typography
-                            component="h1"
-                            sx={{
-                                fontSize: s(24),
-                                fontWeight: 800,
-                                letterSpacing: '-0.02em',
-                                color: 'common.white',
-                                lineHeight: 1.15,
-                            }}
-                        >
-                            JJ100 Putimäng
-                        </Typography>
-                    </Box>
-                </Box>
-
-                <Box
-                    sx={{
-                        flexShrink: 0,
-                        width: '100%',
-                        px: 1,
-                        py: 0.5,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        textAlign: 'center',
-                        boxSizing: 'border-box',
-                    }}
-                >
-                    {isPuttingRunning && (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'baseline',
-                                justifyContent: 'center',
-                                gap: 1.25,
-                                minWidth: 0,
-                                maxWidth: '100%',
-                                flexWrap: 'nowrap',
-                            }}
-                        >
-                            <Typography
-                                component="span"
-                                sx={{fontSize: s(18), fontWeight: 700, color: '#1a1a1a', flexShrink: 0}}
-                            >
-                                Kaugus: {puttingGame?.currentLevel}m
-                            </Typography>
-                            {puttingGame?.currentTurnName ? (
-                                <>
-                                    <Typography component="span" sx={{fontSize: s(18), color: 'text.secondary', flexShrink: 0}}>
-                                        ·
-                                    </Typography>
-                                    <Typography
-                                        component="span"
-                                        sx={{
-                                            fontSize: s(18),
-                                            fontWeight: 600,
-                                            color: 'primary.main',
-                                            flexShrink: 1,
-                                            minWidth: 0,
-                                            maxWidth: `min(${nameColMaxPx}px, 100%)`,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                        }}
-                                    >
-                                        Viskab: {puttingGame.currentTurnName}
-                                    </Typography>
-                                </>
-                            ) : null}
-                        </Box>
-                    )}
-                    {isPuttingFinished && puttingGame?.winnerName && (
-                        <Typography sx={{fontSize: s(18), fontWeight: 800, color: 'primary.main', maxWidth: '100%'}}>
-                            Võitja: {puttingGame.winnerName}
-                        </Typography>
-                    )}
-                </Box>
-
-                <Box
-                    sx={{
-                        flex: 1,
-                        minHeight: 0,
-                        width: '100%',
-                        bgcolor: 'common.white',
+                        height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'stretch',
                         justifyContent: 'flex-start',
-                        overflow: 'hidden',
+                        gap: 0,
                         boxSizing: 'border-box',
-                        py: 0.5,
+                        overflow: 'hidden',
+                        minHeight: 0,
                     }}
                 >
-                    {renderContent()}
+                    <Box
+                        component="header"
+                        sx={{
+                            flexShrink: 0,
+                            width: '100%',
+                            bgcolor: DRAW_HEADER_BG,
+                            color: DRAW_HEADER_FG,
+                            py: 0.25,
+                            px: 1.5,
+                            boxSizing: 'border-box',
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1,
+                                flexWrap: 'wrap',
+                            }}
+                        >
+                            <Box sx={{position: 'relative', width: s(44), height: s(38), flexShrink: 0}}>
+                                <Image
+                                    src="/logo2.webp"
+                                    alt="JJ100"
+                                    width={s(44)}
+                                    height={s(38)}
+                                    style={{objectFit: 'contain'}}
+                                    priority
+                                />
+                            </Box>
+                            <Typography
+                                component="h1"
+                                sx={{
+                                    fontSize: s(24),
+                                    fontWeight: 800,
+                                    letterSpacing: '-0.02em',
+                                    color: DRAW_HEADER_FG,
+                                    lineHeight: 1.15,
+                                }}
+                            >
+                                JJ100 Putimäng
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box
+                        sx={{
+                            flexShrink: 0,
+                            width: '100%',
+                            px: 1,
+                            py: 0.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            boxSizing: 'border-box',
+                        }}
+                    >
+                        {isPuttingRunning && (
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'baseline',
+                                    justifyContent: 'center',
+                                    gap: 1.25,
+                                    minWidth: 0,
+                                    maxWidth: '100%',
+                                    flexWrap: 'nowrap',
+                                }}
+                            >
+                                <Typography
+                                    component="span"
+                                    sx={{fontSize: s(18), fontWeight: 700, color: 'text.primary', flexShrink: 0}}
+                                >
+                                    Kaugus: {puttingGame?.currentLevel}m
+                                </Typography>
+                                {puttingGame?.currentTurnName ? (
+                                    <>
+                                        <Typography component="span" sx={{fontSize: s(18), color: 'text.secondary', flexShrink: 0}}>
+                                            ·
+                                        </Typography>
+                                        <Typography
+                                            component="span"
+                                            sx={{
+                                                fontSize: s(18),
+                                                fontWeight: 600,
+                                                color: 'primary.main',
+                                                flexShrink: 1,
+                                                minWidth: 0,
+                                                maxWidth: `min(${nameColMaxPx}px, 100%)`,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            Viskab: {puttingGame.currentTurnName}
+                                        </Typography>
+                                    </>
+                                ) : null}
+                            </Box>
+                        )}
+                        {isPuttingFinished && puttingGame?.winnerName && (
+                            <Typography sx={{fontSize: s(18), fontWeight: 800, color: 'primary.main', maxWidth: '100%'}}>
+                                Võitja: {puttingGame.winnerName}
+                            </Typography>
+                        )}
+                    </Box>
+
+                    <Box
+                        sx={{
+                            flex: 1,
+                            minHeight: 0,
+                            width: '100%',
+                            bgcolor: 'background.default',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'stretch',
+                            justifyContent: 'flex-start',
+                            overflow: 'hidden',
+                            boxSizing: 'border-box',
+                            py: 0.5,
+                        }}
+                    >
+                        {renderContent()}
+                    </Box>
                 </Box>
             </Box>
-        </Box>
+        </ThemeProvider>
     )
 }

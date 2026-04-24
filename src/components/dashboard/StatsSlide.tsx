@@ -1,11 +1,33 @@
 import {useCallback, useEffect, useState} from 'react'
 import {Box, Typography} from '@mui/material'
+import {useTheme} from '@mui/material/styles'
 import useMetrixApi from '@/src/api/useMetrixApi'
 
 const REFRESH_MS = 5 * 60 * 1000
 const STREAK_ACE_ROTATE_MS = 15000
 
+/** Pastel fills (light UI). */
+const circleBgLight = {
+    holesLeft: '#fb638c',
+    finished: '#ffcc80',
+    throws: '#efb4f5',
+    lake: '#b3d4fc',
+    streak: '#a6e4a3',
+    ace: '#f4d774',
+} as const
+
+/** Saturated darker fills for dashboard LED dark mode — white text stays readable in sunlight. */
+const circleBgDark = {
+    holesLeft: '#ad1457',
+    finished: '#e65100',
+    throws: '#6a1b9a',
+    lake: '#1565c0',
+    streak: '#2e7d32',
+    ace: '#b45309',
+} as const
+
 export default function StatsSlide({ competitionId }: { competitionId: number }) {
+    const theme = useTheme()
     const { getCompetitionStats } = useMetrixApi()
     const [stats, setStats] = useState<{
         playerCount: number
@@ -64,7 +86,17 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
 
     if (loading && !stats) {
         return (
-            <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+                sx={{
+                    p: 6,
+                    height: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'background.default',
+                    color: 'text.primary',
+                }}
+            >
                 <Typography>Laen...</Typography>
             </Box>
         )
@@ -72,7 +104,17 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
 
     if (error && !stats) {
         return (
-            <Box sx={{ p: 6, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+                sx={{
+                    p: 6,
+                    height: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'background.default',
+                    color: 'text.primary',
+                }}
+            >
                 <Typography color="error">{error}</Typography>
             </Box>
         )
@@ -93,18 +135,20 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
         longestAces,
     } = stats
 
+    const isLedDark = theme.palette.mode === 'dark'
+
     const items = [
         {
             label: '🕒 Viimasel puulil',
             value: mostHolesLeft,
             sub: `korvi ${totalHoles}st`,
-            bg: '#fb638c',
+            bg: isLedDark ? circleBgDark.holesLeft : circleBgLight.holesLeft,
         },
         {
             label: '🏁 Lõpetanud',
             value: finishedPlayersCount,
             sub: `mängijat ${playerCount}st`,
-            bg: '#ffcc80',
+            bg: isLedDark ? circleBgDark.finished : circleBgLight.finished,
         },
         {
             label: '📊 Viskeid kokku',
@@ -113,13 +157,13 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                 const diff = Math.round(averageDiff)
                 return diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`
             })()} viset par-ile`,
-            bg: '#efb4f5',
+            bg: isLedDark ? circleBgDark.throws : circleBgLight.throws,
         },
         {
             label: '🌊 Järve viskas',
             value: lakeOBCount,
             sub: `mängijat (${playerCount > 0 ? Math.round((lakeOBCount / playerCount) * 100) : 0}% 🤦‍♂️)`,
-            bg: '#b3d4fc',
+            bg: isLedDark ? circleBgDark.lake : circleBgLight.lake,
         },
         ...(longestStreaks.length > 0
             ? (() => {
@@ -129,7 +173,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                     label: '🐤 Pikim birdie jada',
                     value: streak.count,
                     sub: `${streak.player} (${String(streak.startHole).padStart(2, '0')}-${String(streak.endHole).padStart(2, '0')})`,
-                    bg: '#a6e4a3',
+                    bg: isLedDark ? circleBgDark.streak : circleBgLight.streak,
                 }]
             })()
             : []),
@@ -141,11 +185,13 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                     label: '🎯 Pikim HIO',
                     value: `${ace.length}m`,
                     sub: `${ace.player} (rada ${String(ace.holeNumber).padStart(2, '0')})`,
-                    bg: '#f4d774',
+                    bg: isLedDark ? circleBgDark.ace : circleBgLight.ace,
                 }]
             })()
             : []),
     ]
+
+    const statValueColor = isLedDark ? '#ffffff' : '#000'
 
     return (
         <Box
@@ -156,6 +202,8 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                bgcolor: 'background.default',
+                color: 'text.primary',
             }}
         >
             <Box
@@ -181,7 +229,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                             },
                         }}
                     >
-                        <Typography variant="h4" fontWeight="bold" mb={2}>
+                        <Typography variant="h4" fontWeight="bold" mb={2} color="text.primary">
                             {item.label}
                         </Typography>
                         <Box
@@ -194,6 +242,10 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 margin: '0 auto',
+                                ...(isLedDark && {
+                                    boxShadow:
+                                        '0 0 0 3px rgba(255,255,255,0.14), 0 8px 24px rgba(0,0,0,0.45)',
+                                }),
                             }}
                         >
                             <Typography
@@ -204,16 +256,25 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
                                         ? 'clamp(2rem, 3.1vw, 4rem)'
                                         : 'clamp(2rem, 5vw, 64rem)',
                                     fontWeight: 'bold',
-                                    color: '#000',
+                                    color: statValueColor,
                                 }}
                             >
                                 {item.value}
                             </Typography>
                         </Box>
-                        <Box mt={1} sx={{ fontSize: 27, fontWeight: 500, lineHeight: "1.75rem" }}>
+                        <Box
+                            mt={1}
+                            sx={{
+                                fontSize: 27,
+                                fontWeight: 500,
+                                lineHeight: '1.75rem',
+                                color: isLedDark ? 'rgba(255,255,255,0.82)' : 'text.secondary',
+                                '& span': {fontSize: 25},
+                            }}
+                        >
                             {item.sub.replace(/\s*\(.*\)/, '')}
                             <br />
-                            <span style={{ fontSize: 25 }}>{item.sub.match(/\(.*\)/)?.[0] ?? ''}</span>
+                            <span>{item.sub.match(/\(.*\)/)?.[0] ?? ''}</span>
                         </Box>
                     </Box>
                 ))}

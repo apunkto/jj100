@@ -16,6 +16,12 @@ export function useTopPlayersByDivision(competitionId: number) {
 
     const fetchData = useCallback(async () => {
         staleRef.current = false
+        if (!Number.isFinite(competitionId) || competitionId <= 0) {
+            setTopPlayersByDivision({})
+            setError(null)
+            setLoading(false)
+            return
+        }
         try {
             setError(null)
             const data = await getTopPlayersByDivision(competitionId)

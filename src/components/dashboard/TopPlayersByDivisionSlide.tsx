@@ -14,15 +14,21 @@ const scoreCategories = [
     { key: 'others', color: 'rgba(244,43,3,.80)', label: 'Triple+' },
 ]
 
-/** Content for a single division slide. Rendered inside SwiperSlide by Dashboard. */
+export type TopPlayersByDivisionLayout = 'dashboardSlide' | 'standalonePage'
+
+/** Content for a single division: dashboard Swiper slide or static `/leaderboard` section. */
 export function TopPlayersByDivisionContent({
     division,
     players,
+    layout = 'dashboardSlide',
 }: {
     division: string
     players: DashboardPlayerResult[]
+    layout?: TopPlayersByDivisionLayout
 }) {
     const topPlayers = players.slice(0, TOP_PLAYERS_SHOWN)
+
+    const isSlide = layout === 'dashboardSlide'
 
     return (
         <Box
@@ -30,12 +36,23 @@ export function TopPlayersByDivisionContent({
                 px: { xs: 1.5, sm: 2, md: 3 },
                 pt: { xs: 1, sm: 1.25, md: 1.5 },
                 pb: { xs: 1, sm: 1.25, md: 1.5 },
-                height: '100%',
-                overflowY: 'auto',
-                overflowX: 'hidden',
                 width: '100%',
                 maxWidth: '100%',
                 boxSizing: 'border-box',
+                bgcolor: 'background.default',
+                color: 'text.primary',
+                ...(isSlide
+                    ? {
+                          height: '100%',
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                      }
+                    : {
+                          height: 'auto',
+                          minHeight: 0,
+                          overflowX: 'hidden',
+                          overflowY: 'visible',
+                      }),
             }}
         >
             <Typography

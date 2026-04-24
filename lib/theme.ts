@@ -35,4 +35,29 @@ const theme = createTheme({
     },
 })
 
+/**
+ * Nested `ThemeProvider` on `/dashboard?darkMode=true` for outdoor P5 LED (high contrast, no auto system dark).
+ */
+export const dashboardLedDarkTheme = createTheme({
+    ...theme,
+    palette: {
+        ...theme.palette,
+        mode: 'dark',
+        primary: {
+            main: '#9aa3ff',
+            dark: '#6f78cc',
+            light: '#b8c0ff',
+        },
+        background: {
+            default: '#050508',
+            paper: '#0c0d12',
+        },
+        text: {
+            primary: 'rgba(255,255,255,0.95)',
+            secondary: 'rgba(255,255,255,0.72)',
+        },
+        divider: 'rgba(255,255,255,0.14)',
+    },
+})
+
 export default theme

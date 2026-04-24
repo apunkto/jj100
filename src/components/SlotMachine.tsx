@@ -1,5 +1,6 @@
 import React, {forwardRef, useCallback, useImperativeHandle, useRef, useState} from 'react'
 import {Box, Typography} from '@mui/material'
+import {useTheme} from '@mui/material/styles'
 
 // Defaults tuned for large LED ~1200x800; actual size should be driven by container (narrow walls / P8).
 export const SLOT_MACHINE_LAYOUT = {
@@ -98,10 +99,14 @@ function SingleReel({
     /** Wider leading so wrapped names read at P8 pitch */
     const lineHeightUnitless = 1.34
     const fontPx = Math.min(
-        26,
-        Math.max(10, Math.round(slotSizePx * 0.2)),
-        Math.max(10, Math.floor((slotSizePx - 8) / (REEL_NAME_MAX_LINES * lineHeightUnitless)))
+        27,
+        Math.max(10, Math.round(slotSizePx * 0.21)),
+        Math.max(10, Math.round(slotSizePx * 0.21)),
+        Math.max(10, Math.floor((slotSizePx - 7) / (REEL_NAME_MAX_LINES * lineHeightUnitless)))
     )
+
+    const theme = useTheme()
+    const isDark = theme.palette.mode === 'dark'
 
     return (
         <Box
@@ -112,9 +117,11 @@ function SingleReel({
                 minWidth: slotSizePx * 1.5,
                 boxSizing: 'border-box',
                 borderRadius: 2,
-                background: 'linear-gradient(180deg, #ebe8e4 0%, #e0dcd6 100%)',
-                border: `${borderW}px solid #5a5550`,
-                boxShadow: '0 3px 12px rgba(0,0,0,0.12)',
+                background: isDark
+                    ? 'linear-gradient(180deg, #343842 0%, #252830 100%)'
+                    : 'linear-gradient(180deg, #ebe8e4 0%, #e0dcd6 100%)',
+                border: `${borderW}px solid ${isDark ? '#8b93a8' : '#5a5550'}`,
+                boxShadow: isDark ? '0 3px 18px rgba(0,0,0,0.5)' : '0 3px 12px rgba(0,0,0,0.12)',
             }}
         >
             <Box
@@ -143,7 +150,7 @@ function SingleReel({
                                 fontSize: `${fontPx}px`,
                                 fontWeight: 800,
                                 textAlign: 'center',
-                                color: '#1a1a1a',
+                                color: isDark ? 'rgba(255,255,255,0.94)' : '#1a1a1a',
                                 lineHeight: lineHeightUnitless,
                                 display: '-webkit-box',
                                 WebkitLineClamp: REEL_NAME_MAX_LINES,

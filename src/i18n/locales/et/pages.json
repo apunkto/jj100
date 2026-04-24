@@ -157,10 +157,16 @@
   "holeCard": {
     "noSpecialRules": "Erireeglid puuduvad"
   },
+  "leaderboard": {
+    "openWithId": "Ava võistluse ID-ga: /leaderboard?competitionId=123"
+  },
   "dashboard": {
     "loading": "Laen...",
     "competitionRequired": "Võistlus on nõutav",
     "openWithId": "Ava ekraan võistluse ID-ga: /dashboard?competitionId=123",
-    "noDivisions": "Klassid puuduvad"
+    "darkModeHint": "Lisa &darkMode=true väljas LED jaoks tumedaks kõrge kontrastsusega slaidideks.",
+    "noDivisions": "Klassid puuduvad",
+    "predictionTitle": "Ennustusmäng",
+    "predictionNoData": "Ennustuste tulemusi pole veel või ennustused pole sellel võistlusel lubatud."
   }
 }
