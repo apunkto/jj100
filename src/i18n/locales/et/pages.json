@@ -55,7 +55,8 @@
     "scorePar": "Par",
     "scoreBogey": "Bogey",
     "scoreDouble": "Double",
-    "scoreTriple": "Triple+"
+    "scoreTriple": "Triple+",
+    "progress": "Progress"
   },
   "results": {
     "title": "Tulemused",

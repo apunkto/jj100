@@ -35,6 +35,9 @@ export type MetrixPlayerStats = {
     } | null;
     holes: { played: number; total: number; playedPct: number | null };
     obHoles: number;
+    startGroup: number | null;
+    /** Index i = course hole i+1 vs par, null = not played. */
+    holeDiffs: (number | null)[];
 };
 
 // Generic envelope your BE returns: { success: true, data: ... }

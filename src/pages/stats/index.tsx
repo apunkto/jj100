@@ -25,6 +25,42 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     )
 }
 
+/** Course hole 1..N → display order starting at `startGroup` (1-based Metrix pool hole). */
+function orderHoleDiffsForStartGroup(
+    holeDiffs: (number | null)[],
+    totalHoles: number,
+    startGroup: number | null,
+): (number | null)[] {
+    const n = totalHoles
+    if (n <= 0) return []
+    let s = startGroup != null && Number.isFinite(startGroup) ? Math.floor(Number(startGroup)) : 1
+    if (s < 1 || s > n) s = 1
+    const out: (number | null)[] = []
+    for (let i = 0; i < n; i++) {
+        const courseHole = ((s - 1 + i) % n) + 1
+        out.push(holeDiffs[courseHole - 1] ?? null)
+    }
+    return out
+}
+
+const SCORE_CATEGORY_COLORS = {
+    eagles: '#f8c600',
+    birdies: 'rgba(62,195,0,.34)',
+    pars: '#ECECECFF',
+    bogeys: 'rgba(244,43,3,.12)',
+    doubleBogeys: 'rgba(244,43,3,.26)',
+    tripleOrWorse: 'rgba(244,43,3,.42)',
+} as const
+
+function diffToBreakdownColor(diff: number): string {
+    if (diff <= -2) return SCORE_CATEGORY_COLORS.eagles
+    if (diff === -1) return SCORE_CATEGORY_COLORS.birdies
+    if (diff === 0) return SCORE_CATEGORY_COLORS.pars
+    if (diff === 1) return SCORE_CATEGORY_COLORS.bogeys
+    if (diff === 2) return SCORE_CATEGORY_COLORS.doubleBogeys
+    return SCORE_CATEGORY_COLORS.tripleOrWorse
+}
+
 export default function PlayerStatsPage() {
     const { getMetrixPlayerStats } = useMetrixApi()
     const { t } = useTranslation('pages')
@@ -34,12 +70,12 @@ export default function PlayerStatsPage() {
     const breakdownCategories = useMemo(
         () =>
             [
-                { key: 'eagles' as const, color: '#f8c600', labelKey: 'stats.scoreEagle' as const },
-                { key: 'birdies' as const, color: 'rgba(62,195,0,.34)', labelKey: 'stats.scoreBirdie' as const },
-                { key: 'pars' as const, color: '#ECECECFF', labelKey: 'stats.scorePar' as const },
-                { key: 'bogeys' as const, color: 'rgba(244,43,3,.12)', labelKey: 'stats.scoreBogey' as const },
-                { key: 'doubleBogeys' as const, color: 'rgba(244,43,3,.26)', labelKey: 'stats.scoreDouble' as const },
-                { key: 'tripleOrWorse' as const, color: 'rgba(244,43,3,.42)', labelKey: 'stats.scoreTriple' as const },
+                { key: 'eagles' as const, color: SCORE_CATEGORY_COLORS.eagles, labelKey: 'stats.scoreEagle' as const },
+                { key: 'birdies' as const, color: SCORE_CATEGORY_COLORS.birdies, labelKey: 'stats.scoreBirdie' as const },
+                { key: 'pars' as const, color: SCORE_CATEGORY_COLORS.pars, labelKey: 'stats.scorePar' as const },
+                { key: 'bogeys' as const, color: SCORE_CATEGORY_COLORS.bogeys, labelKey: 'stats.scoreBogey' as const },
+                { key: 'doubleBogeys' as const, color: SCORE_CATEGORY_COLORS.doubleBogeys, labelKey: 'stats.scoreDouble' as const },
+                { key: 'tripleOrWorse' as const, color: SCORE_CATEGORY_COLORS.tripleOrWorse, labelKey: 'stats.scoreTriple' as const },
             ] as const,
         [],
     )
@@ -73,6 +109,12 @@ export default function PlayerStatsPage() {
         if (total === 0) return null
         return { categories, total }
     }, [stats?.scoreBreakdown, breakdownCategories, t])
+
+    const progressOrderedDiffs = useMemo(() => {
+        if (!stats?.holes.total) return []
+        const diffs = stats.holeDiffs ?? []
+        return orderHoleDiffsForStartGroup(diffs, stats.holes.total, stats.startGroup)
+    }, [stats?.holeDiffs, stats?.holes.total, stats?.startGroup])
 
     return (
         <Layout>
@@ -210,6 +252,48 @@ export default function PlayerStatsPage() {
                                                 {label}: {value}
                                             </Box>
                                         ))}
+                                </Box>
+                            </Box>
+                        )}
+
+                        {progressOrderedDiffs.length > 0 && (
+                            <Box sx={{ mt: 1.5, mb: 2 }} aria-label={t('stats.progress')}>
+                                <SectionTitle>{t('stats.progress')}</SectionTitle>
+                                <Box
+                                    sx={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(20, minmax(0, 1fr))',
+                                        columnGap: 0.5,
+                                        rowGap: 0.75,
+                                        width: '100%',
+                                    }}
+                                >
+                                    {progressOrderedDiffs.map((diff, idx) => {
+                                        const played = diff !== null
+                                        return (
+                                            <Box
+                                                key={idx}
+                                                sx={{
+                                                    width: '100%',
+                                                    maxWidth: 14,
+                                                    aspectRatio: '1',
+                                                    justifySelf: 'center',
+                                                    borderRadius: '50%',
+                                                    boxSizing: 'border-box',
+                                                    ...(played
+                                                        ? {
+                                                              bgcolor: diffToBreakdownColor(diff as number),
+                                                              border: '1px solid transparent',
+                                                          }
+                                                        : {
+                                                              bgcolor: 'transparent',
+                                                              border: '1px solid',
+                                                              borderColor: 'divider',
+                                                          }),
+                                                }}
+                                            />
+                                        )
+                                    })}
                                 </Box>
                             </Box>
                         )}
