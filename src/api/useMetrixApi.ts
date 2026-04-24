@@ -38,6 +38,11 @@ export type MetrixPlayerStats = {
     startGroup: number | null;
     /** Index i = course hole i+1 vs par, null = not played. */
     holeDiffs: (number | null)[];
+    /** Worst vs-par hole(s); absent on older API responses. */
+    worstResult?:
+        | null
+        | { kind: 'single'; holeNumber: number; strokes: number | null; diff: number }
+        | { kind: 'tied'; count: number; diff: number; strokesWhenUniform: number | null };
 };
 
 // Generic envelope your BE returns: { success: true, data: ... }

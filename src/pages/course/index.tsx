@@ -11,7 +11,8 @@ import useCtpApi, {Hole} from '@/src/api/useCtpApi'
 import useMetrixApi from '@/src/api/useMetrixApi'
 import {useAuth} from '@/src/contexts/AuthContext'
 import debounce from 'lodash/debounce'
-import HoleCard from "@/src/components/HoleCard";
+import HoleCard from "@/src/components/HoleCard"
+import {SCORE_CATEGORY_COLORS, ScoreResultCircle} from '@/src/components/ScoreResultCircle'
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import GpsFixedIcon from '@mui/icons-material/GpsFixed'
 import {useRouter} from 'next/router'
@@ -24,25 +25,15 @@ type HoleCacheEntry = {
 
 const DEFAULT_TOTAL_CARDS = 100
 
-// Score categories for bar and hole result circle (order: eagle → birdie → par → bogey → double → triple+)
+// Score categories for bar (order: eagle → birdie → par → bogey → double → triple+); colors shared with ScoreResultCircle
 const SCORE_CATEGORIES = [
-    { key: 'eagles', color: '#f8c600', label: 'Eagle' },
-    { key: 'birdies', color: 'rgba(62,195,0,.34)', label: 'Birdie' },
-    { key: 'pars', color: '#ECECECFF', label: 'Par' },
-    { key: 'bogeys', color: 'rgba(244,43,3,.12)', label: 'Bogey' },
-    { key: 'double_bogeys', color: 'rgba(244,43,3,.26)', label: 'Double' },
-    { key: 'others', color: 'rgba(244,43,3,.42)', label: 'Triple+' },
+    { key: 'eagles', color: SCORE_CATEGORY_COLORS.eagles, label: 'Eagle' },
+    { key: 'birdies', color: SCORE_CATEGORY_COLORS.birdies, label: 'Birdie' },
+    { key: 'pars', color: SCORE_CATEGORY_COLORS.pars, label: 'Par' },
+    { key: 'bogeys', color: SCORE_CATEGORY_COLORS.bogeys, label: 'Bogey' },
+    { key: 'double_bogeys', color: SCORE_CATEGORY_COLORS.doubleBogeys, label: 'Double' },
+    { key: 'others', color: SCORE_CATEGORY_COLORS.tripleOrWorse, label: 'Triple+' },
 ]
-
-function getHoleResultColor(result: number, par: number): string {
-    const diff = result - par
-    if (diff <= -2) return SCORE_CATEGORIES[0].color
-    if (diff === -1) return SCORE_CATEGORIES[1].color
-    if (diff === 0) return SCORE_CATEGORIES[2].color
-    if (diff === 1) return SCORE_CATEGORIES[3].color
-    if (diff === 2) return SCORE_CATEGORIES[4].color
-    return SCORE_CATEGORIES[5].color
-}
 
 export default function CoursePage() {
     const { t } = useTranslation('pages')
@@ -264,7 +255,6 @@ export default function CoursePage() {
     const userResult = currentHole?.user_result ?? null
     const userHasPenalty = !!currentHole?.user_has_penalty
     const resultNum = userResult != null ? parseInt(userResult, 10) : NaN
-    const holeResultColor = !isNaN(resultNum) ? getHoleResultColor(resultNum, par) : null
 
     return (
         <Layout>
@@ -375,26 +365,12 @@ export default function CoursePage() {
                                 <Typography variant="body2" color="text.secondary">
                                     {t('course.myResult')}
                                 </Typography>
-                                <Box
-                                    sx={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        backgroundColor: holeResultColor ?? 'action.hover',
-                                        fontSize: '0.95rem',
-                                        fontWeight: 600,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        lineHeight: 1,
-                                        ...(userHasPenalty && {
-                                            border: '2px solid',
-                                            borderColor: 'error.main',
-                                        }),
-                                    }}
-                                >
-                                    {userResult}
-                                </Box>
+                                <ScoreResultCircle
+                                    value={userResult}
+                                    strokes={resultNum}
+                                    par={par}
+                                    hasPenalty={userHasPenalty}
+                                />
                             </Box>
                         ) : holeInfo[currentHoleNumber]?.data.coordinates ? (
                             <Button

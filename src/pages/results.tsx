@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, CircularProgress, Tab, Tabs, Typography} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import {useAuth} from '@/src/contexts/AuthContext'
@@ -24,10 +24,20 @@ function ResultsTabs({
     currentUserMetrixId?: number
 }) {
     const { t } = useTranslation('pages')
-    const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
+    const { topPlayersByDivision, loading, error, refetch } = useTopPlayersByDivision(competitionId)
     const { getMyDivisionResult } = useMetrixApi()
     const [myDivisionResult, setMyDivisionResult] = useState<MyDivisionResultPayload>(null)
     const myDivisionName = myDivisionResult?.player?.ClassName
+
+    const loadMyDivision = useCallback(() => {
+        if (currentUserMetrixId == null) {
+            queueMicrotask(() => setMyDivisionResult(null))
+            return
+        }
+        getMyDivisionResult(competitionId)
+            .then(setMyDivisionResult)
+            .catch(() => setMyDivisionResult(null))
+    }, [competitionId, currentUserMetrixId, getMyDivisionResult])
 
     const divisionEntriesOrdered = useMemo(() => {
         const divisionEntries = Object.entries(topPlayersByDivision)
@@ -55,14 +65,29 @@ function ResultsTabs({
     const [selectedTab, setSelectedTab] = useState(0)
 
     useEffect(() => {
-        if (currentUserMetrixId == null) {
-            queueMicrotask(() => setMyDivisionResult(null))
-            return
+        loadMyDivision()
+    }, [loadMyDivision])
+
+    /** Reload after screen lock / backgrounding (same idea as stats page). */
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState !== 'visible') return
+            void refetch()
+            loadMyDivision()
         }
-        getMyDivisionResult(competitionId)
-            .then(setMyDivisionResult)
-            .catch(() => setMyDivisionResult(null))
-    }, [competitionId, currentUserMetrixId, getMyDivisionResult])
+        const onPageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                void refetch()
+                loadMyDivision()
+            }
+        }
+        document.addEventListener('visibilitychange', onVisible)
+        window.addEventListener('pageshow', onPageShow)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible)
+            window.removeEventListener('pageshow', onPageShow)
+        }
+    }, [refetch, loadMyDivision])
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setSelectedTab(newValue)

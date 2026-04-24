@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import {Box, CircularProgress, FormControlLabel, Switch, Typography, useTheme} from '@mui/material'
 import Layout from '@/src/components/Layout'
 import useMetrixApi, {MetrixPlayerStats, PoolParProgressPayload} from '@/src/api/useMetrixApi'
+import {SCORE_CATEGORY_COLORS, scoreColorFromDiff, ScoreResultCircle} from '@/src/components/ScoreResultCircle'
 import type {ParProgressSeries} from '@/src/components/stats/ParProgressChart'
 import {useTranslation} from 'react-i18next'
 
@@ -17,9 +18,9 @@ function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
             <Typography variant="body1" color="text.secondary">
                 {label}
             </Typography>
-            <Typography variant="body1" fontWeight={600} sx={{ textAlign: 'right' }}>
+            <Box sx={{ typography: 'body1', fontWeight: 600, textAlign: 'right', minWidth: 0 }}>
                 {value}
-            </Typography>
+            </Box>
         </Box>
     )
 }
@@ -29,6 +30,45 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
         <Typography variant="subtitle2" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', mb: 1 }}>
             {children}
         </Typography>
+    )
+}
+
+function WorstResultStatValue({ stats }: { stats: MetrixPlayerStats }) {
+    const { t } = useTranslation('pages')
+    const w = stats.worstResult
+    if (w == null) {
+        return '–'
+    }
+    const diffLabel = w.diff > 0 ? `+${w.diff}` : String(w.diff)
+    const wrap = (circle: React.ReactNode, text: React.ReactNode) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, flexWrap: 'wrap' }}>
+            {circle}
+            <Typography component="span" variant="body1" fontWeight={600}>
+                {text}
+            </Typography>
+        </Box>
+    )
+    if (w.kind === 'single') {
+        if (w.strokes != null) {
+            return wrap(
+                <ScoreResultCircle value={w.strokes} diffVsPar={w.diff} />,
+                t('stats.worstResultSingleHoleSuffix', { hole: w.holeNumber }),
+            )
+        }
+        return wrap(
+            <ScoreResultCircle value={diffLabel} diffVsPar={w.diff} />,
+            t('stats.worstResultSingleHoleSuffix', { hole: w.holeNumber }),
+        )
+    }
+    if (w.strokesWhenUniform != null) {
+        return wrap(
+            <ScoreResultCircle value={w.strokesWhenUniform} diffVsPar={w.diff} />,
+            t('stats.worstResultTiedCountSuffix', { count: w.count }),
+        )
+    }
+    return wrap(
+        <ScoreResultCircle value={diffLabel} diffVsPar={w.diff} />,
+        t('stats.worstResultTiedCountSuffix', { count: w.count }),
     )
 }
 
@@ -48,24 +88,6 @@ function orderHoleDiffsForStartGroup(
         out.push(holeDiffs[courseHole - 1] ?? null)
     }
     return out
-}
-
-const SCORE_CATEGORY_COLORS = {
-    eagles: '#f8c600',
-    birdies: 'rgba(62,195,0,.34)',
-    pars: '#ECECECFF',
-    bogeys: 'rgba(244,43,3,.12)',
-    doubleBogeys: 'rgba(244,43,3,.26)',
-    tripleOrWorse: 'rgba(244,43,3,.42)',
-} as const
-
-function diffToBreakdownColor(diff: number): string {
-    if (diff <= -2) return SCORE_CATEGORY_COLORS.eagles
-    if (diff === -1) return SCORE_CATEGORY_COLORS.birdies
-    if (diff === 0) return SCORE_CATEGORY_COLORS.pars
-    if (diff === 1) return SCORE_CATEGORY_COLORS.bogeys
-    if (diff === 2) return SCORE_CATEGORY_COLORS.doubleBogeys
-    return SCORE_CATEGORY_COLORS.tripleOrWorse
 }
 
 /** After theme primary: red → green → yellow → brown (max 5 in a pool). */
@@ -109,6 +131,23 @@ export default function PlayerStatsPage() {
 
     useEffect(() => {
         loadStats()
+    }, [loadStats])
+
+    /** After screen lock / backgrounding, reload so numbers are not stale on return. */
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState !== 'visible') return
+            void loadStats()
+        }
+        const onPageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) void loadStats()
+        }
+        document.addEventListener('visibilitychange', onVisible)
+        window.addEventListener('pageshow', onPageShow)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible)
+            window.removeEventListener('pageshow', onPageShow)
+        }
     }, [loadStats])
 
     useEffect(() => {
@@ -276,6 +315,7 @@ export default function PlayerStatsPage() {
                                             : String(stats.obHoles)
                                     }
                                 />
+                                <StatRow label={t('stats.worstResult')} value={<WorstResultStatValue stats={stats} />} />
                             </Box>
                         </Box>
 
@@ -355,7 +395,7 @@ export default function PlayerStatsPage() {
                                                 justifySelf: 'center',
                                                 borderRadius: '50%',
                                                 boxSizing: 'border-box',
-                                                bgcolor: diffToBreakdownColor(diff),
+                                                bgcolor: scoreColorFromDiff(diff),
                                             }}
                                         />
                                     ))}

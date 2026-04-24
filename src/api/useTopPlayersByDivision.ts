@@ -50,5 +50,5 @@ export function useTopPlayersByDivision(competitionId: number) {
         }
     }, [fetchData])
 
-    return { topPlayersByDivision, loading, error }
+    return { topPlayersByDivision, loading, error, refetch: fetchData }
 }

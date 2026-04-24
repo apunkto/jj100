@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useState} from 'react'
+import {type ReactNode, useCallback, useEffect, useRef, useState} from 'react'
 import {AppError} from '@/src/utils/AppError'
 import {
     Box,
@@ -137,72 +137,100 @@ export default function PredictionPage() {
         water_discs_count: false,
     })
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!user?.activeCompetitionId) {
-                setLoading(false)
-                return
-            }
+    const isEditingRef = useRef(isEditing)
+    isEditingRef.current = isEditing
 
+    /** `useConfigApi()` returns a new `isPredictionEnabled` fn each render — ref avoids unstable `useCallback` deps. */
+    const isPredictionEnabledRef = useRef(isPredictionEnabled)
+    isPredictionEnabledRef.current = isPredictionEnabled
+
+    const loadPredictionPage = useCallback(async () => {
+        if (!user?.activeCompetitionId) {
+            setLoading(false)
+            return
+        }
+
+        try {
+            setLoading(true)
+            const enabled = await isPredictionEnabledRef.current(user.activeCompetitionId)
+            setPredictionEnabled(enabled)
+
+            // Fetch user's prediction first to determine participation
+            let participating = true
             try {
-                setLoading(true)
-                const enabled = await isPredictionEnabled(user.activeCompetitionId)
-                setPredictionEnabled(enabled)
-
-                // Fetch user's prediction first to determine participation
-                let participating = true
-                try {
-                    const userPrediction = await getPrediction(user.activeCompetitionId)
+                const userPrediction = await getPrediction(user.activeCompetitionId)
+                setIsParticipating(true)
+                if (userPrediction) {
+                    setPrediction(userPrediction)
+                    if (enabled) {
+                        setFormData({
+                            best_overall_score: userPrediction.best_overall_score,
+                            best_female_score: userPrediction.best_female_score,
+                            will_rain: userPrediction.will_rain,
+                            player_own_score: userPrediction.player_own_score,
+                            hole_in_ones_count: userPrediction.hole_in_ones_count,
+                            water_discs_count: userPrediction.water_discs_count,
+                        })
+                    }
+                }
+            } catch (predErr: unknown) {
+                const message = predErr instanceof Error ? predErr.message : ''
+                const code = predErr instanceof AppError ? predErr.code : undefined
+                if (message.includes('not_competition_participant') || code === 'not_competition_participant') {
+                    participating = false
+                    setIsParticipating(false)
+                } else if (message.includes('not enabled')) {
                     setIsParticipating(true)
-                    if (userPrediction) {
-                        setPrediction(userPrediction)
-                        if (enabled) {
-                            setFormData({
-                                best_overall_score: userPrediction.best_overall_score,
-                                best_female_score: userPrediction.best_female_score,
-                                will_rain: userPrediction.will_rain,
-                                player_own_score: userPrediction.player_own_score,
-                                hole_in_ones_count: userPrediction.hole_in_ones_count,
-                                water_discs_count: userPrediction.water_discs_count,
-                            })
-                        }
-                    }
-                } catch (predErr: unknown) {
-                    const message = predErr instanceof Error ? predErr.message : ''
-                    const code = predErr instanceof AppError ? predErr.code : undefined
-                    if (message.includes('not_competition_participant') || code === 'not_competition_participant') {
-                        participating = false
-                        setIsParticipating(false)
-                    } else if (message.includes('not enabled')) {
-                        setIsParticipating(true)
-                    } else {
-                        setIsParticipating(true)
-                        console.error('Failed to fetch prediction:', predErr)
-                    }
+                } else {
+                    setIsParticipating(true)
+                    console.error('Failed to fetch prediction:', predErr)
                 }
-
-                // Fetch leaderboard only if participating or admin (leaderboard API fails for non-participants)
-                if (participating || user?.isAdmin) {
-                    try {
-                        const leaderboardData = await getLeaderboard(user.activeCompetitionId)
-                        setLeaderboard(leaderboardData)
-                    } catch (leaderboardErr) {
-                        console.error('Failed to fetch leaderboard:', leaderboardErr)
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch prediction data:', err)
-                showToast(t('toastLoadFailed'), 'error')
-            } finally {
-                setLoading(false)
             }
-        }
 
-        if (user?.activeCompetitionId !== undefined) {
-            fetchData()
+            // Fetch leaderboard only if participating or admin (leaderboard API fails for non-participants)
+            if (participating || user?.isAdmin) {
+                try {
+                    const leaderboardData = await getLeaderboard(user.activeCompetitionId)
+                    setLeaderboard(leaderboardData)
+                } catch (leaderboardErr) {
+                    console.error('Failed to fetch leaderboard:', leaderboardErr)
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch prediction data:', err)
+            showToast(t('toastLoadFailed'), 'error')
+        } finally {
+            setLoading(false)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.activeCompetitionId])
+    }, [user?.activeCompetitionId, user?.isAdmin, getPrediction, getLeaderboard, showToast, t])
+
+    useEffect(() => {
+        if (user?.activeCompetitionId !== undefined) {
+            void loadPredictionPage()
+        }
+    }, [user?.activeCompetitionId, loadPredictionPage])
+
+    /** Reload after unlock / foreground — not while edit form is open (would overwrite in-progress values). */
+    useEffect(() => {
+        const onVisible = () => {
+            if (document.visibilityState !== 'visible') return
+            if (isEditingRef.current) return
+            if (user?.activeCompetitionId == null) return
+            void loadPredictionPage()
+        }
+        const onPageShow = (e: PageTransitionEvent) => {
+            if (!e.persisted) return
+            if (isEditingRef.current) return
+            if (user?.activeCompetitionId == null) return
+            void loadPredictionPage()
+        }
+        document.addEventListener('visibilitychange', onVisible)
+        window.addEventListener('pageshow', onPageShow)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible)
+            window.removeEventListener('pageshow', onPageShow)
+        }
+    }, [loadPredictionPage, user?.activeCompetitionId])
 
     const validateForm = (): boolean => {
         const errors: typeof fieldErrors = {}
