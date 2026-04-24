@@ -279,7 +279,7 @@ export default function CtpHolePage({ hole }: { hole: string }) {
                                 component="img"
                                 src={holeInfo.ctp_sponsor_logo}
                                 alt={holeInfo.ctp_sponsor}
-                                sx={{ height: 50, maxWidth: 100, objectFit: "contain", flexShrink: 0 }}
+                                sx={{ height: 50, maxWidth: 150, objectFit: "contain", flexShrink: 0 }}
                             />
                         )}
                         <Box sx={{ textAlign: holeInfo.ctp_sponsor_logo ? "left" : "center" }}>
