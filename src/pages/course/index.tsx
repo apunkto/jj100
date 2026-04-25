@@ -25,6 +25,7 @@ import HoleCard from "@/src/components/HoleCard"
 import {SCORE_CATEGORY_COLORS, ScoreResultCircle} from '@/src/components/ScoreResultCircle'
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import GpsFixedIcon from '@mui/icons-material/GpsFixed'
+import CloseIcon from '@mui/icons-material/Close'
 import {useRouter} from 'next/router'
 import {useTranslation} from 'react-i18next'
 
@@ -50,7 +51,8 @@ type CourseFairwayPath = {
 }
 
 type GoogleMap = {
-    fitBounds: (bounds: GoogleLatLngBounds) => void
+    fitBounds: (bounds: GoogleLatLngBounds, padding?: number) => void
+    setHeading?: (heading: number) => void
 }
 
 type GoogleLatLngBounds = {
@@ -181,6 +183,16 @@ const parseKmlCoordinateList = (value: string | null | undefined): LatLngLiteral
         .filter((point): point is LatLngLiteral => point !== null)
 }
 
+const getBearingDegrees = (from: LatLngLiteral, to: LatLngLiteral) => {
+    const fromLat = (from.lat * Math.PI) / 180
+    const toLat = (to.lat * Math.PI) / 180
+    const deltaLng = ((to.lng - from.lng) * Math.PI) / 180
+
+    const y = Math.sin(deltaLng) * Math.cos(toLat)
+    const x = Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(deltaLng)
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
 const loadCourseKmlMarkers = () => {
     if (courseKmlMarkersPromise) return courseKmlMarkersPromise
 
@@ -275,14 +287,12 @@ function CourseNavigationMap({
     fromBasket,
     toTee,
     path,
-    fromBasketLabel,
-    toTeeLabel,
+    fairwayHoleNumber,
 }: {
     fromBasket: LatLngLiteral
     toTee: LatLngLiteral
     path: LatLngLiteral[]
-    fromBasketLabel: string
-    toTeeLabel: string
+    fairwayHoleNumber: number
 }) {
     const mapRef = useRef<HTMLDivElement | null>(null)
     const [mapLoadError, setMapLoadError] = useState(false)
@@ -303,6 +313,8 @@ function CourseNavigationMap({
                     mapTypeControl: false,
                     streetViewControl: false,
                 })
+
+                const currentFairwayPath = fairwayPaths.find((fairway) => Number(fairway.holeNumber) === fairwayHoleNumber)?.path ?? []
 
                 fairwayPaths.forEach((fairway) => {
                     new maps.Polyline({
@@ -339,8 +351,6 @@ function CourseNavigationMap({
                     })
                 })
 
-                new maps.Marker({position: fromBasket, map, label: fromBasketLabel, title: fromBasketLabel})
-                new maps.Marker({position: toTee, map, label: toTeeLabel, title: toTeeLabel})
                 new maps.Polyline({
                     path,
                     map,
@@ -365,8 +375,12 @@ function CourseNavigationMap({
                 })
 
                 const bounds = new maps.LatLngBounds()
-                ;[fromBasket, toTee, ...path].forEach((point) => bounds.extend(point))
-                map.fitBounds(bounds)
+                ;[fromBasket, toTee, ...path, ...currentFairwayPath].forEach((point) => bounds.extend(point))
+                map.fitBounds(bounds, 32)
+
+                if (currentFairwayPath.length >= 2) {
+                    map.setHeading?.(getBearingDegrees(currentFairwayPath[0], currentFairwayPath[currentFairwayPath.length - 1]))
+                }
             })
             .catch(() => {
                 if (!cancelled) setMapLoadError(true)
@@ -375,10 +389,10 @@ function CourseNavigationMap({
         return () => {
             cancelled = true
         }
-    }, [fromBasket, fromBasketLabel, path, toTee, toTeeLabel])
+    }, [fairwayHoleNumber, fromBasket, path, toTee])
 
     return (
-        <Box sx={{position: 'relative', width: '100%', height: {xs: '70vh', sm: 600}}}>
+        <Box sx={{position: 'relative', width: '100%', height: {xs: '100%', sm: 600}}}>
             <Box ref={mapRef} sx={{width: '100%', height: '100%'}} />
             {mapLoadError && (
                 <Box
@@ -626,18 +640,19 @@ export default function CoursePage() {
     }
 
     const currentHole = holeInfo[currentHoleNumber]?.data
-    const nextHole = currentHoleNumber < totalCards ? holeInfo[currentHoleNumber + 1]?.data : null
+    const previousHole = currentHoleNumber > 1 ? holeInfo[currentHoleNumber - 1]?.data : null
     const transitionRoute = useMemo(() => {
-        const path = parseNavigationPath(nextHole?.nav_from_previous)
+        const path = parseNavigationPath(currentHole?.nav_from_previous)
         if (!path || path.length < 2) return null
 
         return {
-            fromBasket: parseCoordinateString(currentHole?.target_coordinates) ?? path[0],
-            toTee: parseCoordinateString(nextHole?.coordinates) ?? path[path.length - 1],
+            fromBasket: parseCoordinateString(previousHole?.target_coordinates) ?? path[0],
+            toTee: parseCoordinateString(currentHole?.coordinates) ?? path[path.length - 1],
             path,
-            nextHoleNumber: currentHoleNumber + 1,
+            destinationHoleNumber: currentHoleNumber,
+            fairwayHoleNumber: currentHoleNumber - 1,
         }
-    }, [currentHole?.target_coordinates, currentHoleNumber, nextHole?.coordinates, nextHole?.nav_from_previous])
+    }, [currentHole?.coordinates, currentHole?.nav_from_previous, currentHoleNumber, previousHole?.target_coordinates])
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
     const isAdmin = user?.isAdmin ?? false
@@ -787,7 +802,7 @@ export default function CoursePage() {
                                         size="small"
                                         onClick={() => setNavDialogOpen(true)}
                                     >
-                                        {t('course.navigateToNextHole')}
+                                        {t('course.navigateToNextHoleTitle', {n: transitionRoute.destinationHoleNumber})}
                                     </Button>
                                 )}
                             </Box>
@@ -863,27 +878,48 @@ export default function CoursePage() {
                 fullScreen={navDialogFullScreen}
                 fullWidth
                 maxWidth="md"
+                slotProps={{
+                    paper: {
+                        sx: {
+                            overflow: 'hidden',
+                            height: {xs: '100dvh', sm: 'auto'},
+                        },
+                    },
+                }}
             >
-                <DialogTitle>
-                    {transitionRoute
-                        ? t('course.navigateToNextHoleTitle', {n: transitionRoute.nextHoleNumber})
-                        : t('course.navigateToNextHole')}
+                <DialogTitle
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                        px: 2,
+                        py: 1,
+                    }}
+                >
+                    <Typography variant="h6" component="span" noWrap>
+                        {transitionRoute
+                            ? t('course.navigateToNextHoleTitle', {n: transitionRoute.destinationHoleNumber})
+                            : t('course.navigateToNextHole')}
+                    </Typography>
+                    <IconButton
+                        aria-label={t('course.closeNavigationMap')}
+                        color="primary"
+                        edge="end"
+                        onClick={() => setNavDialogOpen(false)}
+                    >
+                        <CloseIcon />
+                    </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{p: {xs: 0, sm: 2}}}>
+                <DialogContent sx={{p: {xs: 0, sm: 2}, flex: 1, minHeight: 0, display: 'flex'}}>
                     {transitionRoute && (
                         <CourseNavigationMap
                             fromBasket={transitionRoute.fromBasket}
                             toTee={transitionRoute.toTee}
                             path={transitionRoute.path}
-                            fromBasketLabel={`Basket ${currentHoleNumber}`}
-                            toTeeLabel={`Tii ${transitionRoute.nextHoleNumber}`}
+                            fairwayHoleNumber={transitionRoute.fairwayHoleNumber}
                         />
                     )}
-                    <Box display="flex" justifyContent="flex-end" p={1}>
-                        <Button onClick={() => setNavDialogOpen(false)}>
-                            {t('course.closeNavigationMap')}
-                        </Button>
-                    </Box>
                 </DialogContent>
             </Dialog>
         </Layout>
