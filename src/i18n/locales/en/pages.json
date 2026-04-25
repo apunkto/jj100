@@ -89,6 +89,8 @@
     "navigateToNextHole": "Directions to next hole",
     "navigateToNextHoleTitle": "Directions to hole {{n}}",
     "navigateToNextHoleTitleWithDistance": "Directions to hole {{n}} ({{distance}}m)",
+    "navigateFromPreviousBasket": "From previous basket",
+    "navigateFromCurrentLocation": "From my location",
     "closeNavigationMap": "Close map",
     "hasCtp": "CTP hole",
     "markCtp": "Enter CTP",

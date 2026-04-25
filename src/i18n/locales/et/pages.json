@@ -89,6 +89,8 @@
     "navigateToNextHole": "Juhata rajale 2",
     "navigateToNextHoleTitle": "Juhata rajale {{n}}",
     "navigateToNextHoleTitleWithDistance": "Juhata rajale {{n}} ({{distance}}m)",
+    "navigateFromPreviousBasket": "Eelmise korvi juurest",
+    "navigateFromCurrentLocation": "Minu asukohast",
     "closeNavigationMap": "Sulge kaart",
     "hasCtp": "Sellel korvil on CTP",
     "markCtp": "Märgi CTP",

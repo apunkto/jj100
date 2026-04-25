@@ -11,6 +11,8 @@ import {
     DialogContent,
     DialogTitle,
     IconButton,
+    Menu,
+    MenuItem,
     TextField,
     Typography,
     useMediaQuery
@@ -445,7 +447,9 @@ export default function CoursePage() {
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
     const [navDialogOpen, setNavDialogOpen] = useState(false)
+    const [navMenuAnchorEl, setNavMenuAnchorEl] = useState<HTMLElement | null>(null)
     const navDialogFullScreen = useMediaQuery('(max-width:600px)')
+    const navMenuOpen = Boolean(navMenuAnchorEl)
 
     // Clear in-memory hole cache when user switches competition so we don't show wrong competition's data
     useEffect(() => {
@@ -579,6 +583,25 @@ export default function CoursePage() {
         if (!isNaN(parsed)) debouncedSlideTo(parsed)
     }
 
+    const closeNavigationMenu = () => {
+        setNavMenuAnchorEl(null)
+    }
+
+    const openNavigationFromPreviousBasket = () => {
+        closeNavigationMenu()
+        if (transitionRoute) setNavDialogOpen(true)
+    }
+
+    const openNavigationFromCurrentLocation = () => {
+        closeNavigationMenu()
+        if (!currentHole?.coordinates) return
+
+        window.open(
+            `https://www.google.com/maps/dir/?api=1&destination=${currentHole.coordinates}&travelmode=walking`,
+            '_blank'
+        )
+    }
+
     const renderScoreBar = () => {
         const holeData = holeInfo[currentHoleNumber]?.data
         if (!holeData) return null
@@ -673,7 +696,6 @@ export default function CoursePage() {
         : t('course.navigateToNextHole')
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
-    const isAdmin = user?.isAdmin ?? false
     const par = currentHole?.par ?? 3
     const userResult = currentHole?.user_result ?? null
     const userHasPenalty = !!currentHole?.user_has_penalty
@@ -797,32 +819,38 @@ export default function CoursePage() {
                             </Box>
                         ) : currentHole?.coordinates || transitionRoute ? (
                             <Box display="flex" justifyContent="center" flexWrap="wrap" gap={1}>
-                                {currentHole?.coordinates && (
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
-                                        size="small"
-                                        onClick={() => {
-                                            const coords = currentHole.coordinates
-                                            window.open(
-                                                `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`,
-                                                '_blank'
-                                            )
-                                        }}
+                                <Button
+                                    id="course-navigation-menu-button"
+                                    variant="outlined"
+                                    color="primary"
+                                    size="small"
+                                    aria-controls={navMenuOpen ? 'course-navigation-menu' : undefined}
+                                    aria-haspopup="true"
+                                    aria-expanded={navMenuOpen ? 'true' : undefined}
+                                    onClick={(event) => setNavMenuAnchorEl(event.currentTarget)}
+                                >
+                                    {t('course.navigateToHole')}
+                                </Button>
+                                <Menu
+                                    id="course-navigation-menu"
+                                    anchorEl={navMenuAnchorEl}
+                                    open={navMenuOpen}
+                                    onClose={closeNavigationMenu}
+                                    MenuListProps={{'aria-labelledby': 'course-navigation-menu-button'}}
+                                >
+                                    <MenuItem
+                                        disabled={!transitionRoute}
+                                        onClick={openNavigationFromPreviousBasket}
                                     >
-                                        {t('course.navigateToHole')}
-                                    </Button>
-                                )}
-                                {isAdmin && transitionRoute && (
-                                    <Button
-                                        variant="outlined"
-                                        color="primary"
-                                        size="small"
-                                        onClick={() => setNavDialogOpen(true)}
+                                        {t('course.navigateFromPreviousBasket')}
+                                    </MenuItem>
+                                    <MenuItem
+                                        disabled={!currentHole?.coordinates}
+                                        onClick={openNavigationFromCurrentLocation}
                                     >
-                                        {t('course.navigateToNextHoleTitle', {n: transitionRoute.destinationHoleNumber})}
-                                    </Button>
-                                )}
+                                        {t('course.navigateFromCurrentLocation')}
+                                    </MenuItem>
+                                </Menu>
                             </Box>
                         ) : null}
                     </Box>
