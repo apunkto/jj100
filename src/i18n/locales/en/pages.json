@@ -88,6 +88,7 @@
     "navigateToHole": "📍 Directions to hole",
     "navigateToNextHole": "Directions to next hole",
     "navigateToNextHoleTitle": "Directions to hole {{n}}",
+    "navigateToNextHoleTitleWithDistance": "Directions to hole {{n}} ({{distance}}m)",
     "closeNavigationMap": "Close map",
     "hasCtp": "CTP hole",
     "markCtp": "Enter CTP",

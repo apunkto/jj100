@@ -651,8 +651,26 @@ export default function CoursePage() {
             path,
             destinationHoleNumber: currentHoleNumber,
             fairwayHoleNumber: currentHoleNumber - 1,
+            distanceMeters:
+                typeof currentHole?.nav_from_previous_distance === 'number'
+                    ? Math.round(currentHole.nav_from_previous_distance)
+                    : null,
         }
-    }, [currentHole?.coordinates, currentHole?.nav_from_previous, currentHoleNumber, previousHole?.target_coordinates])
+    }, [
+        currentHole?.coordinates,
+        currentHole?.nav_from_previous,
+        currentHole?.nav_from_previous_distance,
+        currentHoleNumber,
+        previousHole?.target_coordinates,
+    ])
+    const transitionRouteTitle = transitionRoute
+        ? transitionRoute.distanceMeters != null
+            ? t('course.navigateToNextHoleTitleWithDistance', {
+                  n: transitionRoute.destinationHoleNumber,
+                  distance: transitionRoute.distanceMeters,
+              })
+            : t('course.navigateToNextHoleTitle', {n: transitionRoute.destinationHoleNumber})
+        : t('course.navigateToNextHole')
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
     const isAdmin = user?.isAdmin ?? false
@@ -898,9 +916,7 @@ export default function CoursePage() {
                     }}
                 >
                     <Typography variant="h6" component="span" noWrap>
-                        {transitionRoute
-                            ? t('course.navigateToNextHoleTitle', {n: transitionRoute.destinationHoleNumber})
-                            : t('course.navigateToNextHole')}
+                        {transitionRouteTitle}
                     </Typography>
                     <IconButton
                         aria-label={t('course.closeNavigationMap')}

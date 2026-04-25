@@ -88,6 +88,7 @@
     "navigateToHole": "📍 Juhata rajale",
     "navigateToNextHole": "Juhata rajale 2",
     "navigateToNextHoleTitle": "Juhata rajale {{n}}",
+    "navigateToNextHoleTitleWithDistance": "Juhata rajale {{n}} ({{distance}}m)",
     "closeNavigationMap": "Sulge kaart",
     "hasCtp": "Sellel korvil on CTP",
     "markCtp": "Märgi CTP",
