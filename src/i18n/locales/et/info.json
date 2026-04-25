@@ -19,5 +19,5 @@
   "payerNameRequired": "Maksja nimi on kohustuslik",
   "toastDownloaded": "Arve allalaetud!",
   "paymentChoiceLabel": "Makse selgitus",
-  "paymentChoiceRequired": "Leiti mitu makset. Vali nimekirjast õige makse kirjeldus."
+  "paymentChoiceRequired": "Leiti mitu makset. Vali nimekirjast õige makse selgitus."
 }
