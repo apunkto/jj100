@@ -35,6 +35,8 @@ export type Hole = {
     par: number
     length: number
     coordinates: string
+    target_coordinates?: string | null
+    nav_from_previous?: string | null
     rank: number
     average_diff: number
     ob_percent: number

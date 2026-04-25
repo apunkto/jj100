@@ -4,7 +4,17 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import {Navigation} from 'swiper/modules'
 import Layout from '@/src/components/Layout'
-import {Box, Button, IconButton, TextField, Typography} from '@mui/material'
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    TextField,
+    Typography,
+    useMediaQuery
+} from '@mui/material'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import useCtpApi, {Hole} from '@/src/api/useCtpApi'
@@ -23,7 +33,372 @@ type HoleCacheEntry = {
     fetchedAt: number
 }
 
+type LatLngLiteral = {
+    lat: number
+    lng: number
+}
+
+type CourseKmlMarker = {
+    position: LatLngLiteral
+    holeNumber: string
+    kind: 'tee' | 'basket'
+}
+
+type CourseFairwayPath = {
+    holeNumber: string
+    path: LatLngLiteral[]
+}
+
+type GoogleMap = {
+    fitBounds: (bounds: GoogleLatLngBounds) => void
+}
+
+type GoogleLatLngBounds = {
+    extend: (point: LatLngLiteral) => void
+}
+
+type GoogleMapsApi = {
+    Map: new (element: HTMLElement, options: {
+        center: LatLngLiteral
+        zoom: number
+        mapTypeId: string
+        fullscreenControl: boolean
+        mapTypeControl: boolean
+        streetViewControl: boolean
+    }) => GoogleMap
+    Marker: new (options: {
+        position: LatLngLiteral
+        map: GoogleMap
+        label: string | {
+            text: string
+            color: string
+            fontSize: string
+            fontWeight: string
+        }
+        title: string
+        icon?: {
+            path: number
+            scale: number
+            fillColor: string
+            fillOpacity: number
+            strokeColor: string
+            strokeWeight: number
+            labelOrigin: unknown
+        }
+    }) => unknown
+    Polyline: new (options: {
+        path: LatLngLiteral[]
+        map: GoogleMap
+        strokeWeight: number
+        strokeOpacity: number
+        strokeColor?: string
+        icons?: Array<{
+            icon: {
+                path: number
+                scale: number
+                fillColor: string
+                fillOpacity: number
+                strokeColor: string
+                strokeOpacity: number
+                strokeWeight: number
+            }
+            offset: string
+            repeat: string
+        }>
+        zIndex?: number
+    }) => unknown
+    LatLngBounds: new () => GoogleLatLngBounds
+    Point: new (x: number, y: number) => unknown
+    SymbolPath: {
+        CIRCLE: number
+    }
+}
+
+type GoogleMapsGlobal = {
+    maps: GoogleMapsApi
+}
+
+declare global {
+    interface Window {
+        google?: GoogleMapsGlobal
+        initCourseNavigationMap?: () => void
+    }
+}
+
 const DEFAULT_TOTAL_CARDS = 100
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCy0sLiAbVop7U805jotdW6FY9b6gzVHQw'
+const GOOGLE_MAPS_SCRIPT_ID = 'course-navigation-google-maps'
+const COURSE_KML_URL = '/kml/data.kml'
+const FAIRWAY_KML_URL = '/kml/Fairway.kml'
+
+let googleMapsPromise: Promise<GoogleMapsGlobal> | null = null
+let courseKmlMarkersPromise: Promise<CourseKmlMarker[]> | null = null
+let fairwayKmlPathsPromise: Promise<CourseFairwayPath[]> | null = null
+
+const parseCoordinateString = (value?: string | null): LatLngLiteral | null => {
+    if (!value) return null
+    const [latRaw, lngRaw] = value.split(',').map((part) => Number(part.trim()))
+    if (!Number.isFinite(latRaw) || !Number.isFinite(lngRaw)) return null
+    return {lat: latRaw, lng: lngRaw}
+}
+
+const parseNavigationPath = (value?: string | null): LatLngLiteral[] | null => {
+    if (!value) return null
+
+    try {
+        const parsed = JSON.parse(value) as unknown
+        if (!Array.isArray(parsed)) return null
+
+        const path = parsed
+            .map((point) => {
+                if (!Array.isArray(point) || point.length < 2) return null
+                const [lat, lng] = point.map(Number)
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                return {lat, lng}
+            })
+            .filter((point): point is LatLngLiteral => point !== null)
+
+        return path.length > 0 ? path : null
+    } catch {
+        return null
+    }
+}
+
+const parseKmlCoordinate = (value: string | null | undefined): LatLngLiteral | null => {
+    if (!value) return null
+    const [lngRaw, latRaw] = value.trim().split(',').map(Number)
+    if (!Number.isFinite(latRaw) || !Number.isFinite(lngRaw)) return null
+    return {lat: latRaw, lng: lngRaw}
+}
+
+const parseKmlCoordinateList = (value: string | null | undefined): LatLngLiteral[] => {
+    if (!value) return []
+
+    return value
+        .trim()
+        .split(/\s+/)
+        .map(parseKmlCoordinate)
+        .filter((point): point is LatLngLiteral => point !== null)
+}
+
+const loadCourseKmlMarkers = () => {
+    if (courseKmlMarkersPromise) return courseKmlMarkersPromise
+
+    courseKmlMarkersPromise = fetch(COURSE_KML_URL)
+        .then((response) => {
+            if (!response.ok) throw new Error('Course KML failed to load')
+            return response.text()
+        })
+        .then((kmlText) => {
+            const xml = new DOMParser().parseFromString(kmlText, 'application/xml')
+            const placemarks = Array.from(xml.getElementsByTagName('Placemark'))
+
+            return placemarks
+                .map((placemark): CourseKmlMarker | null => {
+                    const holeNumber = placemark.getElementsByTagName('name')[0]?.textContent?.trim()
+                    const description = placemark.getElementsByTagName('description')[0]?.textContent?.trim()
+                    const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent
+                    const position = parseKmlCoordinate(coordinates)
+
+                    if (!holeNumber || !position) return null
+                    if (description !== 'tii' && description !== 'korv') return null
+
+                    return {
+                        position,
+                        holeNumber,
+                        kind: description === 'tii' ? 'tee' : 'basket',
+                    }
+                })
+                .filter((marker): marker is CourseKmlMarker => marker !== null)
+        })
+
+    return courseKmlMarkersPromise
+}
+
+const loadFairwayKmlPaths = () => {
+    if (fairwayKmlPathsPromise) return fairwayKmlPathsPromise
+
+    fairwayKmlPathsPromise = fetch(FAIRWAY_KML_URL)
+        .then((response) => {
+            if (!response.ok) throw new Error('Fairway KML failed to load')
+            return response.text()
+        })
+        .then((kmlText) => {
+            const xml = new DOMParser().parseFromString(kmlText, 'application/xml')
+            const placemarks = Array.from(xml.getElementsByTagName('Placemark'))
+
+            return placemarks
+                .map((placemark): CourseFairwayPath | null => {
+                    const holeNumber = placemark.getElementsByTagName('name')[0]?.textContent?.trim()
+                    const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent
+                    const path = parseKmlCoordinateList(coordinates)
+
+                    if (!holeNumber || path.length < 2) return null
+                    return {holeNumber, path}
+                })
+                .filter((fairway): fairway is CourseFairwayPath => fairway !== null)
+        })
+
+    return fairwayKmlPathsPromise
+}
+
+const loadGoogleMaps = () => {
+    if (typeof window === 'undefined') return Promise.reject(new Error('Google Maps can only load in the browser'))
+    if (window.google?.maps) return Promise.resolve(window.google)
+    if (googleMapsPromise) return googleMapsPromise
+
+    googleMapsPromise = new Promise<GoogleMapsGlobal>((resolve, reject) => {
+        window.initCourseNavigationMap = () => {
+            if (window.google?.maps) {
+                resolve(window.google)
+            } else {
+                reject(new Error('Google Maps failed to initialize'))
+            }
+        }
+
+        const existingScript = document.getElementById(GOOGLE_MAPS_SCRIPT_ID)
+        if (existingScript) return
+
+        const script = document.createElement('script')
+        script.id = GOOGLE_MAPS_SCRIPT_ID
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initCourseNavigationMap`
+        script.async = true
+        script.defer = true
+        script.onerror = () => reject(new Error('Google Maps failed to load'))
+        document.head.appendChild(script)
+    })
+
+    return googleMapsPromise
+}
+
+function CourseNavigationMap({
+    fromBasket,
+    toTee,
+    path,
+    fromBasketLabel,
+    toTeeLabel,
+}: {
+    fromBasket: LatLngLiteral
+    toTee: LatLngLiteral
+    path: LatLngLiteral[]
+    fromBasketLabel: string
+    toTeeLabel: string
+}) {
+    const mapRef = useRef<HTMLDivElement | null>(null)
+    const [mapLoadError, setMapLoadError] = useState(false)
+
+    useEffect(() => {
+        let cancelled = false
+
+        Promise.all([loadGoogleMaps(), loadCourseKmlMarkers(), loadFairwayKmlPaths()])
+            .then(([{maps}, courseMarkers, fairwayPaths]) => {
+                if (cancelled || !mapRef.current) return
+
+                mapRef.current.innerHTML = ''
+                const map = new maps.Map(mapRef.current, {
+                    center: fromBasket,
+                    zoom: 18,
+                    mapTypeId: 'hybrid',
+                    fullscreenControl: true,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                })
+
+                fairwayPaths.forEach((fairway) => {
+                    new maps.Polyline({
+                        path: fairway.path,
+                        map,
+                        strokeColor: '#FFD600',
+                        strokeWeight: 3,
+                        strokeOpacity: 0.75,
+                        zIndex: 1,
+                    })
+                })
+
+                courseMarkers.forEach((marker) => {
+                    const isTee = marker.kind === 'tee'
+                    new maps.Marker({
+                        position: marker.position,
+                        map,
+                        label: {
+                            text: marker.holeNumber,
+                            color: '#ffffff',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                        },
+                        title: `${isTee ? 'Tee' : 'Basket'} ${marker.holeNumber}`,
+                        icon: {
+                            path: maps.SymbolPath.CIRCLE,
+                            scale: 9,
+                            fillColor: isTee ? '#FFD600' : '#0288D1',
+                            fillOpacity: 0.95,
+                            strokeColor: '#ffffff',
+                            strokeWeight: 2,
+                            labelOrigin: new maps.Point(0, 0),
+                        },
+                    })
+                })
+
+                new maps.Marker({position: fromBasket, map, label: fromBasketLabel, title: fromBasketLabel})
+                new maps.Marker({position: toTee, map, label: toTeeLabel, title: toTeeLabel})
+                new maps.Polyline({
+                    path,
+                    map,
+                    strokeWeight: 0,
+                    strokeOpacity: 0,
+                    icons: [
+                        {
+                            icon: {
+                                path: maps.SymbolPath.CIRCLE,
+                                scale: 4,
+                                fillColor: '#4FC3F7',
+                                fillOpacity: 1,
+                                strokeColor: '#0288D1',
+                                strokeOpacity: 1,
+                                strokeWeight: 1,
+                            },
+                            offset: '0',
+                            repeat: '16px',
+                        },
+                    ],
+                    zIndex: 2,
+                })
+
+                const bounds = new maps.LatLngBounds()
+                ;[fromBasket, toTee, ...path].forEach((point) => bounds.extend(point))
+                map.fitBounds(bounds)
+            })
+            .catch(() => {
+                if (!cancelled) setMapLoadError(true)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [fromBasket, fromBasketLabel, path, toTee, toTeeLabel])
+
+    return (
+        <Box sx={{position: 'relative', width: '100%', height: {xs: '70vh', sm: 600}}}>
+            <Box ref={mapRef} sx={{width: '100%', height: '100%'}} />
+            {mapLoadError && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'background.paper',
+                        px: 2,
+                        textAlign: 'center',
+                    }}
+                >
+                    <Typography color="error">Google Maps laadimine ebaõnnestus.</Typography>
+                </Box>
+            )}
+        </Box>
+    )
+}
 
 // Score categories for bar (order: eagle → birdie → par → bogey → double → triple+); colors shared with ScoreResultCircle
 const SCORE_CATEGORIES = [
@@ -55,6 +430,8 @@ export default function CoursePage() {
 
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
+    const [navDialogOpen, setNavDialogOpen] = useState(false)
+    const navDialogFullScreen = useMediaQuery('(max-width:600px)')
 
     // Clear in-memory hole cache when user switches competition so we don't show wrong competition's data
     useEffect(() => {
@@ -249,8 +626,21 @@ export default function CoursePage() {
     }
 
     const currentHole = holeInfo[currentHoleNumber]?.data
+    const nextHole = currentHoleNumber < totalCards ? holeInfo[currentHoleNumber + 1]?.data : null
+    const transitionRoute = useMemo(() => {
+        const path = parseNavigationPath(nextHole?.nav_from_previous)
+        if (!path || path.length < 2) return null
+
+        return {
+            fromBasket: parseCoordinateString(currentHole?.target_coordinates) ?? path[0],
+            toTee: parseCoordinateString(nextHole?.coordinates) ?? path[path.length - 1],
+            path,
+            nextHoleNumber: currentHoleNumber + 1,
+        }
+    }, [currentHole?.target_coordinates, currentHoleNumber, nextHole?.coordinates, nextHole?.nav_from_previous])
     const hasCtp = !!currentHole?.is_ctp
     const hasFood = !!currentHole?.is_food
+    const isAdmin = user?.isAdmin ?? false
     const par = currentHole?.par ?? 3
     const userResult = currentHole?.user_result ?? null
     const userHasPenalty = !!currentHole?.user_has_penalty
@@ -372,21 +762,35 @@ export default function CoursePage() {
                                     hasPenalty={userHasPenalty}
                                 />
                             </Box>
-                        ) : holeInfo[currentHoleNumber]?.data.coordinates ? (
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                onClick={() => {
-                                    const coords = holeInfo[currentHoleNumber]!.data.coordinates
-                                    window.open(
-                                        `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`,
-                                        '_blank'
-                                    )
-                                }}
-                            >
-                                {t('course.navigateToHole')}
-                            </Button>
+                        ) : currentHole?.coordinates || transitionRoute ? (
+                            <Box display="flex" justifyContent="center" flexWrap="wrap" gap={1}>
+                                {currentHole?.coordinates && (
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        size="small"
+                                        onClick={() => {
+                                            const coords = currentHole.coordinates
+                                            window.open(
+                                                `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=walking`,
+                                                '_blank'
+                                            )
+                                        }}
+                                    >
+                                        {t('course.navigateToHole')}
+                                    </Button>
+                                )}
+                                {isAdmin && transitionRoute && (
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        size="small"
+                                        onClick={() => setNavDialogOpen(true)}
+                                    >
+                                        {t('course.navigateToNextHole')}
+                                    </Button>
+                                )}
+                            </Box>
                         ) : null}
                     </Box>
                     <IconButton color="primary" ref={nextRef}>
@@ -453,6 +857,35 @@ export default function CoursePage() {
                 {renderScoreBar()}
 
             </Box>
+            <Dialog
+                open={navDialogOpen && transitionRoute !== null}
+                onClose={() => setNavDialogOpen(false)}
+                fullScreen={navDialogFullScreen}
+                fullWidth
+                maxWidth="md"
+            >
+                <DialogTitle>
+                    {transitionRoute
+                        ? t('course.navigateToNextHoleTitle', {n: transitionRoute.nextHoleNumber})
+                        : t('course.navigateToNextHole')}
+                </DialogTitle>
+                <DialogContent sx={{p: {xs: 0, sm: 2}}}>
+                    {transitionRoute && (
+                        <CourseNavigationMap
+                            fromBasket={transitionRoute.fromBasket}
+                            toTee={transitionRoute.toTee}
+                            path={transitionRoute.path}
+                            fromBasketLabel={`Basket ${currentHoleNumber}`}
+                            toTeeLabel={`Tii ${transitionRoute.nextHoleNumber}`}
+                        />
+                    )}
+                    <Box display="flex" justifyContent="flex-end" p={1}>
+                        <Button onClick={() => setNavDialogOpen(false)}>
+                            {t('course.closeNavigationMap')}
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
         </Layout>
     )
 }
