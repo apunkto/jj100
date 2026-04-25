@@ -1,6 +1,7 @@
 {
   "bill_missing_payment_details": "Palun täida maksja pangakonto number ja maksja nimi.",
   "bill_transaction_not_found": "Makset ei leitud. Kontrolli IBAN-i ja maksja nime nagu pangaväljavõttel.",
-  "bill_multiple_payments": "Selle IBAN-i ja nimega leiti mitu makset. Arve saamiseks võta ühendust korraldajatega.",
-  "bill_lookup_failed": "Arve koostamine ebaõnnestus"
+  "bill_multiple_payments": "Leiti mitu makset. Vali nimekirjast sobiv makse kirjeldus.",
+  "bill_lookup_failed": "Arve koostamine ebaõnnestus",
+  "bill_invalid_payment_selection": "Valitud makse ei ole enam kehtiv. Palun vali makse uuesti nimekirjast."
 }

@@ -10,6 +10,7 @@ import {
     DialogTitle,
     IconButton,
     Link as MuiLink,
+    MenuItem,
     TextField,
     Typography,
 } from '@mui/material'
@@ -21,7 +22,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import {useAuth} from '@/src/contexts/AuthContext'
 import usePlayerApi from '@/src/api/usePlayerApi'
-import useBillApi from '@/src/api/useBillApi'
+import useBillApi, {type BillPaymentChoice} from '@/src/api/useBillApi'
 import {useToast} from '@/src/contexts/ToastContext'
 import {generateBillPdf} from '@/src/utils/generateBillPdf'
 import {normalizeBillIban, normalizeBillPayerName} from '@/src/utils/billInputNormalize'
@@ -77,6 +78,8 @@ export default function InfoPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [iban, setIban] = useState('')
     const [payerName, setPayerName] = useState('')
+    const [paymentChoices, setPaymentChoices] = useState<BillPaymentChoice[]>([])
+    const [selectedPaymentKey, setSelectedPaymentKey] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -111,18 +114,34 @@ export default function InfoPage() {
             setError(t('payerNameRequired'))
             return
         }
+        if (paymentChoices.length > 0 && !selectedPaymentKey) {
+            setError(t('paymentChoiceRequired'))
+            return
+        }
 
         setLoading(true)
         try {
-            const bill = await lookupBill(normalizedIban, normalizedPayerName)
+            const bill = await lookupBill(normalizedIban, normalizedPayerName, selectedPaymentKey || undefined)
             await generateBillPdf(bill)
             showToast(t('toastDownloaded'), 'success')
             setDialogOpen(false)
             setIban('')
             setPayerName('')
+            setPaymentChoices([])
+            setSelectedPaymentKey('')
         } catch (err) {
             const code =
                 err instanceof Error && 'code' in err ? (err as Error & {code?: string}).code : undefined
+            const choices =
+                err instanceof Error && 'choices' in err
+                    ? (err as Error & {choices?: BillPaymentChoice[]}).choices
+                    : undefined
+            if (code === 'bill_multiple_payments' && Array.isArray(choices) && choices.length > 0) {
+                setPaymentChoices(choices)
+                setSelectedPaymentKey('')
+                setError(t('paymentChoiceRequired'))
+                return
+            }
             const fallback = err instanceof Error ? err.message : tErr('bill_lookup_failed')
             setError(code ? tErr(code, {defaultValue: fallback}) : fallback)
         } finally {
@@ -233,6 +252,8 @@ export default function InfoPage() {
                                 }}
                                 onClick={() => {
                                     setError(null)
+                                    setPaymentChoices([])
+                                    setSelectedPaymentKey('')
                                     setDialogOpen(true)
                                 }}
                             >
@@ -265,17 +286,49 @@ export default function InfoPage() {
                         placeholder="EE..."
                         fullWidth
                         value={iban}
-                        onChange={(e) => setIban(e.target.value)}
+                        onChange={(e) => {
+                            setIban(e.target.value)
+                            if (paymentChoices.length > 0) {
+                                setPaymentChoices([])
+                                setSelectedPaymentKey('')
+                            }
+                        }}
                         disabled={loading}
                     />
                     <TextField
                         label={t('payerNameLabel')}
                         fullWidth
                         value={payerName}
-                        onChange={(e) => setPayerName(e.target.value)}
+                        onChange={(e) => {
+                            setPayerName(e.target.value)
+                            if (paymentChoices.length > 0) {
+                                setPaymentChoices([])
+                                setSelectedPaymentKey('')
+                            }
+                        }}
                         disabled={loading}
                         sx={{mt: 2}}
                     />
+                    {paymentChoices.length > 0 && (
+                        <TextField
+                            select
+                            label={t('paymentChoiceLabel')}
+                            fullWidth
+                            value={selectedPaymentKey}
+                            onChange={(e) => {
+                                setSelectedPaymentKey(e.target.value)
+                                setError(null)
+                            }}
+                            disabled={loading}
+                            sx={{mt: 2}}
+                        >
+                            {paymentChoices.map((choice) => (
+                                <MenuItem key={choice.paymentKey} value={choice.paymentKey}>
+                                    {choice.description}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    )}
                     {error && (
                         <Typography color="error" variant="body2" sx={{mt: 2}}>
                             {error}

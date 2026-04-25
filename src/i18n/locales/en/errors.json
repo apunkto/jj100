@@ -1,6 +1,7 @@
 {
   "bill_missing_payment_details": "Please fill in the payer bank account number and payer name.",
   "bill_transaction_not_found": "Payment not found. Check the IBAN and payer name as on the bank statement.",
-  "bill_multiple_payments": "More than one payment matches these details. Contact the organisers for an invoice.",
-  "bill_lookup_failed": "Could not create the invoice"
+  "bill_multiple_payments": "Multiple payments were found. Please select the matching payment description.",
+  "bill_lookup_failed": "Could not create the invoice",
+  "bill_invalid_payment_selection": "The selected payment is no longer valid. Please choose one again from the list."
 }

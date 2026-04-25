@@ -10,12 +10,14 @@
   "invoiceSection": "Invoice",
   "issueInvoice": "Download invoice",
   "dialogTitle": "Download invoice",
-  "dialogBody": "You can issue an invoice based on your bank payment. Enter the payer IBAN and name exactly as they appear on the statement.",
+  "dialogBody": "You can issue an invoice based on your bank payment. Enter the payer IBAN and name from the statement.",
   "ibanLabel": "Payer IBAN",
   "payerNameLabel": "Payer name (as on bank statement)",
   "cancel": "Cancel",
   "buildInvoice": "Create invoice",
   "ibanRequired": "Bank account number is required",
   "payerNameRequired": "Payer name is required",
-  "toastDownloaded": "Invoice downloaded!"
+  "toastDownloaded": "Invoice downloaded!",
+  "paymentChoiceLabel": "Payment description",
+  "paymentChoiceRequired": "Multiple payments were found. Select the correct payment description from the list."
 }

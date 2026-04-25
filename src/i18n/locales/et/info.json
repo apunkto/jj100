@@ -10,12 +10,14 @@
   "invoiceSection": "Arve",
   "issueInvoice": "Väljasta arve",
   "dialogTitle": "Väljasta arve",
-  "dialogBody": "Arve saad väljastada makse alusel. Sisesta maksja IBAN ja nimi täpselt nii, nagu need pangaväljavõttel kuvatakse.",
+  "dialogBody": "Arve saad väljastada makse alusel. Sisesta maksekorraldusel olev IBAN ja maksja nimi.",
   "ibanLabel": "Maksja pangakonto nr",
-  "payerNameLabel": "Maksja nimi (nagu pangaväljavõttel)",
+  "payerNameLabel": "Maksja nimi",
   "cancel": "Katkesta",
   "buildInvoice": "Koosta arve",
   "ibanRequired": "Pangakonto number on kohustuslik",
   "payerNameRequired": "Maksja nimi on kohustuslik",
-  "toastDownloaded": "Arve allalaetud!"
+  "toastDownloaded": "Arve allalaetud!",
+  "paymentChoiceLabel": "Makse selgitus",
+  "paymentChoiceRequired": "Leiti mitu makset. Vali nimekirjast õige makse kirjeldus."
 }

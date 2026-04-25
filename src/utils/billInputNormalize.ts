@@ -16,6 +16,6 @@ export function normalizeBillIban(input: string): string {
 }
 
 export function normalizeBillPayerName(input: string): string {
-    const collapsed = stripInvisibleControls(input).normalize('NFKC').trim().replace(/\s+/g, '')
+    const collapsed = stripInvisibleControls(input).normalize('NFKC').trim().replace(/\s+/g, ' ')
     return collapsed.toLocaleUpperCase('et-EE')
 }
