@@ -445,6 +445,7 @@ export default function CoursePage() {
     const [holeInfo, setHoleInfo] = useState<Record<number, HoleCacheEntry>>({})
     const [searchInput, setSearchInput] = useState<string>('')
     const [navDialogOpen, setNavDialogOpen] = useState(false)
+    const navDialogHistoryPushed = useRef(false)
     const [navMenuAnchorEl, setNavMenuAnchorEl] = useState<HTMLElement | null>(null)
     const navDialogFullScreen = useMediaQuery('(max-width:600px)')
     const navMenuOpen = Boolean(navMenuAnchorEl)
@@ -585,9 +586,33 @@ export default function CoursePage() {
         setNavMenuAnchorEl(null)
     }
 
+    const openNavigationDialog = () => {
+        if (!transitionRoute) return
+
+        if (!navDialogHistoryPushed.current) {
+            window.history.pushState(
+                {...window.history.state, courseNavigationDialog: true},
+                '',
+                window.location.href
+            )
+            navDialogHistoryPushed.current = true
+        }
+
+        setNavDialogOpen(true)
+    }
+
+    const closeNavigationDialog = () => {
+        setNavDialogOpen(false)
+
+        if (navDialogHistoryPushed.current) {
+            navDialogHistoryPushed.current = false
+            window.history.back()
+        }
+    }
+
     const openNavigationFromPreviousBasket = () => {
         closeNavigationMenu()
-        if (transitionRoute) setNavDialogOpen(true)
+        openNavigationDialog()
     }
 
     const openNavigationFromCurrentLocation = () => {
@@ -599,6 +624,20 @@ export default function CoursePage() {
             '_blank'
         )
     }
+
+    useEffect(() => {
+        const handlePopState = () => {
+            if (!navDialogHistoryPushed.current) return
+
+            navDialogHistoryPushed.current = false
+            setNavDialogOpen(false)
+        }
+
+        window.addEventListener('popstate', handlePopState)
+        return () => {
+            window.removeEventListener('popstate', handlePopState)
+        }
+    }, [])
 
     const renderScoreBar = () => {
         const holeData = holeInfo[currentHoleNumber]?.data
@@ -918,7 +957,7 @@ export default function CoursePage() {
             </Box>
             <Dialog
                 open={navDialogOpen && transitionRoute !== null}
-                onClose={() => setNavDialogOpen(false)}
+                onClose={closeNavigationDialog}
                 fullScreen={navDialogFullScreen}
                 fullWidth
                 maxWidth="md"
@@ -948,7 +987,7 @@ export default function CoursePage() {
                         aria-label={t('course.closeNavigationMap')}
                         color="primary"
                         edge="end"
-                        onClick={() => setNavDialogOpen(false)}
+                        onClick={closeNavigationDialog}
                     >
                         <CloseIcon />
                     </IconButton>
