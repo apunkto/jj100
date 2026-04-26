@@ -52,13 +52,6 @@ type CourseFairwayPath = {
     path: LatLngLiteral[]
 }
 
-type ZipEntry = {
-    name: string
-    compressionMethod: number
-    compressedSize: number
-    dataOffset: number
-}
-
 type GoogleMap = {
     fitBounds: (bounds: GoogleLatLngBounds, padding?: number) => void
     setHeading?: (heading: number) => void
@@ -139,8 +132,8 @@ declare global {
 const DEFAULT_TOTAL_CARDS = 100
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCy0sLiAbVop7U805jotdW6FY9b6gzVHQw'
 const GOOGLE_MAPS_SCRIPT_ID = 'course-navigation-google-maps'
-const COURSE_KMZ_URL = '/kml/Korvid & Tiialad.kmz'
-const FAIRWAY_KMZ_URL = '/kml/Fairway.kmz'
+const COURSE_KML_URL = '/kml/Korvid & Tiialad.kml'
+const FAIRWAY_KML_URL = '/kml/Fairway.kml'
 
 let googleMapsPromise: Promise<GoogleMapsGlobal> | null = null
 let courseKmlMarkersPromise: Promise<CourseKmlMarker[]> | null = null
@@ -202,90 +195,16 @@ const getBearingDegrees = (from: LatLngLiteral, to: LatLngLiteral) => {
     return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
 }
 
-const readZipEntries = (buffer: ArrayBuffer): ZipEntry[] => {
-    const view = new DataView(buffer)
-    const bytes = new Uint8Array(buffer)
-    let eocdOffset = -1
-
-    for (let offset = bytes.length - 22; offset >= 0; offset -= 1) {
-        if (view.getUint32(offset, true) === 0x06054b50) {
-            eocdOffset = offset
-            break
-        }
-    }
-
-    if (eocdOffset === -1) throw new Error('KMZ end of central directory was not found')
-
-    const centralDirectoryOffset = view.getUint32(eocdOffset + 16, true)
-    const entryCount = view.getUint16(eocdOffset + 10, true)
-    const textDecoder = new TextDecoder()
-    const entries: ZipEntry[] = []
-    let offset = centralDirectoryOffset
-
-    for (let index = 0; index < entryCount; index += 1) {
-        if (view.getUint32(offset, true) !== 0x02014b50) throw new Error('Invalid KMZ central directory')
-
-        const compressionMethod = view.getUint16(offset + 10, true)
-        const compressedSize = view.getUint32(offset + 20, true)
-        const fileNameLength = view.getUint16(offset + 28, true)
-        const extraFieldLength = view.getUint16(offset + 30, true)
-        const commentLength = view.getUint16(offset + 32, true)
-        const localHeaderOffset = view.getUint32(offset + 42, true)
-        const nameBytes = bytes.slice(offset + 46, offset + 46 + fileNameLength)
-        const name = textDecoder.decode(nameBytes)
-
-        const localFileNameLength = view.getUint16(localHeaderOffset + 26, true)
-        const localExtraFieldLength = view.getUint16(localHeaderOffset + 28, true)
-        entries.push({
-            name,
-            compressionMethod,
-            compressedSize,
-            dataOffset: localHeaderOffset + 30 + localFileNameLength + localExtraFieldLength,
-        })
-
-        offset += 46 + fileNameLength + extraFieldLength + commentLength
-    }
-
-    return entries
-}
-
-const inflateRaw = async (compressed: Uint8Array) => {
-    const compressedBuffer = compressed.buffer.slice(
-        compressed.byteOffset,
-        compressed.byteOffset + compressed.byteLength
-    ) as ArrayBuffer
-    const stream = new Blob([compressedBuffer]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
-    return new Uint8Array(await new Response(stream).arrayBuffer())
-}
-
-const loadKmlTextFromKmz = async (url: string) => {
+const loadKmlText = async (url: string) => {
     const response = await fetch(url)
-    if (!response.ok) throw new Error(`KMZ failed to load: ${url}`)
-
-    const buffer = await response.arrayBuffer()
-    const entries = readZipEntries(buffer)
-    const kmlEntry =
-        entries.find((entry) => entry.name.split('/').pop()?.toLowerCase() === 'doc.kml') ??
-        entries.find((entry) => entry.name.toLowerCase().endsWith('.kml'))
-
-    if (!kmlEntry) throw new Error(`KMZ contains no KML file: ${url}`)
-
-    const compressed = new Uint8Array(buffer, kmlEntry.dataOffset, kmlEntry.compressedSize)
-    const kmlBytes =
-        kmlEntry.compressionMethod === 0
-            ? compressed
-            : kmlEntry.compressionMethod === 8
-              ? await inflateRaw(compressed)
-              : null
-
-    if (!kmlBytes) throw new Error(`Unsupported KMZ compression method: ${kmlEntry.compressionMethod}`)
-    return new TextDecoder().decode(kmlBytes)
+    if (!response.ok) throw new Error(`KML failed to load: ${url}`)
+    return response.text()
 }
 
 const loadCourseKmlMarkers = () => {
     if (courseKmlMarkersPromise) return courseKmlMarkersPromise
 
-    courseKmlMarkersPromise = loadKmlTextFromKmz(COURSE_KMZ_URL)
+    courseKmlMarkersPromise = loadKmlText(COURSE_KML_URL)
         .then((kmlText) => {
             const xml = new DOMParser().parseFromString(kmlText, 'application/xml')
             const placemarks = Array.from(xml.getElementsByTagName('Placemark'))
@@ -315,7 +234,7 @@ const loadCourseKmlMarkers = () => {
 const loadFairwayKmlPaths = () => {
     if (fairwayKmlPathsPromise) return fairwayKmlPathsPromise
 
-    fairwayKmlPathsPromise = loadKmlTextFromKmz(FAIRWAY_KMZ_URL)
+    fairwayKmlPathsPromise = loadKmlText(FAIRWAY_KML_URL)
         .then((kmlText) => {
             const xml = new DOMParser().parseFromString(kmlText, 'application/xml')
             const placemarks = Array.from(xml.getElementsByTagName('Placemark'))
@@ -416,17 +335,17 @@ function CourseNavigationMap({
                         label: {
                             text: marker.holeNumber,
                             color: '#ffffff',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             fontWeight: '700',
                         },
                         title: `${isTee ? 'Tee' : 'Basket'} ${marker.holeNumber}`,
                         icon: {
                             path: maps.SymbolPath.CIRCLE,
-                            scale: 9,
+                            scale: 12,
                             fillColor: isTee ? '#FFD600' : '#0288D1',
                             fillOpacity: 0.95,
                             strokeColor: '#ffffff',
-                            strokeWeight: 2,
+                            strokeWeight: 3,
                             labelOrigin: new maps.Point(0, 0),
                         },
                     })
