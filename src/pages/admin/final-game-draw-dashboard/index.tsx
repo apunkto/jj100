@@ -6,7 +6,7 @@ import Confetti from 'react-dom-confetti'
 import Image from 'next/image'
 import NextLink from 'next/link'
 import {useRouter} from 'next/router'
-import type {FinalGameDrawResponse} from '@/src/api/useCheckinApi'
+import type {FinalGameDrawResponse, PuttingGameState} from '@/src/api/useCheckinApi'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
 
@@ -30,7 +30,13 @@ export default function FinalGameDrawDashboard() {
     const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
 
-    const {getFinalGameDrawState, subscribeToFinalGameDrawState, getCheckins} = useCheckinApi()
+    const {
+        getFinalGameDrawState,
+        subscribeToFinalGameDrawState,
+        getCheckins,
+        getFinalGamePuttingState,
+        subscribeToFinalGamePuttingState,
+    } = useCheckinApi()
 
     const [state, setState] = useState<FinalGameDrawResponse>({
         finalGameParticipants: [],
@@ -101,6 +107,75 @@ export default function FinalGameDrawDashboard() {
     const participants = state.finalGameParticipants ?? []
     const sortedParticipants = [...participants].sort((a, b) => a.order - b.order)
     const isComplete = sortedParticipants.length >= 10
+
+    /** When 10 participants are locked, SSE to putting game — redirect once admin starts («Alusta mängu» → `running`). */
+    useEffect(() => {
+        if (!router.isReady || sortedParticipants.length < 10) {
+            return undefined
+        }
+
+        let cancelled = false
+        let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+        let puttingUnsub: (() => void) | null = null
+        let redirected = false
+
+        const clearReconnectTimer = () => {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer)
+                reconnectTimer = null
+            }
+        }
+
+        const cleanupPuttingSocket = () => {
+            puttingUnsub?.()
+            puttingUnsub = null
+        }
+
+        const goToPuttingIfRunning = (data: PuttingGameState) => {
+            if (cancelled || redirected || data.status !== 'running') return
+            redirected = true
+            clearReconnectTimer()
+            cleanupPuttingSocket()
+            const qs = darkMode ? '?darkMode=true' : ''
+            void router.replace(`/admin/final-game-putting-dashboard${qs}`)
+        }
+
+        const connectPuttingSse = () => {
+            if (cancelled || redirected) return
+            cleanupPuttingSocket()
+            puttingUnsub = subscribeToFinalGamePuttingState(
+                goToPuttingIfRunning,
+                () => {
+                    if (cancelled || redirected) return
+                    reconnectTimer = setTimeout(connectPuttingSse, RECONNECT_DELAY_MS)
+                },
+            )
+        }
+
+        void (async () => {
+            try {
+                const initial = await getFinalGamePuttingState()
+                if (!cancelled) goToPuttingIfRunning(initial)
+            } catch {
+                /* SSE will catch up when game starts */
+            }
+            if (cancelled || redirected) return
+            connectPuttingSse()
+        })()
+
+        return () => {
+            cancelled = true
+            clearReconnectTimer()
+            cleanupPuttingSocket()
+        }
+    }, [
+        router,
+        router.isReady,
+        darkMode,
+        sortedParticipants.length,
+        getFinalGamePuttingState,
+        subscribeToFinalGamePuttingState,
+    ])
 
     return (
         <ThemeProvider theme={activeTheme}>
