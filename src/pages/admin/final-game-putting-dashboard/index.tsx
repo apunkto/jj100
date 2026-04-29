@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {Box, Typography} from '@mui/material'
+import {Box, SvgIcon, Typography} from '@mui/material'
 import {ThemeProvider} from '@mui/material/styles'
 import theme, {dashboardLedDarkTheme} from '@/lib/theme'
 import Image from 'next/image'
@@ -20,6 +20,26 @@ const LED_SCALE = LED_STAGE_W / 625
 const s = (px: number) => Math.round(px * LED_SCALE)
 /** Show the last N distance columns; older levels scroll off first */
 const LED_MAX_VISIBLE_LEVEL_COLS = 10
+
+/** Stroke crown (Lucide-style); reads clearly on LED walls */
+function CrownIcon({sizePx, color}: {sizePx: number; color: string}) {
+    return (
+        <SvgIcon
+            inheritViewBox={false}
+            viewBox="0 0 24 24"
+            sx={{width: sizePx, height: sizePx, flexShrink: 0, color}}
+        >
+            <path
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"
+            />
+        </SvgIcon>
+    )
+}
 
 const cellPx = s(20)
 const nameColMin = s(92)
@@ -195,23 +215,49 @@ export default function PuttingGameDashboard() {
                         {lvl}
                     </Typography>
                 ))}
-                {sortedPlayers.map((p) => (
+                {sortedPlayers.map((p) => {
+                    const isRowWinner =
+                        isPuttingFinished &&
+                        (puttingGame.winnerId != null
+                            ? p.finalParticipantId === puttingGame.winnerId
+                            : !!(puttingGame.winnerName?.trim() && p.name === puttingGame.winnerName))
+                    const strikeOut = !isRowWinner && p.status === 'out'
+                    const nameBold = isRowWinner || p.status === 'active'
+                    return (
                     <Box key={p.finalParticipantId} sx={{display: 'contents'}}>
-                        <Typography
+                        <Box
                             sx={{
-                                fontSize: isPuttingFinished ? s(17) : s(16),
-                                fontWeight: p.status === 'active' ? 700 : 500,
-                                color: p.status === 'active' ? 'text.primary' : 'text.secondary',
-                                textDecoration: p.status === 'out' ? 'line-through' : 'none',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: `${s(6)}px`,
                                 minWidth: nameColMin,
                                 maxWidth: nameColMaxPx,
+                                minHeight: 0,
                             }}
                         >
-                            {p.order}. {p.name}
-                        </Typography>
+                            {isRowWinner && (
+                                <CrownIcon sizePx={s(18)} color={darkMode ? '#ffd54f' : '#f9a825'} />
+                            )}
+                            <Typography
+                                component="span"
+                                sx={{
+                                    fontSize: isPuttingFinished ? s(17) : s(16),
+                                    fontWeight: nameBold ? 700 : 500,
+                                    color:
+                                        isRowWinner || p.status === 'active'
+                                            ? 'text.primary'
+                                            : 'text.secondary',
+                                    textDecoration: strikeOut ? 'line-through' : 'none',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    flex: 1,
+                                    minWidth: 0,
+                                }}
+                            >
+                                {p.order}. {p.name}
+                            </Typography>
+                        </Box>
                         <Box key={`${p.finalParticipantId}-gap`} aria-hidden sx={{minWidth: nameToResultsGapPx}} />
                         {levels.map((lvl) => {
                             const cleared =
@@ -248,7 +294,8 @@ export default function PuttingGameDashboard() {
                             )
                         })}
                     </Box>
-                ))}
+                    )
+                })}
             </Box>
         )
     }
