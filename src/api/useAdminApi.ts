@@ -81,6 +81,25 @@ const updateCompetitionStatus = async (
     await patchCompetitionField(competitionId, 'status', { status }, 'Failed to update competition status')
 }
 
+export type RunMetrixSyncSuccessResponse = {
+    success: true
+    result: { metrix_competition_id: number; success: boolean; error?: string }
+    durationMs: number
+}
+
+const runMetrixSyncForCompetition = async (competitionId: number): Promise<RunMetrixSyncSuccessResponse> => {
+    const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/run-metrix`)
+    const json = (await res.json()) as RunMetrixSyncSuccessResponse | { success: false; error: string; durationMs?: number }
+    if (!res.ok) {
+        const errJson = json as { error?: string }
+        throw new Error(errJson.error || 'Metrix sync failed')
+    }
+    if (!('result' in json) || json.success !== true) {
+        throw new Error('Metrix sync failed')
+    }
+    return json
+}
+
 const getPaceOfPlayTop = async (competitionId: number): Promise<PaceOfPlayTopPool[]> => {
     const res = await authedFetch(`${API_BASE}/admin/competition/${competitionId}/pace-of-play`)
     if (!res.ok) {
@@ -116,6 +135,7 @@ export default function useAdminApi() {
         updateFoodChoiceEnabled,
         updateDidRainEnabled,
         updateCompetitionStatus,
+        runMetrixSyncForCompetition,
         getPaceOfPlayTop,
         getPaceOfPlayPoolPlayers,
     }

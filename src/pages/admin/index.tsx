@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react'
-import {Box, CircularProgress, Typography} from '@mui/material'
+import {Box, Button, CircularProgress, Typography} from '@mui/material'
+import SyncIcon from '@mui/icons-material/Sync'
 import {useRouter} from 'next/router'
 import AdminLayout from '@/src/components/AdminLayout'
 import {CompetitionSettings} from '@/src/components/admin/CompetitionSettings'
@@ -18,12 +19,14 @@ export default function AdminSettingsPage() {
         updateFoodChoiceEnabled,
         updateDidRainEnabled,
         updateCompetitionStatus,
+        runMetrixSyncForCompetition,
     } = useAdminApi()
     const {showToast} = useToast()
 
     const [competition, setCompetition] = useState<AdminCompetition | null>(null)
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [metrixRefreshing, setMetrixRefreshing] = useState(false)
 
     const isAdmin = user?.isAdmin ?? false
 
@@ -164,6 +167,25 @@ export default function AdminSettingsPage() {
         }
     }
 
+    const handleRefreshFromMetrix = async () => {
+        if (!user?.activeCompetitionId || metrixRefreshing) return
+
+        try {
+            setMetrixRefreshing(true)
+            const data = await runMetrixSyncForCompetition(user.activeCompetitionId)
+            if (data.result.success) {
+                showToast(`Metrix uuendatud (${data.durationMs} ms)`, 'success')
+            } else {
+                showToast(data.result.error || 'Metrix uuendamine ebaõnnestus', 'error')
+            }
+        } catch (err) {
+            console.error('Metrix refresh failed:', err)
+            showToast(err instanceof Error ? err.message : 'Metrix uuendamine ebaõnnestus', 'error')
+        } finally {
+            setMetrixRefreshing(false)
+        }
+    }
+
     // Show loading while auth is loading or user data is not yet available
     if (authLoading || !user) {
         return (
@@ -237,6 +259,17 @@ export default function AdminSettingsPage() {
     return (
         <AdminLayout>
             <Box px={2}>
+                <Box display="flex" justifyContent="flex-end" mb={2}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<SyncIcon />}
+                        onClick={handleRefreshFromMetrix}
+                        disabled={metrixRefreshing}
+                    >
+                        {metrixRefreshing ? 'Refreshing…' : 'Refresh from Metrix'}
+                    </Button>
+                </Box>
                 <CompetitionSettings
                     competition={competition}
                     updating={updating}
