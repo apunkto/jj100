@@ -259,17 +259,6 @@ export default function AdminSettingsPage() {
     return (
         <AdminLayout>
             <Box px={2}>
-                <Box display="flex" justifyContent="flex-end" mb={2}>
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<SyncIcon />}
-                        onClick={handleRefreshFromMetrix}
-                        disabled={metrixRefreshing}
-                    >
-                        {metrixRefreshing ? 'Refreshing…' : 'Refresh from Metrix'}
-                    </Button>
-                </Box>
                 <CompetitionSettings
                     competition={competition}
                     updating={updating}
@@ -280,6 +269,17 @@ export default function AdminSettingsPage() {
                     onFoodChoiceToggle={handleFoodChoiceToggle}
                     onDidRainToggle={handleDidRainToggle}
                 />
+                <Box display="flex" justifyContent="flex-end" mt={4}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<SyncIcon />}
+                        onClick={handleRefreshFromMetrix}
+                        disabled={metrixRefreshing}
+                    >
+                        {metrixRefreshing ? 'Refreshing…' : 'Refresh from Metrix'}
+                    </Button>
+                </Box>
             </Box>
         </AdminLayout>
     )
