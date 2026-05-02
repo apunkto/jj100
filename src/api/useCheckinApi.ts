@@ -145,7 +145,10 @@ export const useCheckinApi = () => {
         let buffer = ''
         const run = async () => {
             try {
-                const res = await authedFetch(`${API_BASE}/lottery/draw-sse`, { signal: ac.signal })
+                const res = await authedFetch(`${API_BASE}/lottery/draw-sse`, {
+                    signal: ac.signal,
+                    headers: {Accept: "text/event-stream"},
+                })
                 if (!res.ok || !res.body) {
                     onClose()
                     return
@@ -269,7 +272,10 @@ export const useCheckinApi = () => {
         let buffer = ''
         const run = async () => {
             try {
-                const res = await authedFetch(`${API_BASE}/lottery/final-game-draw-sse`, { signal: ac.signal })
+                const res = await authedFetch(`${API_BASE}/lottery/final-game-draw-sse`, {
+                    signal: ac.signal,
+                    headers: {Accept: "text/event-stream"},
+                })
                 if (!res.ok || !res.body) {
                     onClose()
                     return
@@ -325,7 +331,10 @@ export const useCheckinApi = () => {
             try {
                 const sseUrl = `${API_BASE}/lottery/final-game-putting-sse`
                 console.log('[PuttingSSE] Connecting to', sseUrl.replace(/^https?:\/\//, '').split('/')[0], '/lottery/final-game-putting-sse')
-                const res = await authedFetch(sseUrl, { signal: ac.signal })
+                const res = await authedFetch(sseUrl, {
+                    signal: ac.signal,
+                    headers: {Accept: "text/event-stream"},
+                })
                 if (!res.ok || !res.body) {
                     console.warn('[PuttingSSE] Connection failed or no body:', res.status, res.statusText, 'url=', sseUrl.split('/').slice(0, 3).join('/'))
                     onClose()

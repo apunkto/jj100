@@ -7,7 +7,10 @@ export async function authedFetch(input: FetchInput, init: RequestInit = {}) {
 
     const headers = new Headers(init.headers || {})
     if (token) headers.set("Authorization", `Bearer ${token}`)
-    headers.set("Accept", "application/json")
+    /** Callers that stream (SSE) must set Accept (e.g. text/event-stream). Forcing application/json breaks some caches/proxies that buffer “JSON” until EOF — live dashboards never get chunks. */
+    if (!headers.has("Accept")) {
+        headers.set("Accept", "application/json")
+    }
     if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
 
     return fetch(input, {...init, headers})
