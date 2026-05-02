@@ -15,6 +15,10 @@ import PredictionResultsSlide from '@/src/components/dashboard/PredictionResults
 import {useTranslation} from 'react-i18next'
 import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 
+/** Outer carousel dwell time; Top Holes uses `TOP_HOLES_SLIDE_MULTIPLIER`× this via `data-swiper-autoplay`. */
+const DASHBOARD_AUTOPLAY_MS = 60_000
+const TOP_HOLES_SLIDE_MULTIPLIER = 3
+
 export default function Dashboard() {
     const { t } = useTranslation('pages')
     const router = useRouter()
@@ -103,10 +107,14 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
             rewind={isLooping}
             spaceBetween={50}
             slidesPerView={1}
-            autoplay={isLooping ? { delay: 60000, disableOnInteraction: false } : false}
+            autoplay={isLooping ? { delay: DASHBOARD_AUTOPLAY_MS, disableOnInteraction: false } : false}
             style={{ height: '100%', width: '100%' }}
         >
-            <SwiperSlide>
+            <SwiperSlide
+                {...(isLooping
+                    ? {'data-swiper-autoplay': DASHBOARD_AUTOPLAY_MS * TOP_HOLES_SLIDE_MULTIPLIER}
+                    : {})}
+            >
                 <TopHolesSlide competitionId={competitionId} isLooping={isLooping} />
             </SwiperSlide>
             {loading && divisionEntries.length === 0 ? (
