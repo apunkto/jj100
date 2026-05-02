@@ -94,6 +94,7 @@ export type MyDivisionResultPayload = {
 
 export type CompetitionStatsPayload = {
     playerCount: number;
+    totalPlayersCount: number;
     mostHolesLeft: number;
     finishedPlayersCount: number;
     totalThrows: number;

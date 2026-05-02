@@ -31,6 +31,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
     const { getCompetitionStats } = useMetrixApi()
     const [stats, setStats] = useState<{
         playerCount: number
+        totalPlayersCount: number
         mostHolesLeft: number
         finishedPlayersCount: number
         totalThrows: number
@@ -124,6 +125,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
 
     const {
         playerCount,
+        totalPlayersCount,
         mostHolesLeft,
         finishedPlayersCount,
         totalThrows,
@@ -162,7 +164,7 @@ export default function StatsSlide({ competitionId }: { competitionId: number })
         {
             label: '🌊 Järve viskas',
             value: lakeOBCount,
-            sub: `mängijat (${playerCount > 0 ? Math.round((lakeOBCount / playerCount) * 100) : 0}% 🤦‍♂️)`,
+            sub: `mängijat (${totalPlayersCount > 0 ? Math.round((lakeOBCount / totalPlayersCount) * 100) : 0}% 🤦‍♂️)`,
             bg: isLedDark ? circleBgDark.lake : circleBgLight.lake,
         },
         ...(longestStreaks.length > 0
