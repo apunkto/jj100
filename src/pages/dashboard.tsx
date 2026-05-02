@@ -1,4 +1,4 @@
-import {useRef} from 'react'
+import {useEffect, useRef} from 'react'
 import {Swiper, SwiperSlide} from 'swiper/react'
 import {Autoplay, Keyboard} from 'swiper/modules'
 import 'swiper/css'
@@ -76,6 +76,12 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
     const { topPlayersByDivision, loading, error } = useTopPlayersByDivision(competitionId)
     const divisionEntries = Object.entries(topPlayersByDivision)
 
+    useEffect(() => {
+        const s = swiperRef.current
+        if (!s?.update) return
+        requestAnimationFrame(() => s.update())
+    }, [loading, divisionEntries.length, error])
+
     return (
         <Box
             sx={{
@@ -92,7 +98,9 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
             onSwiper={(swiper) => { swiperRef.current = swiper }}
             modules={[Autoplay, Keyboard]}
             keyboard={{ enabled: true }}
-            loop={isLooping}
+            /* `loop` duplicates slides in the DOM; nested Swiper inside slide 1 breaks on clones — use rewind instead. */
+            loop={false}
+            rewind={isLooping}
             spaceBetween={50}
             slidesPerView={1}
             autoplay={isLooping ? { delay: 60000, disableOnInteraction: false } : false}

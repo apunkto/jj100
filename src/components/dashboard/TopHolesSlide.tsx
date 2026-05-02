@@ -412,7 +412,8 @@ export default function TopHolesSlide({ competitionId, isLooping = true }: { com
                 modules={[Autoplay]}
                 nested
                 autoplay={isLooping ? { delay: 15000, disableOnInteraction: false } : false}
-                loop={isLooping}
+                loop={false}
+                rewind={isLooping}
                 spaceBetween={30}
                 slidesPerView={1}
                 style={{ height: '100%' }}
