@@ -8,6 +8,7 @@ import {useCheckinApi} from '@/src/api/useCheckinApi'
 import {useAuth} from '@/src/contexts/AuthContext'
 import {useRouter} from 'next/router'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
+import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 
 const RECONNECT_DELAY_MS = 2000
 
@@ -71,8 +72,9 @@ export default function DrawDashboardPage() {
     const {getDrawState, subscribeToDrawState, getCheckins} = useCheckinApi()
     const {user, loading} = useAuth()
     const router = useRouter()
-    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const darkMode = !router.isReady || isDashboardLedDarkMode(router.query.darkMode)
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+    useLedDashboardChrome(darkMode)
 
     const [state, setState] = useState<DrawState>({ participantCount: 0 })
     const [phase, setPhase] = useState<Phase>('idle')

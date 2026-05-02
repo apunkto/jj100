@@ -8,6 +8,7 @@ import NextLink from 'next/link'
 import {useRouter} from 'next/router'
 import type {FinalGameDrawResponse, PuttingGameState} from '@/src/api/useCheckinApi'
 import {useCheckinApi} from '@/src/api/useCheckinApi'
+import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 import SlotMachine, {SlotMachineHandle} from '@/src/components/SlotMachine'
 
 const RECONNECT_DELAY_MS = 2000
@@ -27,8 +28,9 @@ type Phase = 'idle' | 'winner'
 
 export default function FinalGameDrawDashboard() {
     const router = useRouter()
-    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const darkMode = !router.isReady || isDashboardLedDarkMode(router.query.darkMode)
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+    useLedDashboardChrome(darkMode)
 
     const {
         getFinalGameDrawState,
@@ -136,7 +138,7 @@ export default function FinalGameDrawDashboard() {
             redirected = true
             clearReconnectTimer()
             cleanupPuttingSocket()
-            const qs = darkMode ? '?darkMode=true' : ''
+            const qs = darkMode ? '' : '?darkMode=false'
             void router.replace(`/admin/final-game-putting-dashboard${qs}`)
         }
 
@@ -271,8 +273,8 @@ export default function FinalGameDrawDashboard() {
                                 <NextLink
                                     href={
                                         darkMode
-                                            ? '/admin/final-game-putting-dashboard?darkMode=true'
-                                            : '/admin/final-game-putting-dashboard'
+                                            ? '/admin/final-game-putting-dashboard'
+                                            : '/admin/final-game-putting-dashboard?darkMode=false'
                                     }
                                     passHref
                                     legacyBehavior

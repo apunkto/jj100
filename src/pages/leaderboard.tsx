@@ -6,6 +6,7 @@ import {Swiper, SwiperSlide} from 'swiper/react'
 import {Keyboard} from 'swiper/modules'
 import 'swiper/css'
 import {useTranslation} from 'react-i18next'
+import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 import {useTopPlayersByDivision} from '@/src/api/useTopPlayersByDivision'
 import {TopPlayersByDivisionContent} from '@/src/components/dashboard/TopPlayersByDivisionSlide'
 import PredictionResultsSlide from '@/src/components/dashboard/PredictionResultsSlide'
@@ -118,8 +119,9 @@ export default function LeaderboardPage() {
     const competitionId =
         competitionIdParam != null && competitionIdParam !== '' ? Number(competitionIdParam) : null
 
-    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const darkMode = !router.isReady || isDashboardLedDarkMode(router.query.darkMode)
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+    useLedDashboardChrome(darkMode)
 
     if (!router.isReady || competitionId == null || !Number.isFinite(competitionId)) {
         return (

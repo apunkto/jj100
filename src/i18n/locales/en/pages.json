@@ -178,7 +178,7 @@
     "loading": "Loading...",
     "competitionRequired": "Competition required",
     "openWithId": "Open the dashboard with a competition ID: /dashboard?competitionId=123",
-    "darkModeHint": "Add &darkMode=true for high-contrast dark slides (outdoor LED).",
+    "darkModeHint": "Slides default to high-contrast dark mode for outdoor LED; add &darkMode=false for the normal light theme.",
     "noDivisions": "No divisions yet",
     "predictionTitle": "Top predictions",
     "predictionNoData": "No prediction results yet, or predictions are not enabled for this competition."

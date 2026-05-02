@@ -5,6 +5,7 @@ import theme, {dashboardLedDarkTheme} from '@/lib/theme'
 import Image from 'next/image'
 import {useRouter} from 'next/router'
 import {PuttingGameState, useCheckinApi} from '@/src/api/useCheckinApi'
+import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 
 const RECONNECT_DELAY_MS = 2000
 
@@ -49,8 +50,9 @@ const nameColMaxPx = s(360)
 
 export default function PuttingGameDashboard() {
     const router = useRouter()
-    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const darkMode = !router.isReady || isDashboardLedDarkMode(router.query.darkMode)
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+    useLedDashboardChrome(darkMode)
 
     const {subscribeToFinalGamePuttingState, getFinalGamePuttingState} = useCheckinApi()
 

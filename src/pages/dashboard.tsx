@@ -13,6 +13,7 @@ import {TopPlayersByDivisionContent} from '@/src/components/dashboard/TopPlayers
 import StatsSlide from '@/src/components/dashboard/StatsSlide'
 import PredictionResultsSlide from '@/src/components/dashboard/PredictionResultsSlide'
 import {useTranslation} from 'react-i18next'
+import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 
 export default function Dashboard() {
     const { t } = useTranslation('pages')
@@ -24,8 +25,9 @@ export default function Dashboard() {
             : null
 
     const isLooping = router.isReady ? router.query.loop !== 'off' : true
-    const darkMode = router.isReady && String(router.query.darkMode ?? '').toLowerCase() === 'true'
+    const darkMode = !router.isReady || isDashboardLedDarkMode(router.query.darkMode)
     const activeTheme = darkMode ? dashboardLedDarkTheme : theme
+    useLedDashboardChrome(darkMode)
 
     if (!router.isReady || competitionId == null || !Number.isFinite(competitionId)) {
         return (
