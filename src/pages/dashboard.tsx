@@ -15,9 +15,17 @@ import PredictionResultsSlide from '@/src/components/dashboard/PredictionResults
 import {useTranslation} from 'react-i18next'
 import {isDashboardLedDarkMode, useLedDashboardChrome} from '@/src/utils/dashboardDarkMode'
 
-/** Outer carousel dwell time; Top Holes uses `TOP_HOLES_SLIDE_MULTIPLIER`× this via `data-swiper-autoplay`. */
-const DASHBOARD_AUTOPLAY_MS = 60_000
-const TOP_HOLES_SLIDE_MULTIPLIER = 3
+const TOP_HOLES_AUTOPLAY_MS = 180_000
+const TOP_PLAYERS_SLIDE_MS = 20_000
+const PREDICTION_SLIDE_MS = 20_000
+const STATS_SLIDE_MS = 60_000
+
+/** Default autoplay delay when a slide has no `data-swiper-autoplay` (all dashboard slides set one). */
+const DEFAULT_SWIPER_AUTOPLAY_MS = TOP_PLAYERS_SLIDE_MS
+
+function slideAutoplayDelay(isLooping: boolean, ms: number): { 'data-swiper-autoplay': number } | Record<string, never> {
+    return isLooping ? { 'data-swiper-autoplay': ms } : {}
+}
 
 export default function Dashboard() {
     const { t } = useTranslation('pages')
@@ -107,18 +115,14 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
             rewind={isLooping}
             spaceBetween={50}
             slidesPerView={1}
-            autoplay={isLooping ? { delay: DASHBOARD_AUTOPLAY_MS, disableOnInteraction: false } : false}
+            autoplay={isLooping ? { delay: DEFAULT_SWIPER_AUTOPLAY_MS, disableOnInteraction: false } : false}
             style={{ height: '100%', width: '100%' }}
         >
-            <SwiperSlide
-                {...(isLooping
-                    ? {'data-swiper-autoplay': DASHBOARD_AUTOPLAY_MS * TOP_HOLES_SLIDE_MULTIPLIER}
-                    : {})}
-            >
+            <SwiperSlide {...slideAutoplayDelay(isLooping, TOP_HOLES_AUTOPLAY_MS)}>
                 <TopHolesSlide competitionId={competitionId} isLooping={isLooping} />
             </SwiperSlide>
             {loading && divisionEntries.length === 0 ? (
-                <SwiperSlide>
+                <SwiperSlide {...slideAutoplayDelay(isLooping, TOP_PLAYERS_SLIDE_MS)}>
                     <Box
                         sx={{
                             p: 6,
@@ -135,7 +139,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     </Box>
                 </SwiperSlide>
             ) : error && divisionEntries.length === 0 ? (
-                <SwiperSlide>
+                <SwiperSlide {...slideAutoplayDelay(isLooping, TOP_PLAYERS_SLIDE_MS)}>
                     <Box
                         sx={{
                             p: 6,
@@ -152,7 +156,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     </Box>
                 </SwiperSlide>
             ) : divisionEntries.length === 0 ? (
-                <SwiperSlide>
+                <SwiperSlide {...slideAutoplayDelay(isLooping, TOP_PLAYERS_SLIDE_MS)}>
                     <Box
                         sx={{
                             p: 6,
@@ -170,12 +174,12 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                 </SwiperSlide>
             ) : (
                 divisionEntries.map(([division, players]) => (
-                    <SwiperSlide key={division}>
+                    <SwiperSlide key={division} {...slideAutoplayDelay(isLooping, TOP_PLAYERS_SLIDE_MS)}>
                         <TopPlayersByDivisionContent division={division} players={players} />
                     </SwiperSlide>
                 ))
             )}
-            <SwiperSlide key="prediction-results">
+            <SwiperSlide key="prediction-results" {...slideAutoplayDelay(isLooping, PREDICTION_SLIDE_MS)}>
                 <PredictionResultsSlide
                     competitionId={competitionId}
                     title={t('dashboard.predictionTitle')}
@@ -183,7 +187,7 @@ function DashboardSwiper({ competitionId, isLooping }: { competitionId: number; 
                     emptyLabel={t('dashboard.predictionNoData')}
                 />
             </SwiperSlide>
-            <SwiperSlide>
+            <SwiperSlide {...slideAutoplayDelay(isLooping, STATS_SLIDE_MS)}>
                 <StatsSlide competitionId={competitionId} />
             </SwiperSlide>
         </Swiper>
