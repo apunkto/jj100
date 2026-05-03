@@ -24,6 +24,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import CasinoIcon from '@mui/icons-material/Casino'
 import SportsGolfIcon from '@mui/icons-material/SportsGolf'
 import TimerIcon from '@mui/icons-material/Timer'
+import TvIcon from '@mui/icons-material/Tv'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
@@ -41,6 +42,8 @@ const adminMenuItems = [
     { href: '/admin/draw-dashboard', label: 'Loosi ekraan', icon: <CasinoIcon />, newTab: true },
     { href: '/admin/final-game', label: 'Putimäng', icon: <SportsGolfIcon /> },
     { href: '/admin/final-game-draw-dashboard', label: 'Putimängu ekraan', icon: <SportsGolfIcon />, newTab: true },
+    { href: '/admin/led-control', label: 'LED juhtimine', icon: <TvIcon /> },
+    { href: '/admin/led-screen', label: 'LED ekraan', icon: <TvIcon />, newTab: true },
 ]
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

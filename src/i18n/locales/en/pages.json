@@ -172,7 +172,8 @@
     "noSpecialRules": "No special rules"
   },
   "leaderboard": {
-    "openWithId": "Open with a competition ID: /leaderboard?competitionId=123"
+    "openWithId": "Open with a competition ID: /leaderboard?competitionId=123",
+    "divisionNotFound": "Division not found: {{division}}"
   },
   "dashboard": {
     "loading": "Loading...",

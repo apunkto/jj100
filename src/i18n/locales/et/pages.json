@@ -172,7 +172,8 @@
     "noSpecialRules": "Erireeglid puuduvad"
   },
   "leaderboard": {
-    "openWithId": "Ava võistluse ID-ga: /leaderboard?competitionId=123"
+    "openWithId": "Ava võistluse ID-ga: /leaderboard?competitionId=123",
+    "divisionNotFound": "Klassi ei leitud: {{division}}"
   },
   "dashboard": {
     "loading": "Laen...",
