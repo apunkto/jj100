@@ -275,7 +275,7 @@ export default function HistoryPage() {
                                                 {isMyBucket && <StarIcon fontSize="small" sx={{ color: 'warning.main' }} />}
 
                                                 <Typography sx={{ fontWeight: 700, fontSize: { xs: 13, sm: 14 } }}>
-                                                    {amount} {timesLabel(amount)}
+                                                    {timesLabel(amount)}
                                                     <Typography component="span" sx={{ ml: 1, fontSize: { xs: 12, sm: 13 }, color: 'text.secondary' }}>
                                                         ({players.length})
                                                     </Typography>
