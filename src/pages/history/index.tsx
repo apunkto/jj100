@@ -85,7 +85,7 @@ export default function HistoryPage() {
 
     const years = useMemo(() => {
         const start = 2017
-        const end = 2025
+        const end = 2026
         return Array.from({length: end - start + 1}, (_, i) => start + i)
     }, [])
 
