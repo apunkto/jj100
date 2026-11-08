@@ -451,6 +451,8 @@ const PEAK_COUNT = 1200;
 const HEADROOM = 0.45;
 const LIMITER_MAKEUP = 0.82; // cancels the gain the compressor node adds by itself
 const SPEEDS = [1, 0.85, 0.75];
+const AUDIO_CACHE_PREFIX = 'songer-audio-';
+const AUDIO_CACHE = `${AUDIO_CACHE_PREFIX}v1`; // change the version whenever the MP3s are replaced
 const TYPICAL_FILE_BYTES = 950000; // used when the server doesn't say how big a file is
 const DOWNLOAD_SHARE = 0.85;       // of each part's progress; decoding is the rest
 const MY_PART_KEY = 'songer.myPart';
@@ -851,8 +853,33 @@ function showError(html) {
   transport.classList.remove('loading');
 }
 
+// Serves a recording from the browser's cache when it can, and stores it after the first
+// download. `caches` only exists on https and localhost; elsewhere this is a plain fetch.
+async function fetchRecording(url) {
+  if (!window.caches) return fetch(url);
+  let cache;
+  try {
+    cache = await caches.open(AUDIO_CACHE);
+    const cached = await cache.match(url);
+    if (cached) return cached;
+  } catch {
+    return fetch(url);
+  }
+  const response = await fetch(url);
+  // Not awaited: it only finishes with the download, and progress has to show meanwhile.
+  if (response.ok) cache.put(url, response.clone()).catch(() => {});
+  return response;
+}
+
+async function dropOldRecordings() {
+  if (!window.caches) return;
+  for (const name of await caches.keys()) {
+    if (name.startsWith(AUDIO_CACHE_PREFIX) && name !== AUDIO_CACHE) await caches.delete(name);
+  }
+}
+
 async function download(track, onProgress) {
-  const response = await fetch(FOLDER + encodeURIComponent(track.file));
+  const response = await fetchRecording(FOLDER + encodeURIComponent(track.file));
   if (!response.ok) throw new Error(`${track.file}: HTTP ${response.status}`);
   const expected = +response.headers.get('content-length') || TYPICAL_FILE_BYTES;
   const reader = response.body.getReader();
@@ -963,6 +990,7 @@ new ResizeObserver(drawAll).observe($('waves'));
 buildSpeeds();
 buildVolumeModes();
 load();
+dropOldRecordings().catch(() => {});
 </script>
 </body>
 </html>
