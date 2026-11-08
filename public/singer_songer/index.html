@@ -428,6 +428,13 @@
       <div class="choices" id="myParts" role="group" aria-labelledby="myPartLabel"></div>
     </div>
 
+    <div class="option">
+      <span id="partnerLabel">Partner</span>
+      <div class="choices" role="group" aria-labelledby="partnerLabel">
+        <button id="partnerToggle"></button>
+      </div>
+    </div>
+
     <div class="balance">
       <label class="volume" id="myBalance">
         <span id="myName"></span>
@@ -528,11 +535,20 @@ let myPart = null;
 const session = readSession();
 let myLevel = session.myLevel ?? DEFAULT_VOLUME;
 let restLevel = session.restLevel ?? DEFAULT_VOLUME;
+let silencePartner = session.silencePartner ?? false;
 let loopRange = null; // { start, end } in song time
 let shortest = 0;     // the loop can't run past the end of the shortest recording
 let wakeLock = null;
 
-const levelFor = track => mode === 'each' ? track.volume : track === myPart ? myLevel : restLevel;
+// The other half of a section, e.g. Tenor 2 for Tenor 1. They often sing the same notes.
+const sectionOf = track => track.name.split(' ')[0];
+const partnerOf = track => tracks.find(other => other !== track && sectionOf(other) === sectionOf(track));
+
+function levelFor(track) {
+  if (mode === 'each') return track.volume;
+  if (track === myPart) return myLevel;
+  return silencePartner && track === partnerOf(myPart) ? 0 : restLevel;
+}
 
 // Squared so the slider feels even to the ear instead of bunching up at the top.
 const gainFor = track => track.muted ? 0 : (levelFor(track) / 100) ** 2;
@@ -600,6 +616,7 @@ function saveSession() {
     volumes: Object.fromEntries(tracks.map(track => [track.name, track.volume])),
     myLevel,
     restLevel,
+    silencePartner,
     // Until the recordings load there's nothing new to say about these two.
     position: duration ? position() : session.position,
     loop: duration ? loopRange : session.loop,
@@ -638,8 +655,18 @@ function chooseMyPart(track) {
   }
   $('myName').textContent = track.name;
   $('myBalance').style.setProperty('--c', `var(${track.color})`);
+  const partner = partnerOf(track);
+  $('partnerToggle').textContent = `Silence ${partner.name}`;
+  $('partnerToggle').style.setProperty('--c', `var(${partner.color})`);
   tracks.forEach(applyVolume);
   remember(MY_PART_KEY, track.name);
+}
+
+function toggleSilencePartner() {
+  silencePartner = !silencePartner;
+  $('partnerToggle').setAttribute('aria-pressed', silencePartner);
+  tracks.forEach(applyVolume);
+  saveSession();
 }
 
 function bindLevel(sliderId, outputId, initial, setLevel) {
@@ -667,6 +694,8 @@ function buildVolumeModes() {
   for (const button of $('modes').querySelectorAll('button')) {
     button.addEventListener('click', () => setMode(button.dataset.mode));
   }
+  $('partnerToggle').setAttribute('aria-pressed', silencePartner);
+  $('partnerToggle').addEventListener('click', toggleSilencePartner);
   bindLevel('myVolume', 'myOutput', myLevel, level => { myLevel = level; });
   bindLevel('restVolume', 'restOutput', restLevel, level => { restLevel = level; });
 
