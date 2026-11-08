@@ -172,6 +172,19 @@
     border-radius: 2rem;
   }
 
+  /* While the recordings load, the Play button is the progress bar. */
+  .transport.loading #restart,
+  .transport.loading #time { display: none; }
+
+  .transport.loading #play {
+    min-width: 14rem;
+    opacity: 1;
+    color: var(--moon);
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(to right, var(--line) var(--loaded, 0%), transparent var(--loaded, 0%));
+    border-color: var(--moon-dim);
+  }
+
   #time {
     margin-left: auto;
     font: 500 1.75rem/1 Alegreya, Georgia, serif;
@@ -310,6 +323,7 @@
 
     .transport { flex-wrap: nowrap; gap: 0.5rem; margin: 0.75rem 0; }
     #play { min-width: 5rem; padding: 0.4rem 1rem; font-size: 1.125rem; }
+    .transport.loading #play { flex: 1; }
     #restart { padding: 0.2rem 0.5rem; font-size: 0.9375rem; white-space: nowrap; }
     #time { font-size: 1.25rem; white-space: nowrap; }
 
@@ -366,8 +380,8 @@
     <div class="choir" role="img" aria-label="Choir Ö:">Ö:</div>
   </header>
 
-  <div class="transport">
-    <button id="play" disabled>Loading</button>
+  <div class="transport loading">
+    <button id="play" disabled>Loading 0%</button>
     <button id="restart" disabled>Back to start</button>
     <div id="time">0:00 <span>/ 0:00</span></div>
   </div>
@@ -437,12 +451,15 @@ const PEAK_COUNT = 1200;
 const HEADROOM = 0.45;
 const LIMITER_MAKEUP = 0.82; // cancels the gain the compressor node adds by itself
 const SPEEDS = [1, 0.85, 0.75];
+const TYPICAL_FILE_BYTES = 950000; // used when the server doesn't say how big a file is
+const DOWNLOAD_SHARE = 0.85;       // of each part's progress; decoding is the rest
 const MY_PART_KEY = 'songer.myPart';
 const MODE_KEY = 'songer.volumeMode';
 const STRETCH_CHUNK = 240000;
 const SOUNDTOUCH_URL = 'https://cdn.jsdelivr.net/npm/soundtouchjs@0.3.0/dist/soundtouch.js';
 
 const $ = id => document.getElementById(id);
+const transport = document.querySelector('.transport');
 const playBtn = $('play');
 const restartBtn = $('restart');
 const seek = $('seek');
@@ -831,6 +848,30 @@ function showError(html) {
   statusEl.innerHTML = html;
   statusEl.hidden = false;
   playBtn.textContent = 'Unavailable';
+  transport.classList.remove('loading');
+}
+
+async function download(track, onProgress) {
+  const response = await fetch(FOLDER + encodeURIComponent(track.file));
+  if (!response.ok) throw new Error(`${track.file}: HTTP ${response.status}`);
+  const expected = +response.headers.get('content-length') || TYPICAL_FILE_BYTES;
+  const reader = response.body.getReader();
+  const chunks = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    onProgress(Math.min(received / expected, 1));
+  }
+  const data = new Uint8Array(received);
+  let position = 0;
+  for (const chunk of chunks) {
+    data.set(chunk, position);
+    position += chunk.length;
+  }
+  return data.buffer;
 }
 
 async function load() {
@@ -839,11 +880,21 @@ async function load() {
     return;
   }
   try {
-    await Promise.all(tracks.map(async track => {
-      const response = await fetch(FOLDER + encodeURIComponent(track.file));
-      if (!response.ok) throw new Error(`${track.file}: HTTP ${response.status}`);
-      track.original = trimToMono(await ctx.decodeAudioData(await response.arrayBuffer()), track.trim);
+    const progress = tracks.map(() => 0);
+    const showProgress = () => {
+      const percent = Math.round(progress.reduce((sum, part) => sum + part, 0) / tracks.length * 100);
+      playBtn.textContent = `Loading ${percent}%`;
+      playBtn.style.setProperty('--loaded', `${percent}%`);
+    };
+    await Promise.all(tracks.map(async (track, index) => {
+      const data = await download(track, fraction => {
+        progress[index] = fraction * DOWNLOAD_SHARE;
+        showProgress();
+      });
+      track.original = trimToMono(await ctx.decodeAudioData(data), track.trim);
       track.buffer = track.original;
+      progress[index] = 1;
+      showProgress();
     }));
   } catch (error) {
     showError(`Could not load the recordings. ${error.message}`);
@@ -859,6 +910,7 @@ async function load() {
   seek.disabled = playBtn.disabled = restartBtn.disabled = false;
   for (const button of $('speeds').querySelectorAll('button')) button.disabled = false;
   playBtn.textContent = 'Play';
+  transport.classList.remove('loading');
   drawAll();
   render();
 }
