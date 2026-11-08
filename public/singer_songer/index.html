@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1230">
+<title>Deck the Hall: part practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #1b2758;
+    --night-deep: #0b1230;
+    --moon: #eef1fb;
+    --moon-dim: #aab5d8;
+    --line: #3a4780;
+    --soprano: #f79ab0;
+    --alto: #cdb6f7;
+    --tenor: #f2cb6c;
+    --bass: #8fd8ec;
+    --row: 4.5rem;
+    --gutter: 22px; /* room for the bracket, left of the waveforms */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    position: relative;
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(var(--night-deep), var(--night));
+    color: var(--moon);
+    font: 400 1.0625rem/1.5 "Alegreya Sans", "Trebuchet MS", sans-serif;
+  }
+
+  /* A few stars above the title, fading out before the controls. */
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 14rem;
+    pointer-events: none;
+    background:
+      radial-gradient(1.5px 1.5px at 8% 30%, var(--moon), transparent),
+      radial-gradient(1px 1px at 19% 72%, var(--moon), transparent),
+      radial-gradient(1.5px 1.5px at 31% 14%, var(--moon), transparent),
+      radial-gradient(1px 1px at 44% 48%, var(--moon), transparent),
+      radial-gradient(2px 2px at 57% 22%, var(--moon), transparent),
+      radial-gradient(1px 1px at 66% 62%, var(--moon), transparent),
+      radial-gradient(1.5px 1.5px at 74% 12%, var(--moon), transparent),
+      radial-gradient(1px 1px at 83% 54%, var(--moon), transparent),
+      radial-gradient(1.5px 1.5px at 93% 34%, var(--moon), transparent);
+    -webkit-mask-image: linear-gradient(black, transparent);
+    mask-image: linear-gradient(black, transparent);
+  }
+
+  main {
+    position: relative;
+    max-width: 66rem;
+    margin: 0 auto;
+    padding: 3.5rem 2rem 4rem;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .choir {
+    font: 700 clamp(3rem, 9vw, 5.5rem)/1 Alegreya, Georgia, serif;
+    color: var(--tenor);
+  }
+
+  h1 {
+    margin: 0;
+    font: 700 clamp(3rem, 9vw, 5.5rem)/1 Alegreya, Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+
+  .arranger {
+    margin: 0.5rem 0 0;
+    font: 500 1.375rem/1.3 Alegreya, Georgia, serif;
+    color: var(--moon-dim);
+  }
+
+  .transport {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin: 2.5rem 0 1.25rem;
+  }
+
+  .option {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .option > span:first-child { min-width: 3.75rem; }
+
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .choices button {
+    font-variant-numeric: tabular-nums;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .choices button[aria-pressed="true"] {
+    color: var(--night-deep);
+    background: var(--c, var(--moon));
+    border-color: var(--c, var(--moon));
+  }
+
+  #speedNote { color: var(--moon-dim); }
+
+  .short { display: none; }
+
+  .balance {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 2rem;
+    margin-top: 1.25rem;
+  }
+
+  .system.mine .volume { display: none; }
+
+  .balance span {
+    font: 700 1.25rem/1.2 Alegreya, Georgia, serif;
+    color: var(--c);
+    white-space: nowrap;
+  }
+
+  button {
+    font: inherit;
+    font-weight: 500;
+    color: inherit;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 0.25rem;
+    padding: 0.35rem 0.8rem;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { border-color: var(--moon-dim); }
+  button:disabled { cursor: default; opacity: 0.6; }
+
+  button:focus-visible,
+  input[type="range"]:focus-visible,
+  .lanes:has(.seek:focus-visible) {
+    outline: 2px solid var(--moon);
+    outline-offset: 3px;
+  }
+
+  #play {
+    min-width: 8rem;
+    padding: 0.6rem 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--night-deep);
+    background: var(--moon);
+    border-color: var(--moon);
+    border-radius: 2rem;
+  }
+
+  #time {
+    margin-left: auto;
+    font: 500 1.75rem/1 Alegreya, Georgia, serif;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  #time span { color: var(--moon-dim); }
+
+  #status {
+    margin: 0 0 1.5rem;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid var(--soprano);
+    background: var(--night-deep);
+  }
+
+  #status[hidden] { display: none; }
+  #status code { color: var(--tenor); }
+
+  .system {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 0 2rem;
+    margin-top: 2rem;
+  }
+
+  .part {
+    height: var(--row);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+  }
+
+  .part-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .part h2 {
+    margin: 0;
+    font: 700 1.25rem/1.2 Alegreya, Georgia, serif;
+    color: var(--c);
+  }
+
+  .part button { font-size: 0.9375rem; padding: 0 0.6rem; }
+
+  .part button[aria-pressed="true"] {
+    color: var(--night-deep);
+    background: var(--c);
+    border-color: var(--c);
+  }
+
+  .volume {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .volume input {
+    flex: 1;
+    min-width: 0;
+    height: 1.75rem;
+    margin: 0;
+    accent-color: var(--c);
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .volume output {
+    width: 3rem;
+    text-align: right;
+    color: var(--moon-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The three waveforms are set like one system of a choral score:
+     a bracket on the left, a barline on the right. */
+  .lanes {
+    position: relative;
+    border-right: 1px solid var(--line);
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .lanes::before {
+    content: "";
+    position: absolute;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    left: 0;
+    width: 0.8rem;
+    border: solid var(--moon);
+    border-width: 2px 0 2px 6px;
+    pointer-events: none;
+  }
+
+  .lanes canvas {
+    display: block;
+    width: 100%;
+    height: var(--row);
+  }
+
+  #playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--moon);
+    pointer-events: none;
+  }
+
+  .seek {
+    position: absolute;
+    top: 0;
+    left: var(--gutter);
+    width: calc(100% - var(--gutter));
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none; /* kept for the keyboard; clicks and touches are handled on .lanes */
+  }
+
+  /* Phones: compact enough that My part and the rest fits on one screen. */
+  @media (max-width: 44rem) {
+    :root { --row: 1.75rem; }
+    main { padding: 1rem 1rem 1.5rem; }
+    button { min-height: 2.75rem; }
+
+    .title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.75rem; }
+    h1, .choir { font-size: 2.25rem; }
+    .arranger { margin: 0; font-size: 1rem; }
+
+    .transport { flex-wrap: nowrap; gap: 0.5rem; margin: 0.75rem 0; }
+    #play { min-width: 5rem; padding: 0.4rem 1rem; font-size: 1.125rem; }
+    #restart { padding: 0.2rem 0.5rem; font-size: 0.9375rem; white-space: nowrap; }
+    #time { font-size: 1.25rem; white-space: nowrap; }
+
+    .option { gap: 0.25rem 0.5rem; margin-bottom: 0.5rem; }
+    .option > span:first-child { min-width: 3.25rem; }
+    .choices { flex: 1; }
+    .choices button { flex: auto; padding: 0.2rem 0.4rem; font-size: 0.9375rem; }
+    #myParts { flex-wrap: nowrap; }
+    #myParts button { flex: 1 1 0; min-width: 0; padding: 0.2rem 0; }
+    .full { display: none; }
+    .short { display: inline; }
+
+    .balance { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 0; }
+    .balance span { flex: none; width: 5.25rem; font-size: 1.125rem; }
+    .balance output { width: 2.75rem; }
+    .volume input { height: 2.75rem; }
+
+    .system { grid-template-columns: minmax(0, 1fr); margin-top: 0.75rem; }
+    .lanes { grid-row: 1; margin-bottom: 0.5rem; }
+
+    /* One line per part: name, slider, mute. */
+    .part {
+      display: grid;
+      grid-template-columns: 5rem minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 0.5rem;
+      height: auto;
+    }
+    .part .part-head, .part .volume { display: contents; }
+    .part h2 { grid-column: 1; grid-row: 1; font-size: 1.125rem; }
+    .part .volume input { grid-column: 2; grid-row: 1; }
+    .part .volume output { display: none; }
+    .part button { grid-column: 3; grid-row: 1; }
+
+    /* With no sliders on the rows, the mute buttons sit four to a line. */
+    .system.mine #mixer {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.25rem 0.5rem;
+    }
+    .system.mine .part { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+    .system.mine .part h2 { font-size: 1rem; }
+    .system.mine .part button { grid-column: 1; grid-row: 2; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="title">
+      <h1>Deck the Hall</h1>
+      <p class="arranger">arr. John Rutter</p>
+    </div>
+    <div class="choir" role="img" aria-label="Choir Ö:">Ö:</div>
+  </header>
+
+  <div class="transport">
+    <button id="play" disabled>Loading</button>
+    <button id="restart" disabled>Back to start</button>
+    <div id="time">0:00 <span>/ 0:00</span></div>
+  </div>
+
+  <div class="option">
+    <span id="speedLabel">Speed</span>
+    <div class="choices" id="speeds" role="group" aria-labelledby="speedLabel"></div>
+    <span id="speedNote" aria-live="polite"></span>
+  </div>
+
+  <div class="option">
+    <span id="modeLabel">Volume</span>
+    <div class="choices" id="modes" role="group" aria-labelledby="modeLabel">
+      <button data-mode="each">Tune individually</button>
+      <button data-mode="mine">Lock my part</button>
+    </div>
+  </div>
+
+  <div id="minePanel" hidden>
+    <div class="option">
+      <span id="myPartLabel">My part</span>
+      <div class="choices" id="myParts" role="group" aria-labelledby="myPartLabel"></div>
+    </div>
+
+    <div class="balance">
+      <label class="volume" id="myBalance">
+        <span id="myName"></span>
+        <input id="myVolume" type="range" min="0" max="100" aria-label="My part volume">
+        <output id="myOutput"></output>
+      </label>
+      <label class="volume" style="--c: var(--moon)">
+        <span>The rest</span>
+        <input id="restVolume" type="range" min="0" max="100" aria-label="Volume of the other parts">
+        <output id="restOutput"></output>
+      </label>
+    </div>
+  </div>
+
+  <p id="status" hidden></p>
+
+  <div class="system">
+    <div id="mixer"></div>
+    <div class="lanes">
+      <div id="waves"></div>
+      <div id="playhead"></div>
+      <input class="seek" id="seek" type="range" min="0" max="1" step="0.1" value="0" aria-label="Position in the song" disabled>
+    </div>
+  </div>
+</main>
+
+<script>
+const FOLDER = 'deck_the_hall/';
+// `trim` is the extra silence at the start of each file, in seconds. The recordings
+// are not aligned; these come from cross-correlating the parts across the whole song.
+const PARTS = [
+  { name: 'Soprano 1', color: '--soprano', trim: 0.72744 },
+  { name: 'Soprano 2', color: '--soprano', trim: 0.81144 },
+  { name: 'Alto 1', color: '--alto', trim: 0.05069 },
+  { name: 'Alto 2', color: '--alto', trim: 0 },
+  { name: 'Tenor 1', color: '--tenor', trim: 0.73931 },
+  { name: 'Tenor 2', color: '--tenor', trim: 0.90264 },
+  { name: 'Bass 1', color: '--bass', trim: 0.94071 },
+  { name: 'Bass 2', color: '--bass', trim: 0.99601 },
+].map(part => ({ ...part, file: `Deck the Hall (Arr. John Rutter) - ${part.name}.mp3` }));
+const DEFAULT_VOLUME = 70;
+const PEAK_COUNT = 1200;
+const HEADROOM = 0.45;
+const LIMITER_MAKEUP = 0.82; // cancels the gain the compressor node adds by itself
+const SPEEDS = [1, 0.85, 0.75];
+const MY_PART_KEY = 'songer.myPart';
+const MODE_KEY = 'songer.volumeMode';
+const STRETCH_CHUNK = 240000;
+const SOUNDTOUCH_URL = 'https://cdn.jsdelivr.net/npm/soundtouchjs@0.3.0/dist/soundtouch.js';
+
+const $ = id => document.getElementById(id);
+const playBtn = $('play');
+const restartBtn = $('restart');
+const seek = $('seek');
+const playhead = $('playhead');
+const timeEl = $('time');
+const statusEl = $('status');
+const speedNote = $('speedNote');
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const master = ctx.createGain();
+master.gain.value = HEADROOM;
+// All eight parts at full peak at 5.7 times what the speakers can take. Scaling that down
+// would leave a single part very quiet, so a limiter catches the loud moments instead.
+const limiter = ctx.createDynamicsCompressor();
+limiter.threshold.value = -3;
+limiter.knee.value = 0;
+limiter.ratio.value = 20;
+limiter.attack.value = 0.003;
+limiter.release.value = 0.25;
+const makeup = ctx.createGain();
+makeup.gain.value = LIMITER_MAKEUP;
+master.connect(limiter).connect(makeup).connect(ctx.destination);
+
+let duration = 0;
+let playing = false;
+let seeking = false;
+let offset = 0;    // song position, in seconds, while stopped
+let startedAt = 0; // ctx.currentTime that corresponds to `offset` while playing
+let speed = 1;
+let speedJob = 0;  // bumped on every speed change so a superseded one can give up
+let mode = 'each'; // 'each': one slider per part. 'mine': one for my part, one for the rest.
+let myPart = null;
+let myLevel = DEFAULT_VOLUME;
+let restLevel = DEFAULT_VOLUME;
+
+const levelFor = track => mode === 'each' ? track.volume : track === myPart ? myLevel : restLevel;
+
+// Squared so the slider feels even to the ear instead of bunching up at the top.
+const gainFor = track => track.muted ? 0 : (levelFor(track) / 100) ** 2;
+
+const tracks = PARTS.map(part => {
+  const track = { ...part, volume: DEFAULT_VOLUME, muted: false, gain: ctx.createGain(), source: null, original: null, buffer: null, peaks: null };
+  track.gain.connect(master);
+  buildPart(track);
+  return track;
+});
+
+function buildPart(track) {
+  const row = document.createElement('section');
+  row.className = 'part';
+  row.style.setProperty('--c', `var(${track.color})`);
+  row.innerHTML = `
+    <div class="part-head">
+      <h2>${track.name}</h2>
+      <button aria-pressed="false">Mute</button>
+    </div>
+    <div class="volume">
+      <input type="range" min="0" max="100" value="${track.volume}" aria-label="${track.name} volume">
+      <output>${track.volume}%</output>
+    </div>`;
+  $('mixer').append(row);
+
+  const slider = row.querySelector('input');
+  const output = row.querySelector('output');
+  const muteBtn = row.querySelector('button');
+
+  slider.addEventListener('input', () => {
+    track.volume = +slider.value;
+    output.textContent = `${track.volume}%`;
+    applyVolume(track);
+  });
+  muteBtn.addEventListener('click', () => {
+    track.muted = !track.muted;
+    muteBtn.setAttribute('aria-pressed', track.muted);
+    muteBtn.textContent = track.muted ? 'Muted' : 'Mute';
+    applyVolume(track);
+  });
+
+  track.canvas = document.createElement('canvas');
+  track.canvas.setAttribute('aria-hidden', 'true');
+  $('waves').append(track.canvas);
+  applyVolume(track);
+}
+
+function applyVolume(track) {
+  track.gain.gain.setTargetAtTime(gainFor(track), ctx.currentTime, 0.015);
+  draw(track);
+}
+
+function remember(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function recall(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function setMode(next) {
+  mode = next;
+  for (const button of $('modes').querySelectorAll('button')) {
+    button.setAttribute('aria-pressed', button.dataset.mode === mode);
+  }
+  $('minePanel').hidden = mode !== 'mine';
+  document.querySelector('.system').classList.toggle('mine', mode === 'mine');
+  tracks.forEach(applyVolume);
+  remember(MODE_KEY, mode);
+}
+
+function chooseMyPart(track) {
+  myPart = track;
+  for (const button of $('myParts').querySelectorAll('button')) {
+    button.setAttribute('aria-pressed', button.getAttribute('aria-label') === track.name);
+  }
+  $('myName').textContent = track.name;
+  $('myBalance').style.setProperty('--c', `var(${track.color})`);
+  tracks.forEach(applyVolume);
+  remember(MY_PART_KEY, track.name);
+}
+
+function bindLevel(sliderId, outputId, setLevel) {
+  const slider = $(sliderId);
+  const output = $(outputId);
+  slider.value = DEFAULT_VOLUME;
+  output.textContent = `${DEFAULT_VOLUME}%`;
+  slider.addEventListener('input', () => {
+    setLevel(+slider.value);
+    output.textContent = `${slider.value}%`;
+    tracks.forEach(applyVolume);
+  });
+}
+
+function buildVolumeModes() {
+  for (const track of tracks) {
+    const button = document.createElement('button');
+    button.innerHTML = `<span class="full">${track.name}</span><span class="short">${track.name[0]}${track.name.at(-1)}</span>`;
+    button.setAttribute('aria-label', track.name);
+    button.style.setProperty('--c', `var(${track.color})`);
+    button.addEventListener('click', () => chooseMyPart(track));
+    $('myParts').append(button);
+  }
+  for (const button of $('modes').querySelectorAll('button')) {
+    button.addEventListener('click', () => setMode(button.dataset.mode));
+  }
+  bindLevel('myVolume', 'myOutput', level => { myLevel = level; });
+  bindLevel('restVolume', 'restOutput', level => { restLevel = level; });
+
+  chooseMyPart(tracks.find(track => track.name === recall(MY_PART_KEY)) || tracks[0]);
+  setMode(recall(MODE_KEY) === 'mine' ? 'mine' : 'each');
+}
+
+// Positions are always in song time, whatever the speed.
+const position = () => playing ? Math.min(offset + (ctx.currentTime - startedAt) * speed, duration) : offset;
+
+function startSources() {
+  // Every part is scheduled against the same clock time, which keeps them sample-locked.
+  const when = ctx.currentTime + 0.05;
+  for (const track of tracks) {
+    const source = ctx.createBufferSource();
+    source.buffer = track.buffer;
+    source.connect(track.gain);
+    if (track.original.duration === duration) source.onended = finish;
+    source.start(when, offset / speed);
+    track.source = source;
+  }
+  startedAt = when;
+}
+
+function stopSources() {
+  for (const track of tracks) {
+    if (!track.source) continue;
+    track.source.onended = null;
+    track.source.stop();
+    track.source = null;
+  }
+}
+
+function play() {
+  ctx.resume();
+  if (offset >= duration) offset = 0;
+  startSources();
+  playing = true;
+  playBtn.textContent = 'Pause';
+  requestAnimationFrame(tick);
+}
+
+function pause() {
+  offset = position();
+  playing = false;
+  stopSources();
+  playBtn.textContent = 'Play';
+  render();
+}
+
+function finish() {
+  for (const track of tracks) track.source = null;
+  playing = false;
+  offset = 0;
+  playBtn.textContent = 'Play';
+  render();
+}
+
+function seekTo(seconds) {
+  const wasPlaying = playing;
+  if (playing) { playing = false; stopSources(); }
+  offset = Math.max(0, Math.min(seconds, duration));
+  if (wasPlaying) {
+    startSources();
+    playing = true;
+  }
+  render();
+}
+
+// The files are stereo in name only (left and right differ by under 0.5%),
+// and a single channel halves the memory eight parts need.
+function trimToMono(buffer, seconds) {
+  const skip = Math.round(seconds * buffer.sampleRate);
+  const mono = ctx.createBuffer(1, buffer.length - skip, buffer.sampleRate);
+  const out = mono.getChannelData(0);
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const data = buffer.getChannelData(c);
+    for (let i = 0; i < out.length; i++) out[i] += data[i + skip] / buffer.numberOfChannels;
+  }
+  return mono;
+}
+
+// Slowing a recording down directly would also lower its pitch, so each part is
+// time-stretched ahead of playback. Returns null if a newer speed change took over.
+async function stretch(buffer, rate, job, onProgress) {
+  const { SoundTouch, SimpleFilter, WebAudioBufferSource } = await import(SOUNDTOUCH_URL);
+  const soundTouch = new SoundTouch();
+  soundTouch.tempo = rate;
+  const filter = new SimpleFilter(new WebAudioBufferSource(buffer), soundTouch);
+
+  const frames = Math.round(buffer.length / rate);
+  const stretched = ctx.createBuffer(1, frames, buffer.sampleRate);
+  const out = stretched.getChannelData(0);
+  const chunk = new Float32Array(STRETCH_CHUNK * 2); // SoundTouch always writes interleaved stereo
+
+  for (let done = 0; done < frames;) {
+    const got = filter.extract(chunk, Math.min(STRETCH_CHUNK, frames - done));
+    if (!got) break;
+    for (let i = 0; i < got; i++) out[done + i] = chunk[i * 2];
+    done += got;
+    onProgress(done / frames);
+    await new Promise(resolve => setTimeout(resolve));
+    if (job !== speedJob) return null;
+  }
+  return stretched;
+}
+
+function markSpeed(rate) {
+  for (const button of $('speeds').querySelectorAll('button')) {
+    button.setAttribute('aria-pressed', +button.dataset.speed === rate);
+  }
+}
+
+async function setSpeed(rate) {
+  const job = ++speedJob;
+  markSpeed(rate);
+  let buffers = tracks.map(t => t.original);
+  if (rate !== 1) {
+    try {
+      buffers = [];
+      for (const [index, track] of tracks.entries()) {
+        const stretched = await stretch(track.original, rate, job, progress => {
+          speedNote.textContent = `Preparing ${Math.round(rate * 100)}%: ${Math.round((index + progress) / tracks.length * 100)}%`;
+        });
+        if (!stretched) return;
+        buffers.push(stretched);
+      }
+    } catch (error) {
+      if (job !== speedJob) return;
+      markSpeed(speed);
+      speedNote.textContent = 'Could not load the slow-down tool. Check your internet connection and choose the speed again.';
+      return;
+    }
+  }
+  if (job !== speedJob) return;
+
+  // Playing carries on at the old speed until the new one is ready, then picks up at the same spot.
+  const wasPlaying = playing;
+  offset = position();
+  if (playing) { playing = false; stopSources(); }
+  tracks.forEach((track, index) => { track.buffer = buffers[index]; });
+  speed = rate;
+  if (wasPlaying) {
+    startSources();
+    playing = true;
+  }
+  speedNote.textContent = '';
+  render();
+}
+
+function buildSpeeds() {
+  for (const rate of SPEEDS) {
+    const button = document.createElement('button');
+    button.textContent = `${Math.round(rate * 100)}%`;
+    button.dataset.speed = rate;
+    button.disabled = true;
+    button.setAttribute('aria-pressed', rate === speed);
+    button.addEventListener('click', () => setSpeed(rate));
+    $('speeds').append(button);
+  }
+}
+
+function formatTime(seconds) {
+  const s = Math.floor(seconds);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function showPosition(seconds) {
+  const fraction = duration ? seconds / duration : 0;
+  playhead.style.left = `calc(var(--gutter) + (100% - var(--gutter)) * ${fraction})`;
+  timeEl.innerHTML = `${formatTime(seconds)} <span>/ ${formatTime(duration)}</span>`;
+}
+
+function render() {
+  const seconds = position();
+  if (!seeking) seek.value = seconds;
+  showPosition(seeking ? +seek.value : seconds);
+}
+
+function tick() {
+  if (!playing) return;
+  render();
+  requestAnimationFrame(tick);
+}
+
+function computePeaks(buffer) {
+  const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+  const size = Math.floor(buffer.length / PEAK_COUNT);
+  const peaks = new Float32Array(PEAK_COUNT);
+  for (let i = 0; i < PEAK_COUNT; i++) {
+    let max = 0;
+    for (let j = i * size; j < (i + 1) * size; j += 16) {
+      for (const data of channels) max = Math.max(max, Math.abs(data[j]));
+    }
+    peaks[i] = max;
+  }
+  return peaks;
+}
+
+function draw(track) {
+  const { canvas, peaks } = track;
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (!width) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  const g = canvas.getContext('2d');
+  g.scale(dpr, dpr);
+
+  const styles = getComputedStyle(document.documentElement);
+  const mid = height / 2;
+
+  // Five stave lines behind each part.
+  g.fillStyle = styles.getPropertyValue('--line');
+  const spacing = Math.round(height / 9);
+  for (let i = -2; i <= 2; i++) g.fillRect(0, mid + i * spacing, width, 1);
+
+  if (!peaks) return;
+
+  // The ink follows the volume, so the balance of the mix is visible at a glance.
+  const level = gainFor(track) ** 0.5;
+  const left = parseFloat(styles.getPropertyValue('--gutter'));
+  const step = 3;
+  const lanes = width - left;
+  g.fillStyle = styles.getPropertyValue(track.color);
+  for (let x = 0; x < lanes; x += step) {
+    const peak = peaks[Math.floor(x / lanes * peaks.length)];
+    const h = Math.max(1, peak * height * 0.45 * level);
+    g.fillRect(left + x, mid - h, 2, h * 2);
+  }
+}
+
+function drawAll() { tracks.forEach(draw); }
+
+function showError(html) {
+  statusEl.innerHTML = html;
+  statusEl.hidden = false;
+  playBtn.textContent = 'Unavailable';
+}
+
+async function load() {
+  if (location.protocol === 'file:') {
+    showError('Browsers block audio loading on pages opened as files. In this folder, run <code>python3 -m http.server 8000</code>, then open <code>http://localhost:8000</code>.');
+    return;
+  }
+  try {
+    await Promise.all(tracks.map(async track => {
+      const response = await fetch(FOLDER + encodeURIComponent(track.file));
+      if (!response.ok) throw new Error(`${track.file}: HTTP ${response.status}`);
+      track.original = trimToMono(await ctx.decodeAudioData(await response.arrayBuffer()), track.trim);
+      track.buffer = track.original;
+    }));
+  } catch (error) {
+    showError(`Could not load the recordings. ${error.message}`);
+    return;
+  }
+
+  duration = Math.max(...tracks.map(t => t.buffer.duration));
+  for (const track of tracks) track.peaks = computePeaks(track.buffer);
+  const loudest = Math.max(...tracks.flatMap(t => Array.from(t.peaks)));
+  for (const track of tracks) track.peaks = track.peaks.map(p => p / loudest);
+
+  seek.max = duration;
+  seek.disabled = playBtn.disabled = restartBtn.disabled = false;
+  for (const button of $('speeds').querySelectorAll('button')) button.disabled = false;
+  playBtn.textContent = 'Play';
+  drawAll();
+  render();
+}
+
+playBtn.addEventListener('click', () => playing ? pause() : play());
+restartBtn.addEventListener('click', () => seekTo(0));
+
+// Dragging only moves the playhead; the audio jumps on release.
+seek.addEventListener('input', () => { seeking = true; showPosition(+seek.value); });
+seek.addEventListener('change', () => { seeking = false; seekTo(+seek.value); });
+
+// iPhone sliders ignore taps on the track, so pointing at the waveforms is handled here.
+const lanes = document.querySelector('.lanes');
+
+function previewPointer(event) {
+  const box = seek.getBoundingClientRect();
+  const fraction = Math.max(0, Math.min((event.clientX - box.left) / box.width, 1));
+  seeking = true;
+  seek.value = fraction * duration;
+  showPosition(+seek.value);
+}
+
+lanes.addEventListener('pointerdown', event => {
+  if (seek.disabled) return;
+  lanes.setPointerCapture(event.pointerId);
+  previewPointer(event);
+});
+lanes.addEventListener('pointermove', event => {
+  if (lanes.hasPointerCapture(event.pointerId)) previewPointer(event);
+});
+lanes.addEventListener('pointerup', event => {
+  if (!lanes.hasPointerCapture(event.pointerId)) return;
+  seeking = false;
+  seekTo(+seek.value);
+});
+// The browser took the gesture over to scroll the page, so nothing should jump.
+lanes.addEventListener('pointercancel', () => {
+  seeking = false;
+  render();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.code !== 'Space' || event.target.tagName === 'BUTTON' || playBtn.disabled) return;
+  event.preventDefault();
+  playing ? pause() : play();
+});
+
+new ResizeObserver(drawAll).observe($('waves'));
+
+buildSpeeds();
+buildVolumeModes();
+load();
+</script>
+</body>
+</html>
