@@ -269,6 +269,8 @@
     border-right: 1px solid var(--line);
     cursor: pointer;
     touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .lanes::before {
@@ -288,6 +290,20 @@
     width: 100%;
     height: var(--row);
   }
+
+  #loopText { color: var(--moon-dim); }
+
+  #loopBand {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(242, 203, 108, 0.16);
+    border: solid var(--tenor);
+    border-width: 0 2px;
+    pointer-events: none;
+  }
+
+  #loopBand[hidden] { display: none; }
 
   #playhead {
     position: absolute;
@@ -400,6 +416,12 @@
     </div>
   </div>
 
+  <div class="option">
+    <span>Loop</span>
+    <span id="loopText">Drag across the waveforms to repeat</span>
+    <button id="loopClear" hidden>Stop looping</button>
+  </div>
+
   <div id="minePanel" hidden>
     <div class="option">
       <span id="myPartLabel">My part</span>
@@ -426,6 +448,7 @@
     <div id="mixer"></div>
     <div class="lanes">
       <div id="waves"></div>
+      <div id="loopBand" hidden></div>
       <div id="playhead"></div>
       <input class="seek" id="seek" type="range" min="0" max="1" step="0.1" value="0" aria-label="Position in the song" disabled>
     </div>
@@ -451,6 +474,12 @@ const PEAK_COUNT = 1200;
 const HEADROOM = 0.45;
 const LIMITER_MAKEUP = 0.82; // cancels the gain the compressor node adds by itself
 const SPEEDS = [1, 0.85, 0.75];
+const LOOP_LEAD_IN = 2;        // seconds of listening before each repeat, at any speed
+const LOOP_MIN_LENGTH = 1.5;   // shorter drags are treated as a slip
+const LOOP_FADE = 0.012;       // the jump back is hidden by a fade this long on each side
+const LOOP_FADE_CYCLES = 1500; // repeats scheduled ahead, hours of practice for any real passage
+const DRAG_PIXELS = 8;         // a press that moves less than this is a tap
+const SESSION_KEY = 'songer.session';
 const AUDIO_CACHE_PREFIX = 'songer-audio-';
 const AUDIO_CACHE = `${AUDIO_CACHE_PREFIX}v1`; // change the version whenever the MP3s are replaced
 const TYPICAL_FILE_BYTES = 950000; // used when the server doesn't say how big a file is
@@ -484,6 +513,8 @@ limiter.release.value = 0.25;
 const makeup = ctx.createGain();
 makeup.gain.value = LIMITER_MAKEUP;
 master.connect(limiter).connect(makeup).connect(ctx.destination);
+const loopFade = ctx.createGain();
+loopFade.connect(master);
 
 let duration = 0;
 let playing = false;
@@ -494,8 +525,12 @@ let speed = 1;
 let speedJob = 0;  // bumped on every speed change so a superseded one can give up
 let mode = 'each'; // 'each': one slider per part. 'mine': one for my part, one for the rest.
 let myPart = null;
-let myLevel = DEFAULT_VOLUME;
-let restLevel = DEFAULT_VOLUME;
+const session = readSession();
+let myLevel = session.myLevel ?? DEFAULT_VOLUME;
+let restLevel = session.restLevel ?? DEFAULT_VOLUME;
+let loopRange = null; // { start, end } in song time
+let shortest = 0;     // the loop can't run past the end of the shortest recording
+let wakeLock = null;
 
 const levelFor = track => mode === 'each' ? track.volume : track === myPart ? myLevel : restLevel;
 
@@ -503,8 +538,8 @@ const levelFor = track => mode === 'each' ? track.volume : track === myPart ? my
 const gainFor = track => track.muted ? 0 : (levelFor(track) / 100) ** 2;
 
 const tracks = PARTS.map(part => {
-  const track = { ...part, volume: DEFAULT_VOLUME, muted: false, gain: ctx.createGain(), source: null, original: null, buffer: null, peaks: null };
-  track.gain.connect(master);
+  const track = { ...part, volume: session.volumes?.[part.name] ?? DEFAULT_VOLUME, muted: false, gain: ctx.createGain(), source: null, original: null, buffer: null, peaks: null };
+  track.gain.connect(loopFade);
   buildPart(track);
   return track;
 });
@@ -532,6 +567,7 @@ function buildPart(track) {
     track.volume = +slider.value;
     output.textContent = `${track.volume}%`;
     applyVolume(track);
+    saveSession();
   });
   muteBtn.addEventListener('click', () => {
     track.muted = !track.muted;
@@ -549,6 +585,25 @@ function buildPart(track) {
 function applyVolume(track) {
   track.gain.gain.setTargetAtTime(gainFor(track), ctx.currentTime, 0.015);
   draw(track);
+}
+
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSession() {
+  remember(SESSION_KEY, JSON.stringify({
+    volumes: Object.fromEntries(tracks.map(track => [track.name, track.volume])),
+    myLevel,
+    restLevel,
+    // Until the recordings load there's nothing new to say about these two.
+    position: duration ? position() : session.position,
+    loop: duration ? loopRange : session.loop,
+  }));
 }
 
 function remember(key, value) {
@@ -587,15 +642,16 @@ function chooseMyPart(track) {
   remember(MY_PART_KEY, track.name);
 }
 
-function bindLevel(sliderId, outputId, setLevel) {
+function bindLevel(sliderId, outputId, initial, setLevel) {
   const slider = $(sliderId);
   const output = $(outputId);
-  slider.value = DEFAULT_VOLUME;
-  output.textContent = `${DEFAULT_VOLUME}%`;
+  slider.value = initial;
+  output.textContent = `${initial}%`;
   slider.addEventListener('input', () => {
     setLevel(+slider.value);
     output.textContent = `${slider.value}%`;
     tracks.forEach(applyVolume);
+    saveSession();
   });
 }
 
@@ -611,28 +667,108 @@ function buildVolumeModes() {
   for (const button of $('modes').querySelectorAll('button')) {
     button.addEventListener('click', () => setMode(button.dataset.mode));
   }
-  bindLevel('myVolume', 'myOutput', level => { myLevel = level; });
-  bindLevel('restVolume', 'restOutput', level => { restLevel = level; });
+  bindLevel('myVolume', 'myOutput', myLevel, level => { myLevel = level; });
+  bindLevel('restVolume', 'restOutput', restLevel, level => { restLevel = level; });
 
   chooseMyPart(tracks.find(track => track.name === recall(MY_PART_KEY)) || tracks[0]);
   setMode(recall(MODE_KEY) === 'mine' ? 'mine' : 'each');
 }
 
 // Positions are always in song time, whatever the speed.
-const position = () => playing ? Math.min(offset + (ctx.currentTime - startedAt) * speed, duration) : offset;
+function position() {
+  if (!playing) return offset;
+  const reached = offset + (ctx.currentTime - startedAt) * speed;
+  if (!loopRange || reached < loopRange.end) return Math.min(reached, duration);
+  const restart = loopRestart();
+  return restart + (reached - restart) % (loopRange.end - restart);
+}
+
+// Each repeat begins a little before the passage, so there's time to breathe and come in.
+const loopRestart = () => Math.max(0, loopRange.start - LOOP_LEAD_IN * speed);
+
+function intoLoop(seconds) {
+  const restart = loopRestart();
+  return seconds >= restart && seconds < loopRange.end ? seconds : restart;
+}
+
+function scheduleLoopFades(when) {
+  const fade = loopFade.gain;
+  fade.cancelScheduledValues(0);
+  fade.setValueAtTime(1, ctx.currentTime);
+  if (!loopRange) return;
+  const firstJump = when + (loopRange.end - offset) / speed;
+  const period = (loopRange.end - loopRestart()) / speed;
+  for (let cycle = 0; cycle < LOOP_FADE_CYCLES; cycle++) {
+    const jump = firstJump + cycle * period;
+    fade.setValueAtTime(1, jump - LOOP_FADE);
+    fade.linearRampToValueAtTime(0, jump);
+    fade.linearRampToValueAtTime(1, jump + LOOP_FADE);
+  }
+}
+
+function showLoopBand(range) {
+  const band = $('loopBand');
+  band.hidden = !range;
+  if (!range) return;
+  band.style.left = `calc(var(--gutter) + (100% - var(--gutter)) * ${range.start / duration})`;
+  band.style.width = `calc((100% - var(--gutter)) * ${(range.end - range.start) / duration})`;
+}
+
+function showLoop() {
+  showLoopBand(loopRange);
+  $('loopClear').hidden = !loopRange;
+  $('loopText').textContent = loopRange
+    ? `Repeating ${formatTime(loopRange.start)}–${formatTime(loopRange.end)}`
+    : 'Drag across the waveforms to repeat';
+}
+
+function setLoop(range) {
+  const current = position();
+  const wasPlaying = playing;
+  if (playing) { playing = false; stopSources(); }
+  loopRange = range;
+  offset = range ? loopRestart() : current;
+  if (wasPlaying) {
+    startSources();
+    playing = true;
+  }
+  showLoop();
+  saveSession();
+  render();
+}
+
+async function keepAwake() {
+  if (!('wakeLock' in navigator) || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch {}
+}
+
+function allowSleep() {
+  wakeLock?.release().catch(() => {});
+}
 
 function startSources() {
   // Every part is scheduled against the same clock time, which keeps them sample-locked.
+  if (loopRange) offset = intoLoop(offset);
   const when = ctx.currentTime + 0.05;
   for (const track of tracks) {
     const source = ctx.createBufferSource();
     source.buffer = track.buffer;
     source.connect(track.gain);
-    if (track.original.duration === duration) source.onended = finish;
+    if (loopRange) {
+      source.loop = true;
+      source.loopStart = loopRestart() / speed;
+      source.loopEnd = loopRange.end / speed;
+    } else if (track.original.duration === duration) {
+      source.onended = finish;
+    }
     source.start(when, offset / speed);
     track.source = source;
   }
   startedAt = when;
+  scheduleLoopFades(when);
 }
 
 function stopSources() {
@@ -650,6 +786,7 @@ function play() {
   startSources();
   playing = true;
   playBtn.textContent = 'Pause';
+  keepAwake();
   requestAnimationFrame(tick);
 }
 
@@ -658,6 +795,8 @@ function pause() {
   playing = false;
   stopSources();
   playBtn.textContent = 'Play';
+  allowSleep();
+  saveSession();
   render();
 }
 
@@ -666,6 +805,8 @@ function finish() {
   playing = false;
   offset = 0;
   playBtn.textContent = 'Play';
+  allowSleep();
+  saveSession();
   render();
 }
 
@@ -673,10 +814,12 @@ function seekTo(seconds) {
   const wasPlaying = playing;
   if (playing) { playing = false; stopSources(); }
   offset = Math.max(0, Math.min(seconds, duration));
+  if (loopRange) offset = intoLoop(offset);
   if (wasPlaying) {
     startSources();
     playing = true;
   }
+  saveSession();
   render();
 }
 
@@ -933,7 +1076,12 @@ async function load() {
   const loudest = Math.max(...tracks.flatMap(t => Array.from(t.peaks)));
   for (const track of tracks) track.peaks = track.peaks.map(p => p / loudest);
 
+  shortest = Math.min(...tracks.map(t => t.original.duration));
   seek.max = duration;
+  if (session.loop?.end <= shortest) loopRange = session.loop;
+  offset = Math.max(0, Math.min(session.position || 0, duration));
+  if (loopRange) offset = intoLoop(offset);
+  showLoop();
   seek.disabled = playBtn.disabled = restartBtn.disabled = false;
   for (const button of $('speeds').querySelectorAll('button')) button.disabled = false;
   playBtn.textContent = 'Play';
@@ -949,35 +1097,54 @@ restartBtn.addEventListener('click', () => seekTo(0));
 seek.addEventListener('input', () => { seeking = true; showPosition(+seek.value); });
 seek.addEventListener('change', () => { seeking = false; seekTo(+seek.value); });
 
-// iPhone sliders ignore taps on the track, so pointing at the waveforms is handled here.
+// Pointing at the waveforms: a tap seeks, a drag marks a passage to repeat.
 const lanes = document.querySelector('.lanes');
+let press = null; // { x, seconds, dragging }
 
-function previewPointer(event) {
+function secondsAt(event) {
   const box = seek.getBoundingClientRect();
-  const fraction = Math.max(0, Math.min((event.clientX - box.left) / box.width, 1));
-  seeking = true;
-  seek.value = fraction * duration;
-  showPosition(+seek.value);
+  return Math.max(0, Math.min((event.clientX - box.left) / box.width, 1)) * duration;
+}
+
+function selection(event) {
+  const here = secondsAt(event);
+  return { start: Math.min(press.seconds, here), end: Math.min(Math.max(press.seconds, here), shortest) };
 }
 
 lanes.addEventListener('pointerdown', event => {
   if (seek.disabled) return;
   lanes.setPointerCapture(event.pointerId);
-  previewPointer(event);
+  press = { x: event.clientX, seconds: secondsAt(event), dragging: false };
 });
 lanes.addEventListener('pointermove', event => {
-  if (lanes.hasPointerCapture(event.pointerId)) previewPointer(event);
+  if (!press) return;
+  if (Math.abs(event.clientX - press.x) > DRAG_PIXELS) press.dragging = true;
+  if (press.dragging) showLoopBand(selection(event));
 });
 lanes.addEventListener('pointerup', event => {
-  if (!lanes.hasPointerCapture(event.pointerId)) return;
-  seeking = false;
-  seekTo(+seek.value);
+  if (!press) return;
+  if (press.dragging) {
+    const range = selection(event);
+    if (range.end - range.start >= LOOP_MIN_LENGTH) setLoop(range);
+    else showLoop();
+  } else {
+    seekTo(secondsAt(event));
+  }
+  press = null;
 });
-// The browser took the gesture over to scroll the page, so nothing should jump.
+// The browser took the gesture over to scroll the page, so nothing should change.
 lanes.addEventListener('pointercancel', () => {
-  seeking = false;
-  render();
+  press = null;
+  showLoop();
 });
+
+$('loopClear').addEventListener('click', () => setLoop(null));
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveSession();
+  else if (playing) keepAwake(); // the browser drops the lock whenever the page is hidden
+});
+window.addEventListener('pagehide', saveSession);
 
 document.addEventListener('keydown', event => {
   if (event.code !== 'Space' || event.target.tagName === 'BUTTON' || playBtn.disabled) return;
