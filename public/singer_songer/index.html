@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
+    color-scheme: dark;
     --night: #1b2758;
     --night-deep: #0b1230;
     --moon: #eef1fb;
@@ -19,7 +20,8 @@
     --alto: #cdb6f7;
     --tenor: #f2cb6c;
     --bass: #8fd8ec;
-    --row: 4.5rem;
+    --row: 3.25rem;
+    --section-gap: 0.5rem; /* between soprano, alto, tenor and bass */
     --gutter: 22px; /* room for the bracket, left of the waveforms */
   }
 
@@ -59,7 +61,7 @@
     position: relative;
     max-width: 66rem;
     margin: 0 auto;
-    padding: 3.5rem 2rem 4rem;
+    padding: 2.5rem 2rem 3rem;
   }
 
   header {
@@ -70,19 +72,19 @@
   }
 
   .choir {
-    font: 700 clamp(3rem, 9vw, 5.5rem)/1 Alegreya, Georgia, serif;
+    font: 700 clamp(2.5rem, 6vw, 3.75rem)/1 Alegreya, Georgia, serif;
     color: var(--tenor);
   }
 
   h1 {
     margin: 0;
-    font: 700 clamp(3rem, 9vw, 5.5rem)/1 Alegreya, Georgia, serif;
+    font: 700 clamp(2.5rem, 6vw, 3.75rem)/1 Alegreya, Georgia, serif;
     letter-spacing: -0.01em;
   }
 
   .arranger {
-    margin: 0.5rem 0 0;
-    font: 500 1.375rem/1.3 Alegreya, Georgia, serif;
+    margin: 0.25rem 0 0;
+    font: 500 1.25rem/1.3 Alegreya, Georgia, serif;
     color: var(--moon-dim);
   }
 
@@ -91,7 +93,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem 1rem;
-    margin: 2.5rem 0 1.25rem;
+    margin: 1.75rem 0 1.25rem;
   }
 
   .option {
@@ -102,7 +104,12 @@
     margin-bottom: 0.75rem;
   }
 
-  .option > span:first-child { min-width: 3.75rem; }
+  .option > span:first-child,
+  .option > label { min-width: 3.75rem; }
+
+  .transport .speed { margin: 0 0 0 0.5rem; }
+  .speed > span:first-child { min-width: 0; }
+  .loop-row { margin: 1.25rem 0 0; }
 
   .choices {
     display: flex;
@@ -121,15 +128,38 @@
     border-color: var(--c, var(--moon));
   }
 
-  #speedNote { color: var(--moon-dim); }
+  /* A speed being prepared fills up, the same way Play does while loading. */
+  .choices button.preparing {
+    color: var(--moon);
+    background: linear-gradient(to right, var(--line) var(--loaded, 0%), transparent var(--loaded, 0%));
+    border-color: var(--moon-dim);
+  }
 
-  .short { display: none; }
+  select {
+    font: inherit;
+    font-weight: 700;
+    color: var(--c, var(--moon));
+    background: var(--night-deep) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23aab5d8' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+    border: 1px solid var(--line);
+    border-radius: 0.25rem;
+    padding: 0.2rem 2rem 0.2rem 0.6rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select:hover { border-color: var(--moon-dim); }
+
+  option {
+    color: var(--moon);
+    background: var(--night-deep);
+  }
 
   .balance {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem 2rem;
-    margin-top: 1.25rem;
+    margin-top: 0.25rem;
   }
 
   .system.mine .volume { display: none; }
@@ -155,6 +185,7 @@
   button:disabled { cursor: default; opacity: 0.6; }
 
   button:focus-visible,
+  select:focus-visible,
   input[type="range"]:focus-visible,
   .lanes:has(.seek:focus-visible) {
     outline: 2px solid var(--moon);
@@ -205,33 +236,54 @@
 
   .system {
     display: grid;
-    grid-template-columns: 17rem minmax(0, 1fr);
+    grid-template-columns: 20rem minmax(0, 1fr);
     gap: 0 2rem;
-    margin-top: 2rem;
+    margin-top: 0.5rem;
   }
 
+  /* One line per part: name, slider, level, mute. */
   .part {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(0, 1fr) 2.75rem auto;
+    align-items: center;
+    column-gap: 0.5rem;
     height: var(--row);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.125rem;
   }
 
-  .part-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
+  #mixer .part:nth-child(2n+1):not(:first-child),
+  #waves canvas:nth-child(2n+1):not(:first-child) { margin-top: var(--section-gap); }
+
+  .part .part-head, .part .volume { display: contents; }
 
   .part h2 {
+    grid-column: 1;
+    grid-row: 1;
     margin: 0;
-    font: 700 1.25rem/1.2 Alegreya, Georgia, serif;
+    font: 700 1.125rem/1.2 Alegreya, Georgia, serif;
     color: var(--c);
   }
 
-  .part button { font-size: 0.9375rem; padding: 0 0.6rem; }
+  .part .volume input { grid-column: 2; grid-row: 1; }
+  .part .volume output { grid-column: 3; grid-row: 1; width: auto; }
+
+  .part button {
+    grid-column: 4;
+    grid-row: 1;
+    font-size: 0.9375rem;
+    padding: 0 0.6rem;
+  }
+
+  .part.is-muted h2,
+  .part.is-muted .volume input,
+  .part.is-muted .volume output { opacity: 0.5; }
+
+  .role { display: none; color: var(--moon-dim); }
+
+  .system.mine .role {
+    display: block;
+    grid-column: 2 / span 2;
+    grid-row: 1;
+  }
 
   .part button[aria-pressed="true"] {
     color: var(--night-deep);
@@ -250,9 +302,40 @@
     min-width: 0;
     height: 1.75rem;
     margin: 0;
-    accent-color: var(--c);
+    background: none;
     cursor: pointer;
     touch-action: pan-y;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .volume input::-webkit-slider-runnable-track {
+    height: 0.375rem;
+    border-radius: 1rem;
+    background: linear-gradient(to right, var(--c) var(--fill, 0%), var(--line) var(--fill, 0%));
+  }
+
+  .volume input::-moz-range-track {
+    height: 0.375rem;
+    border-radius: 1rem;
+    background: linear-gradient(to right, var(--c) var(--fill, 0%), var(--line) var(--fill, 0%));
+  }
+
+  .volume input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: -0.4375rem;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  .volume input::-moz-range-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c);
   }
 
   .volume output {
@@ -262,7 +345,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* The three waveforms are set like one system of a choral score:
+  /* The waveforms are set like one system of a choral score:
      a bracket on the left, a barline on the right. */
   .lanes {
     position: relative;
@@ -329,50 +412,43 @@
 
   /* Phones: compact enough that My part and the rest fits on one screen. */
   @media (max-width: 44rem) {
-    :root { --row: 1.75rem; }
+    :root { --row: 1.75rem; --section-gap: 0.25rem; }
     main { padding: 1rem 1rem 1.5rem; }
-    button { min-height: 2.75rem; }
+    button, select { min-height: 2.75rem; }
 
     .title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.75rem; }
     h1, .choir { font-size: 2.25rem; }
     .arranger { margin: 0; font-size: 1rem; }
 
-    .transport { flex-wrap: nowrap; gap: 0.5rem; margin: 0.75rem 0; }
+    .transport { gap: 0.5rem; margin: 0.75rem 0 0.5rem; }
+    .transport .speed { order: 3; flex-basis: 100%; margin: 0; }
     #play { min-width: 5rem; padding: 0.4rem 1rem; font-size: 1.125rem; }
     .transport.loading #play { flex: 1; }
     #restart { padding: 0.2rem 0.5rem; font-size: 0.9375rem; white-space: nowrap; }
     #time { font-size: 1.25rem; white-space: nowrap; }
 
     .option { gap: 0.25rem 0.5rem; margin-bottom: 0.5rem; }
-    .option > span:first-child { min-width: 3.25rem; }
+    .option > span:first-child,
+    .option > label { min-width: 3.25rem; }
     .choices { flex: 1; }
     .choices button { flex: auto; padding: 0.2rem 0.4rem; font-size: 0.9375rem; }
-    #myParts { flex-wrap: nowrap; }
-    #myParts button { flex: 1 1 0; min-width: 0; padding: 0.2rem 0; }
-    .full { display: none; }
-    .short { display: inline; }
+    select { flex: 1; min-width: 0; }
 
     .balance { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 0; }
     .balance span { flex: none; width: 5.25rem; font-size: 1.125rem; }
     .balance output { width: 2.75rem; }
-    .volume input { height: 2.75rem; }
+    .volume input { height: 2.5rem; }
+    .volume input::-webkit-slider-thumb { width: 1.5rem; height: 1.5rem; margin-top: -0.5625rem; }
+    .volume input::-moz-range-thumb { width: 1.5rem; height: 1.5rem; }
 
-    .system { grid-template-columns: minmax(0, 1fr); margin-top: 0.75rem; }
+    .loop-row { margin: 0; }
+    .system { grid-template-columns: minmax(0, 1fr); margin-top: 0.25rem; }
     .lanes { grid-row: 1; margin-bottom: 0.5rem; }
 
-    /* One line per part: name, slider, mute. */
-    .part {
-      display: grid;
-      grid-template-columns: 5rem minmax(0, 1fr) auto;
-      align-items: center;
-      column-gap: 0.5rem;
-      height: auto;
-    }
-    .part .part-head, .part .volume { display: contents; }
-    .part h2 { grid-column: 1; grid-row: 1; font-size: 1.125rem; }
-    .part .volume input { grid-column: 2; grid-row: 1; }
+    .part { grid-template-columns: 5rem minmax(0, 1fr) auto; height: auto; }
     .part .volume output { display: none; }
-    .part button { grid-column: 3; grid-row: 1; }
+    .part button { grid-column: 3; }
+    .system.mine .role { display: none; }
 
     /* With no sliders on the rows, the mute buttons sit four to a line. */
     .system.mine #mixer {
@@ -380,6 +456,7 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.25rem 0.5rem;
     }
+    .system.mine #mixer .part:nth-child(n) { margin-top: 0; }
     .system.mine .part { grid-template-columns: minmax(0, 1fr); justify-items: center; }
     .system.mine .part h2 { font-size: 1rem; }
     .system.mine .part button { grid-column: 1; grid-row: 2; width: 100%; }
@@ -399,13 +476,11 @@
   <div class="transport loading">
     <button id="play" disabled>Loading 0%</button>
     <button id="restart" disabled>Back to start</button>
+    <div class="option speed">
+      <span id="speedLabel">Speed</span>
+      <div class="choices" id="speeds" role="group" aria-labelledby="speedLabel"></div>
+    </div>
     <div id="time">0:00 <span>/ 0:00</span></div>
-  </div>
-
-  <div class="option">
-    <span id="speedLabel">Speed</span>
-    <div class="choices" id="speeds" role="group" aria-labelledby="speedLabel"></div>
-    <span id="speedNote" aria-live="polite"></span>
   </div>
 
   <div class="option">
@@ -416,21 +491,11 @@
     </div>
   </div>
 
-  <div class="option">
-    <span>Loop</span>
-    <span id="loopText">Drag across the waveforms to repeat</span>
-    <button id="loopClear" hidden>Stop looping</button>
-  </div>
-
   <div id="minePanel" hidden>
     <div class="option">
-      <span id="myPartLabel">My part</span>
-      <div class="choices" id="myParts" role="group" aria-labelledby="myPartLabel"></div>
-    </div>
-
-    <div class="option">
-      <span id="partnerLabel">Partner</span>
-      <div class="choices" role="group" aria-labelledby="partnerLabel">
+      <label for="myParts">My part</label>
+      <select id="myParts"></select>
+      <div class="choices">
         <button id="partnerToggle"></button>
       </div>
     </div>
@@ -450,6 +515,12 @@
   </div>
 
   <p id="status" hidden></p>
+
+  <div class="option loop-row">
+    <span>Loop</span>
+    <span id="loopText">Drag across the waveforms to repeat</span>
+    <button id="loopClear" hidden>Stop looping</button>
+  </div>
 
   <div class="system">
     <div id="mixer"></div>
@@ -504,7 +575,6 @@ const seek = $('seek');
 const playhead = $('playhead');
 const timeEl = $('time');
 const statusEl = $('status');
-const speedNote = $('speedNote');
 
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const master = ctx.createGain();
@@ -567,6 +637,7 @@ function buildPart(track) {
   row.innerHTML = `
     <div class="part-head">
       <h2>${track.name}</h2>
+      <span class="role"></span>
       <button aria-pressed="false">Mute</button>
     </div>
     <div class="volume">
@@ -578,6 +649,7 @@ function buildPart(track) {
   const slider = row.querySelector('input');
   const output = row.querySelector('output');
   const muteBtn = row.querySelector('button');
+  track.role = row.querySelector('.role');
 
   slider.addEventListener('input', () => {
     track.volume = +slider.value;
@@ -589,6 +661,7 @@ function buildPart(track) {
     track.muted = !track.muted;
     muteBtn.setAttribute('aria-pressed', track.muted);
     muteBtn.textContent = track.muted ? 'Muted' : 'Mute';
+    row.classList.toggle('is-muted', track.muted);
     applyVolume(track);
   });
 
@@ -650,15 +723,15 @@ function setMode(next) {
 
 function chooseMyPart(track) {
   myPart = track;
-  for (const button of $('myParts').querySelectorAll('button')) {
-    button.setAttribute('aria-pressed', button.getAttribute('aria-label') === track.name);
-  }
+  $('myParts').value = track.name;
+  $('myParts').style.setProperty('--c', `var(${track.color})`);
   $('myName').textContent = track.name;
   $('myBalance').style.setProperty('--c', `var(${track.color})`);
   const partner = partnerOf(track);
   $('partnerToggle').textContent = `Silence ${partner.name}`;
   $('partnerToggle').style.setProperty('--c', `var(${partner.color})`);
   tracks.forEach(applyVolume);
+  showRoles();
   remember(MY_PART_KEY, track.name);
 }
 
@@ -666,7 +739,15 @@ function toggleSilencePartner() {
   silencePartner = !silencePartner;
   $('partnerToggle').setAttribute('aria-pressed', silencePartner);
   tracks.forEach(applyVolume);
+  showRoles();
   saveSession();
+}
+
+function showRoles() {
+  const silenced = silencePartner ? partnerOf(myPart) : null;
+  for (const track of tracks) {
+    track.role.textContent = track === myPart ? 'My part' : track === silenced ? 'Silenced' : '';
+  }
 }
 
 function bindLevel(sliderId, outputId, initial, setLevel) {
@@ -684,13 +765,11 @@ function bindLevel(sliderId, outputId, initial, setLevel) {
 
 function buildVolumeModes() {
   for (const track of tracks) {
-    const button = document.createElement('button');
-    button.innerHTML = `<span class="full">${track.name}</span><span class="short">${track.name[0]}${track.name.at(-1)}</span>`;
-    button.setAttribute('aria-label', track.name);
-    button.style.setProperty('--c', `var(${track.color})`);
-    button.addEventListener('click', () => chooseMyPart(track));
-    $('myParts').append(button);
+    $('myParts').add(new Option(track.name));
   }
+  $('myParts').addEventListener('change', event => {
+    chooseMyPart(tracks.find(track => track.name === event.target.value));
+  });
   for (const button of $('modes').querySelectorAll('button')) {
     button.addEventListener('click', () => setMode(button.dataset.mode));
   }
@@ -893,19 +972,23 @@ async function stretch(buffer, rate, job, onProgress) {
 function markSpeed(rate) {
   for (const button of $('speeds').querySelectorAll('button')) {
     button.setAttribute('aria-pressed', +button.dataset.speed === rate);
+    button.classList.remove('preparing');
   }
 }
 
 async function setSpeed(rate) {
   const job = ++speedJob;
   markSpeed(rate);
+  statusEl.hidden = true;
+  const speedButton = $('speeds').querySelector(`[data-speed="${rate}"]`);
   let buffers = tracks.map(t => t.original);
   if (rate !== 1) {
     try {
       buffers = [];
       for (const [index, track] of tracks.entries()) {
         const stretched = await stretch(track.original, rate, job, progress => {
-          speedNote.textContent = `Preparing ${Math.round(rate * 100)}%: ${Math.round((index + progress) / tracks.length * 100)}%`;
+          speedButton.classList.add('preparing');
+          speedButton.style.setProperty('--loaded', `${Math.round((index + progress) / tracks.length * 100)}%`);
         });
         if (!stretched) return;
         buffers.push(stretched);
@@ -913,7 +996,8 @@ async function setSpeed(rate) {
     } catch (error) {
       if (job !== speedJob) return;
       markSpeed(speed);
-      speedNote.textContent = 'Could not load the slow-down tool. Check your internet connection and choose the speed again.';
+      statusEl.textContent = 'Could not load the slow-down tool. Check your internet connection and choose the speed again.';
+      statusEl.hidden = false;
       return;
     }
   }
@@ -929,7 +1013,7 @@ async function setSpeed(rate) {
     startSources();
     playing = true;
   }
-  speedNote.textContent = '';
+  markSpeed(rate);
   render();
 }
 
@@ -1185,6 +1269,14 @@ new ResizeObserver(drawAll).observe($('waves'));
 
 buildSpeeds();
 buildVolumeModes();
+
+// The filled part of each volume slider is drawn from this.
+const paintFader = input => input.style.setProperty('--fill', `${input.value}%`);
+document.querySelectorAll('.volume input').forEach(paintFader);
+document.addEventListener('input', event => {
+  if (event.target.matches('.volume input')) paintFader(event.target);
+});
+
 load();
 dropOldRecordings().catch(() => {});
 </script>
