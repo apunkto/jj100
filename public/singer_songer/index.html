@@ -109,7 +109,7 @@
 
   .transport .speed { margin: 0 0 0 0.5rem; }
   .speed > span:first-child { min-width: 0; }
-  .loop-row { margin: 1.25rem 0 0; }
+  .loop-row { margin: 1.25rem 0 0; min-height: 2.4rem; } /* stays put when Stop looping appears */
 
   .choices {
     display: flex;
@@ -179,6 +179,7 @@
     border-radius: 0.25rem;
     padding: 0.35rem 0.8rem;
     cursor: pointer;
+    touch-action: manipulation;
   }
 
   button:hover:not(:disabled) { border-color: var(--moon-dim); }
@@ -410,6 +411,10 @@
     pointer-events: none; /* kept for the keyboard; clicks and touches are handled on .lanes */
   }
 
+  @media (pointer: coarse) {
+    button, select { min-height: 2.75rem; }
+  }
+
   /* Phones: compact enough that My part and the rest fits on one screen. */
   @media (max-width: 44rem) {
     :root { --row: 1.75rem; --section-gap: 0.25rem; }
@@ -432,7 +437,9 @@
     .option > label { min-width: 3.25rem; }
     .choices { flex: 1; }
     .choices button { flex: auto; padding: 0.2rem 0.4rem; font-size: 0.9375rem; }
-    select { flex: 1; min-width: 0; }
+    select { flex: 1 1 6.5rem; min-width: 0; }
+    .partner { flex: 1 0 auto; }
+    #partnerToggle { white-space: nowrap; }
 
     .balance { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 0; }
     .balance span { flex: none; width: 5.25rem; font-size: 1.125rem; }
@@ -441,7 +448,7 @@
     .volume input::-webkit-slider-thumb { width: 1.5rem; height: 1.5rem; margin-top: -0.5625rem; }
     .volume input::-moz-range-thumb { width: 1.5rem; height: 1.5rem; }
 
-    .loop-row { margin: 0; }
+    .loop-row { margin: 0 0 0.25rem; min-height: 2.75rem; }
     .system { grid-template-columns: minmax(0, 1fr); margin-top: 0.25rem; }
     .lanes { grid-row: 1; margin-bottom: 0.5rem; }
 
@@ -495,7 +502,7 @@
     <div class="option">
       <label for="myParts">My part</label>
       <select id="myParts"></select>
-      <div class="choices">
+      <div class="choices partner">
         <button id="partnerToggle"></button>
       </div>
     </div>
@@ -825,6 +832,7 @@ function showLoopBand(range) {
 function showLoop() {
   showLoopBand(loopRange);
   $('loopClear').hidden = !loopRange;
+  restartBtn.textContent = loopRange ? 'Restart loop' : 'Back to start';
   $('loopText').textContent = loopRange
     ? `Repeating ${formatTime(loopRange.start)}–${formatTime(loopRange.end)}`
     : 'Drag across the waveforms to repeat';
@@ -1255,7 +1263,15 @@ $('loopClear').addEventListener('click', () => setLoop(null));
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') saveSession();
-  else if (playing) keepAwake(); // the browser drops the lock whenever the page is hidden
+  else if (playing) {
+    ctx.resume();  // iPhones can leave audio suspended after a call or the lock screen
+    keepAwake();   // the browser drops the lock whenever the page is hidden
+  }
+});
+
+// After a mouse click, give the keyboard back so Space keeps meaning play and pause.
+document.addEventListener('click', event => {
+  if (event.detail) event.target.closest('button')?.blur();
 });
 window.addEventListener('pagehide', saveSession);
 
